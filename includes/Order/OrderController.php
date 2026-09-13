@@ -435,6 +435,24 @@ class OrderController {
 	}
 
 	/**
+	 * Move an order to a status for a bulk action.
+	 *
+	 * An order already in the requested status is reported as not changed so
+	 * the list notice counts it as skipped instead of updated.
+	 *
+	 * @param \WC_Order $order  Order to update.
+	 * @param string    $status Target status slug without the wc- prefix.
+	 * @return bool Whether the order status changed.
+	 */
+	private function change_order_status( $order, $status ) {
+		if ( $order->get_status() === $status ) {
+			return false;
+		}
+
+		return (bool) $order->update_status( $status );
+	}
+
+	/**
 	 * Handle order bulk actions.
 	 */
 	public function handle_order_bulk_actions() {
@@ -480,16 +498,16 @@ class OrderController {
 
 			switch ( $action ) {
 				case 'mark_processing':
-					$order->update_status( 'processing' ) ? ++$updated : ++$skipped;
+					$this->change_order_status( $order, 'processing' ) ? ++$updated : ++$skipped;
 					break;
 				case 'mark_on-hold':
-					$order->update_status( 'on-hold' ) ? ++$updated : ++$skipped;
+					$this->change_order_status( $order, 'on-hold' ) ? ++$updated : ++$skipped;
 					break;
 				case 'mark_completed':
-					$order->update_status( 'completed' ) ? ++$updated : ++$skipped;
+					$this->change_order_status( $order, 'completed' ) ? ++$updated : ++$skipped;
 					break;
 				case 'mark_cancelled':
-					$order->update_status( 'cancelled' ) ? ++$updated : ++$skipped;
+					$this->change_order_status( $order, 'cancelled' ) ? ++$updated : ++$skipped;
 					break;
 				case 'trash':
 					$order->delete() ? ++$trashed : ++$skipped;

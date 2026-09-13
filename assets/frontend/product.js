@@ -1094,9 +1094,27 @@
 							confirmButtonText: bulkEditConfig.delete_confirm_button,
 							cancelButtonText: bulkEditConfig.cancel_button,
 						} ).then( function ( confirmResult ) {
-							if ( confirmResult.isConfirmed ) {
-								runBulkRemoval();
+							if ( ! confirmResult.isConfirmed ) {
+								return;
 							}
+							// Second confirmation: permanent deletion skips
+							// the trash, so a mis-click cannot be undone.
+							Swal.fire( {
+								icon: 'error',
+								title: bulkEditConfig.delete_recheck_title,
+								text: (
+									bulkEditConfig.delete_recheck_message || ''
+								).replace( '%d', selectedProductIds.length ),
+								showCancelButton: true,
+								confirmButtonText:
+									bulkEditConfig.delete_recheck_button,
+								cancelButtonText: bulkEditConfig.cancel_button,
+								focusCancel: true,
+							} ).then( function ( recheckResult ) {
+								if ( recheckResult.isConfirmed ) {
+									runBulkRemoval();
+								}
+							} );
 						} );
 						return;
 					}
@@ -1114,7 +1132,22 @@
 			}
 
 			var $bulkHiddenPostInputs = $( '#storesuite-bulk-edit-post-ids' );
+			var $bulkEditForm = $bulkEditModal.find( 'form' ).first();
 			var productIndex;
+
+			// Start from a clean form every time: the modal is hidden, not
+			// destroyed, on close, so a previous Add/Remove choice would
+			// otherwise be applied silently to the next selection.
+			if ( $bulkEditForm.length ) {
+				$bulkEditForm[ 0 ].reset();
+				$bulkEditForm
+					.find( 'select[multiple]' )
+					.val( null )
+					.trigger( 'change' );
+				$bulkEditForm
+					.find( '.storesuite-bulk-edit-submit' )
+					.prop( 'disabled', false );
+			}
 
 			$bulkHiddenPostInputs.empty();
 

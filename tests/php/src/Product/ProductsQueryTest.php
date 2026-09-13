@@ -141,6 +141,57 @@ class ProductsQueryTest extends StoreSuiteTestCase {
 
 		$this->assertContains( $grouped->get_id(), $ids, 'Products without _price must not be dropped by the price sort.' );
 		$this->assertLessThan( array_search( $high, $ids, true ), array_search( $low, $ids, true ) );
+		$this->assertSame( $grouped->get_id(), end( $ids ), 'Products without _price must sort last, not by an arbitrary meta value.' );
+	}
+
+	/**
+	 * Regression: the old OR (EXISTS / NOT EXISTS) meta sort joined postmeta
+	 * without a key, so unmanaged products were ordered by whatever meta row
+	 * MySQL picked (usually _price) and landed above managed ones.
+	 */
+	public function test_stock_sorting_orders_managed_products_and_lists_unmanaged_last() {
+		$few  = self::factory()->product->create(
+			array(
+				'name'           => 'Few In Stock',
+				'regular_price'  => '900',
+				'manage_stock'   => true,
+				'stock_quantity' => 3,
+			)
+		)->get_id();
+		$many = self::factory()->product->create(
+			array(
+				'name'           => 'Many In Stock',
+				'regular_price'  => '1',
+				'manage_stock'   => true,
+				'stock_quantity' => 40,
+			)
+		)->get_id();
+
+		// Unmanaged, but with a high price so a keyless join would rank it first.
+		$unmanaged = self::factory()->product->create(
+			array(
+				'name'          => 'Aaa Unmanaged',
+				'regular_price' => '5000',
+			)
+		)->get_id();
+
+		$desc = $this->query_ids(
+			array(
+				'orderby' => 'stock',
+				'order'   => 'desc',
+			)
+		);
+		$this->assertSame( array( $many, $few, $unmanaged ), array_values( array_intersect( $desc, array( $many, $few, $unmanaged ) ) ) );
+		$this->assertSame( $unmanaged, end( $desc ) );
+
+		$asc = $this->query_ids(
+			array(
+				'orderby' => 'stock',
+				'order'   => 'asc',
+			)
+		);
+		$this->assertSame( array( $few, $many, $unmanaged ), array_values( array_intersect( $asc, array( $few, $many, $unmanaged ) ) ) );
+		$this->assertSame( $unmanaged, end( $asc ), 'Unmanaged products must sort last in both directions.' );
 	}
 
 	public function test_unknown_orderby_is_ignored() {

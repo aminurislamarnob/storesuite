@@ -68,6 +68,18 @@ class OrderBulkActionsTest extends StoreSuiteTestCase {
 		$this->assertSame( '1', $query['skipped'], 'A non-existent order ID must be counted as skipped.' );
 	}
 
+	public function test_bulk_status_change_counts_unchanged_orders_as_skipped() {
+		wp_set_current_user( $this->admin_id );
+		$done    = self::factory()->order->create( array( 'status' => 'completed' ) );
+		$pending = self::factory()->order->create();
+
+		$query = $this->run_bulk( 'mark_completed', array( $done->get_id(), $pending->get_id() ) );
+
+		$this->assertSame( 'completed', wc_get_order( $pending->get_id() )->get_status() );
+		$this->assertSame( '1', $query['updated'] );
+		$this->assertSame( '1', $query['skipped'], 'An order already in the target status is a no-op and must be reported as skipped.' );
+	}
+
 	public function test_bulk_trash_soft_deletes_orders() {
 		wp_set_current_user( $this->admin_id );
 		$order = self::factory()->order->create();

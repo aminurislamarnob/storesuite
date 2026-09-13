@@ -704,6 +704,10 @@ class Assets {
 					'delete_confirm_title'    => __( 'Delete permanently?', 'storesuite' ),
 					'delete_confirm_message'  => __( 'The selected products will be deleted permanently. This cannot be undone.', 'storesuite' ),
 					'delete_confirm_button'   => __( 'Yes, delete permanently', 'storesuite' ),
+					'delete_recheck_title'    => __( 'Last chance', 'storesuite' ),
+					/* translators: %d: number of products selected for permanent deletion */
+					'delete_recheck_message'  => __( 'Permanently delete %d product(s)? There is no trash to restore from.', 'storesuite' ),
+					'delete_recheck_button'   => __( 'Delete now', 'storesuite' ),
 					'cancel_button'           => __( 'Cancel', 'storesuite' ),
 					'ok_button'               => __( 'OK', 'storesuite' ),
 				),

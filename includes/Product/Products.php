@@ -58,7 +58,22 @@ class Products {
 		// Apply column sorting.
 		$query = $this->apply_product_sorting( $query, $filters );
 
+		$sort_meta = isset( $query['storesuite_sort_meta'] ) ? $query['storesuite_sort_meta'] : null;
+		unset( $query['storesuite_sort_meta'] );
+
+		$sort_clauses_filter = null;
+		if ( $sort_meta ) {
+			$sort_clauses_filter = function ( $clauses ) use ( $sort_meta ) {
+				return $this->sort_meta_clauses( $clauses, $sort_meta );
+			};
+			add_filter( 'posts_clauses', $sort_clauses_filter, 10, 1 );
+		}
+
 		$product_query = new \WP_Query( $query );
+
+		if ( $sort_clauses_filter ) {
+			remove_filter( 'posts_clauses', $sort_clauses_filter, 10 );
+		}
 
 		// Remove filter after query
 		if ( ! empty( $search_term ) ) {
@@ -234,25 +249,54 @@ class Products {
 			return $query;
 		}
 
-		$query['meta_query']['storesuite_sort'] = array(
-			'relation'                => 'OR',
-			'storesuite_sort_value'   => array(
-				'key'     => $meta_columns[ $orderby ]['key'],
-				'compare' => 'EXISTS',
-				'type'    => $meta_columns[ $orderby ]['type'],
-			),
-			'storesuite_sort_missing' => array(
-				'key'     => $meta_columns[ $orderby ]['key'],
-				'compare' => 'NOT EXISTS',
-			),
-		);
-
-		$query['orderby'] = array(
-			'storesuite_sort_value' => $order,
-			'title'                 => 'ASC',
+		// Sorting is applied through a keyed LEFT JOIN in sort_meta_clauses()
+		// rather than a meta_query. A meta_query OR (EXISTS / NOT EXISTS) keeps
+		// products without the meta in the list, but WP builds the EXISTS join
+		// without a meta_key condition, so those products end up ordered by an
+		// arbitrary meta row of theirs instead of sorting last.
+		$query['storesuite_sort_meta'] = array(
+			'key'   => $meta_columns[ $orderby ]['key'],
+			'type'  => $meta_columns[ $orderby ]['type'],
+			'order' => $order,
 		);
 
 		return $query;
+	}
+
+	/**
+	 * Order the products query by one meta key via a keyed LEFT JOIN.
+	 *
+	 * Products that have no value for the key (unmanaged stock, grouped
+	 * products without _price, blank SKUs) are kept and always listed last,
+	 * whatever the direction; ties fall back to the title.
+	 *
+	 * @param array<string, string>                        $clauses   WP_Query SQL clauses.
+	 * @param array{key:string, type:string, order:string} $sort_meta Meta key, SQL cast type and direction.
+	 * @return array<string, string> Modified clauses.
+	 */
+	private function sort_meta_clauses( $clauses, $sort_meta ) {
+		global $wpdb;
+
+		$alias = 'storesuite_sort_meta';
+		$order = 'DESC' === strtoupper( $sort_meta['order'] ) ? 'DESC' : 'ASC';
+
+		$allowed_types = array_column( self::get_sortable_meta_columns(), 'type', 'type' );
+		$type          = isset( $allowed_types[ $sort_meta['type'] ] ) ? $sort_meta['type'] : 'CHAR';
+
+		$clauses['join'] .= $wpdb->prepare(
+			" LEFT JOIN {$wpdb->postmeta} AS {$alias} ON ( {$wpdb->posts}.ID = {$alias}.post_id AND {$alias}.meta_key = %s )", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- core table names and a fixed, non-user alias.
+			$sort_meta['key']
+		);
+
+		$clauses['orderby'] = sprintf(
+			"( %1\$s.meta_value IS NULL OR %1\$s.meta_value = '' ) ASC, CAST( %1\$s.meta_value AS %2\$s ) %3\$s, %4\$s.post_title ASC",
+			$alias,
+			$type,
+			$order,
+			$wpdb->posts
+		);
+
+		return $clauses;
 	}
 
 	/**
