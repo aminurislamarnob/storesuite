@@ -49,8 +49,13 @@ test.describe( 'products list', () => {
 		const products = new ProductsPage( page );
 		await products.goto( '?orderby=title&order=asc' );
 
-		// Alphabetically first seeded product.
-		await expect( products.rows.first() ).toContainText( seed.products.mug.name );
+		// Site-agnostic: whatever products exist, the page must render them A→Z
+		// and the seeded mug must sort before the seeded scarf.
+		const names = await products.rowNames();
+		expect( names.length ).toBeGreaterThan( 1 );
+		const sorted = [ ...names ].sort( ( a, b ) => a.localeCompare( b, undefined, { sensitivity: 'base' } ) );
+		expect( names ).toEqual( sorted );
+		expect( names.indexOf( seed.products.mug.name ) ).toBeLessThan( names.indexOf( seed.products.scarf.name ) );
 		await expect(
 			products.table.locator( 'a.storesuite-sort-link[aria-sort="ascending"]' )
 		).toContainText( 'Name' );
