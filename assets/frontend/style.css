@@ -8190,6 +8190,51 @@ tr.storesuite-inline-saved-flash > td {
   color: var(--storesuite-text-color-light);
 }
 
+/* AI search */
+.storesuite-ai-search {
+  margin: 0 0 16px;
+}
+.storesuite-ai-search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 6px;
+}
+.storesuite-ai-search-input input[type="text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.storesuite-ai-search-icon {
+  color: var(--storesuite-color-button-background, #5539fd);
+}
+.storesuite-ai-search-submit {
+  flex: 0 0 auto;
+  min-width: 64px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.storesuite-ai-search-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: storesuite-ai-search-spin 0.8s linear infinite;
+  vertical-align: middle;
+}
+@keyframes storesuite-ai-search-spin {
+  to { transform: rotate(360deg); }
+}
+.storesuite-ai-search-hint {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-ai-search-hint.is-error {
+  color: #d63638;
+}
+
 /* Column manager */
 .storesuite-list-table th[data-col][hidden],
 .storesuite-list-table td[data-col][hidden],

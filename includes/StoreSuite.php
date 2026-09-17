@@ -273,6 +273,7 @@ final class StoreSuite {
 		$this->container['storesuite_inventory_controller']        = new Inventory\InventoryController();
 		$this->container['storesuite_product_controller']          = new Product\ProductController();
 		$this->container['storesuite_product_ai']                  = new Product\ProductAI();
+		$this->container['storesuite_product_ai_search']           = new Product\ProductAiSearch();
 		$this->container['storesuite_product_image_ai']            = new Product\ProductImageAI();
 		$this->container['storesuite_product_export_controller']   = new Product\ProductExportController();
 		$this->container['storesuite_product_import_controller']   = new Product\ProductImportController();

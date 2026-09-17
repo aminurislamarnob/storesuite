@@ -191,6 +191,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					</div>
 				</div>
 			</div>
+			<?php if ( \PluginizeLab\StoreSuite\Product\ProductAiSearch::is_available() ) : ?>
+				<?php storesuite_get_template_part( 'products/ai-search' ); ?>
+			<?php endif; ?>
 			<!-- Off-canvas Filter -->
 			<?php storesuite_get_template_part( 'products/product-filters-offcanvas' ); ?>
 			<form id="storesuite-product-bulk-actions" method="post">

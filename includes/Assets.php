@@ -95,6 +95,7 @@ class Assets {
 		$frontend_order_export        = STORESUITE_PLUGIN_ASSET . '/frontend/order-export.js';
 		$frontend_edit_history        = STORESUITE_PLUGIN_ASSET . '/frontend/edit-history.js';
 		$frontend_column_manager      = STORESUITE_PLUGIN_ASSET . '/frontend/column-manager.js';
+		$frontend_ai_search           = STORESUITE_PLUGIN_ASSET . '/frontend/ai-search.js';
 		$frontend_product_inline_edit = STORESUITE_PLUGIN_ASSET . '/frontend/product-inline-edit.js';
 		$frontend_taxonomy_list       = STORESUITE_PLUGIN_ASSET . '/frontend/taxonomy-list.js';
 		$frontend_coupon_bulk         = STORESUITE_PLUGIN_ASSET . '/frontend/coupon-bulk.js';
@@ -121,6 +122,7 @@ class Assets {
 		wp_register_script( 'storesuite_order_export_script', $frontend_order_export, array( 'jquery', 'storesuite_order_script', 'storesuite_selectWoo', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_edit_history_script', $frontend_edit_history, array( 'jquery', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_column_manager_script', $frontend_column_manager, array( 'jquery', 'storesuite_global_script' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_ai_search_script', $frontend_ai_search, array( 'jquery' ), STORESUITE_PLUGIN_VERSION, true );
 
 		// Inline cell editing on the products list table.
 		wp_register_script( 'storesuite_product_inline_edit_script', $frontend_product_inline_edit, array( 'jquery', 'storesuite_script', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
@@ -589,6 +591,25 @@ class Assets {
 
 		if ( $needs_media ) {
 			wp_enqueue_media();
+		}
+
+		// Natural-language AI search on the Products list.
+		if ( storesuite_is_endpoint_url( 'products' ) && \PluginizeLab\StoreSuite\Product\ProductAiSearch::is_available() ) {
+			wp_enqueue_script( 'storesuite_ai_search_script' );
+			wp_localize_script(
+				'storesuite_ai_search_script',
+				'StoreSuite_AiSearch',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( \PluginizeLab\StoreSuite\Product\ProductAiSearch::NONCE_ACTION ),
+					'i18n'     => array(
+						'empty_query'      => __( 'Describe what you are looking for first.', 'storesuite' ),
+						'thinking'         => __( 'Working out the filters…', 'storesuite' ),
+						'applying'         => __( 'Applying filters…', 'storesuite' ),
+						'unexpected_error' => __( 'An unexpected error occurred. Please try again.', 'storesuite' ),
+					),
+				)
+			);
 		}
 
 		// "Columns" dropdown on every list table.
