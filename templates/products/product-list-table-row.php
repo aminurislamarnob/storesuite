@@ -117,6 +117,9 @@ $storesuite_inline_title    = __( 'Click to edit', 'storesuite' );
 				</li>
 				<?php endif; ?>
 				<li>
+					<button type="button" class="inline-button dropdown-link storesuite-duplicate-item" data-object="product" data-id="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Duplicate', 'storesuite' ); ?></button>
+				</li>
+				<li>
 					<button type="button" class="inline-button dropdown-link storesuite-delete-product" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Delete', 'storesuite' ); ?></button>
 				</li>
 			</ul>

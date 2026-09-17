@@ -412,6 +412,7 @@ class Assets {
 				array(
 					'ajax_url'                     => admin_url( 'admin-ajax.php' ),
 					'storesuite_woo_delete_nonce_' => wp_create_nonce( '_storesuite_delete_nonce_' ),
+					'duplicate_nonce'              => wp_create_nonce( '_storesuite_duplicate_nonce_' ),
 					'search_products_nonce'        => wp_create_nonce( 'search-products' ),
 					'coupon_code_generator'        => array(
 						'generate_button_text' => esc_html__( 'Generate coupon code', 'storesuite' ),
@@ -510,6 +511,7 @@ class Assets {
 						'coupon_updated_successfully'    => __( 'Coupon updated successfully!', 'storesuite' ),
 						'delete_coupon_warning'          => __( 'This will delete the coupon permanently. This action cannot be undone.', 'storesuite' ),
 						'deleting'                       => __( 'Deleting...', 'storesuite' ),
+						'duplicating'                    => __( 'Duplicating...', 'storesuite' ),
 						'are_you_sure'                   => __( 'Are you sure?', 'storesuite' ),
 						'yes_delete'                     => __( 'Yes, delete it!', 'storesuite' ),
 						'validation_error'               => __( 'Validation Error', 'storesuite' ),

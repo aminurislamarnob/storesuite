@@ -182,6 +182,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 												<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-coupon' ) . '%s', $coupon_id ) ); ?>" class="dropdown-link"><?php esc_html_e( 'Edit', 'storesuite' ); ?></a>
 											</li>
 											<li>
+												<button type="button" class="inline-button dropdown-link storesuite-duplicate-item" data-object="coupon" data-id="<?php echo esc_attr( $coupon_id ); ?>"><?php esc_html_e( 'Duplicate', 'storesuite' ); ?></button>
+											</li>
+											<li>
 												<button type="button" class="inline-button dropdown-link storesuite-delete-coupon" data-coupon-id="<?php echo esc_attr( $coupon_id ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( '_storesuite_delete_coupon_' ) ); ?>"><?php esc_html_e( 'Delete', 'storesuite' ); ?></button>
 											</li>
 										</ul>
