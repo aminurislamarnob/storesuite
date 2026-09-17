@@ -28,11 +28,15 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 			$storesuite_bulk_updated = isset( $_GET['updated'] ) ? absint( wp_unslash( $_GET['updated'] ) ) : 0;
 			$storesuite_bulk_trashed = isset( $_GET['trashed'] ) ? absint( wp_unslash( $_GET['trashed'] ) ) : 0;
 			$storesuite_bulk_skipped = isset( $_GET['skipped'] ) ? absint( wp_unslash( $_GET['skipped'] ) ) : 0;
+			$storesuite_bulk_history = isset( $_GET['history'] ) ? absint( wp_unslash( $_GET['history'] ) ) : 0;
 			// phpcs:enable
 
 			if ( $storesuite_bulk_updated || $storesuite_bulk_trashed || $storesuite_bulk_skipped ) :
 				?>
 				<div class="storesuite-bulk-edit-feedback storesuite-form-group" role="status">
+					<?php if ( $storesuite_bulk_history && $storesuite_bulk_updated ) : ?>
+						<button type="button" class="my-storesuite-button my-storesuite-button-light storesuite-bulk-feedback-undo storesuite-history-undo" data-batch-id="<?php echo esc_attr( (string) $storesuite_bulk_history ); ?>" data-nonce="<?php echo esc_attr( wp_create_nonce( \PluginizeLab\StoreSuite\EditHistory\EditHistoryController::NONCE_ACTION ) ); ?>"><?php esc_html_e( 'Undo', 'storesuite' ); ?></button>
+					<?php endif; ?>
 					<?php if ( $storesuite_bulk_updated ) : ?>
 						<p class="storesuite-bulk-edit-feedback-line storesuite-text-success">
 							<?php

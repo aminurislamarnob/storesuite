@@ -6,6 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use PluginizeLab\StoreSuite\EditHistory\EditHistoryController;
+use PluginizeLab\StoreSuite\EditHistory\EditHistoryManager;
+
 /**
  * Product bulk edit service class.
  */
@@ -40,6 +43,15 @@ class ProductBulkEdit {
 		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- bulk_edit_posts / WC sanitize internally.
 		$post_data = wp_unslash( $_POST );
 
+		$history    = new EditHistoryManager();
+		$before     = array();
+		$target_ids = isset( $post_data['post'] ) ? array_map( 'absint', (array) $post_data['post'] ) : array();
+		if ( EditHistoryManager::is_enabled() ) {
+			foreach ( $target_ids as $target_id ) {
+				$before[ $target_id ] = $history->snapshot_product( $target_id );
+			}
+		}
+
 		$result = $this->run_product_bulk_edit( $post_data );
 
 		if ( is_wp_error( $result ) ) {
@@ -57,12 +69,32 @@ class ProductBulkEdit {
 		$this->apply_bulk_taxonomy_operation( $updated_ids, 'product_cat', 'storesuite_bulk_cat_op', 'storesuite_bulk_cats' );
 		$this->apply_bulk_taxonomy_operation( $updated_ids, 'product_tag', 'storesuite_bulk_tag_op', 'storesuite_bulk_tags' );
 
+		$batch_id = 0;
+		if ( ! empty( $before ) ) {
+			$after = array();
+			foreach ( $updated_ids as $updated_id ) {
+				$after[ $updated_id ] = $history->snapshot_product_fresh( $updated_id );
+			}
+			$batch_id = $history->record_from_snapshots(
+				'bulk',
+				'product',
+				sprintf(
+					/* translators: %d: number of products. */
+					_n( 'Bulk edit of %d product', 'Bulk edit of %d products', count( $updated_ids ), 'storesuite' ),
+					count( $updated_ids )
+				),
+				$before,
+				$after
+			);
+		}
+
 		wp_send_json_success(
 			array(
 				'message' => $this->format_bulk_edit_result_message( $result ),
 				'updated' => count( $result['updated'] ),
 				'skipped' => count( $result['skipped'] ),
 				'locked'  => count( $result['locked'] ),
+				'undo'    => EditHistoryController::undo_payload( $batch_id ),
 			)
 		);
 	}

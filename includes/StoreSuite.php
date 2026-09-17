@@ -106,6 +106,9 @@ final class StoreSuite {
 		if ( ! wp_next_scheduled( Notification\NotificationHooks::CLEANUP_HOOK ) ) {
 			wp_schedule_event( time(), 'daily', Notification\NotificationHooks::CLEANUP_HOOK );
 		}
+
+		// Create the edit history tables and schedule its retention cleanup.
+		EditHistory\EditHistoryInstaller::install();
 	}
 
 	/**
@@ -157,6 +160,7 @@ final class StoreSuite {
 	 */
 	public function deactivate() {
 		wp_clear_scheduled_hook( Notification\NotificationHooks::CLEANUP_HOOK );
+		wp_clear_scheduled_hook( EditHistory\EditHistoryHooks::CLEANUP_HOOK );
 	}
 
 	/**
@@ -288,6 +292,8 @@ final class StoreSuite {
 		$this->container['storesuite_notification_manager']        = new Notification\NotificationManager();
 		$this->container['storesuite_notification_hooks']          = new Notification\NotificationHooks();
 		$this->container['storesuite_notification_controller']     = new Notification\NotificationController();
+		$this->container['storesuite_edit_history_hooks']          = new EditHistory\EditHistoryHooks();
+		$this->container['storesuite_edit_history_controller']     = new EditHistory\EditHistoryController();
 		$this->container['storesuite_notifications_rest_controller'] = new REST\NotificationsController();
 
 		// Analytics (uses WooCommerce analytics packages — no SQL filtering needed).

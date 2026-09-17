@@ -8189,3 +8189,88 @@ tr.storesuite-inline-saved-flash > td {
 .storesuite-form-range-sep {
   color: var(--storesuite-text-color-light);
 }
+
+/* Edit history */
+.storesuite-text-muted {
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.storesuite-history-undone-flag {
+  color: var(--storesuite-text-color-light);
+  font-size: 0.85em;
+}
+.storesuite-history-row.is-undone .storesuite-history-summary strong {
+  text-decoration: line-through;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-details {
+  margin-top: 6px;
+}
+.storesuite-history-details summary {
+  cursor: pointer;
+  color: var(--storesuite-text-color-light);
+  font-size: 0.9em;
+}
+.storesuite-history-items {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.storesuite-history-items li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.92em;
+}
+.storesuite-history-items li.is-undone {
+  opacity: 0.6;
+}
+.storesuite-history-field {
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-old {
+  text-decoration: line-through;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-arrow {
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-new {
+  font-weight: 600;
+}
+.storesuite-history-meta {
+  flex-basis: 100%;
+  color: var(--storesuite-text-color-light);
+  font-size: 0.85em;
+}
+.storesuite-product-history-link {
+  margin: 12px 0 0;
+}
+.storesuite-bulk-feedback-undo {
+  float: right;
+  margin-left: 12px;
+}
+.storesuite-undo-toast .swal2-html-container {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+}
+.storesuite-undo-toast .storesuite-undo-toast-button {
+  background: transparent;
+  border: 0;
+  padding: 0;
+  color: var(--storesuite-color-button-background, #5539fd);
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}

@@ -93,6 +93,7 @@ class Assets {
 		$frontend_variation_script    = STORESUITE_PLUGIN_ASSET . '/frontend/product-variation.js';
 		$frontend_product_export      = STORESUITE_PLUGIN_ASSET . '/frontend/product-export.js';
 		$frontend_order_export        = STORESUITE_PLUGIN_ASSET . '/frontend/order-export.js';
+		$frontend_edit_history        = STORESUITE_PLUGIN_ASSET . '/frontend/edit-history.js';
 		$frontend_product_inline_edit = STORESUITE_PLUGIN_ASSET . '/frontend/product-inline-edit.js';
 		$frontend_taxonomy_list       = STORESUITE_PLUGIN_ASSET . '/frontend/taxonomy-list.js';
 		$frontend_coupon_bulk         = STORESUITE_PLUGIN_ASSET . '/frontend/coupon-bulk.js';
@@ -117,6 +118,7 @@ class Assets {
 		wp_register_script( 'storesuite_variation_script', $frontend_variation_script, array( 'jquery', 'storesuite_selectWoo', 'storesuite_sweetalert2_script', 'jquery-ui-sortable', 'jquery-ui-datepicker' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_product_export_script', $frontend_product_export, array( 'jquery', 'storesuite_product_script', 'storesuite_selectWoo', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_order_export_script', $frontend_order_export, array( 'jquery', 'storesuite_order_script', 'storesuite_selectWoo', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_edit_history_script', $frontend_edit_history, array( 'jquery', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 
 		// Inline cell editing on the products list table.
 		wp_register_script( 'storesuite_product_inline_edit_script', $frontend_product_inline_edit, array( 'jquery', 'storesuite_script', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
@@ -327,6 +329,7 @@ class Assets {
 		$is_account   = storesuite_is_endpoint_url( 'edit-account-details' );
 		$is_import    = storesuite_is_endpoint_url( 'import-products' );
 		$is_inventory = storesuite_is_endpoint_url( 'inventory' );
+		$is_history   = storesuite_is_endpoint_url( 'edit-history' );
 
 		// List pages that get the shared bulk delete + quick edit behaviour.
 		$is_taxonomy_list = storesuite_is_endpoint_url( 'categories' )
@@ -584,6 +587,34 @@ class Assets {
 
 		if ( $needs_media ) {
 			wp_enqueue_media();
+		}
+
+		// Undo toasts on the list pages, the History page and the orders feedback notice.
+		if ( $is_products || $is_inventory || $is_orders || $is_history ) {
+			wp_enqueue_script( 'storesuite_sweetalert2_script' );
+			wp_enqueue_script( 'storesuite_edit_history_script' );
+			wp_localize_script(
+				'storesuite_edit_history_script',
+				'StoreSuite_EditHistory',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( \PluginizeLab\StoreSuite\EditHistory\EditHistoryController::NONCE_ACTION ),
+					'context'  => $is_inventory ? 'inventory' : ( storesuite_is_endpoint_url( 'products' ) ? 'products' : '' ),
+					'i18n'     => array(
+						'saved'            => __( 'Saved', 'storesuite' ),
+						'undo'             => __( 'Undo', 'storesuite' ),
+						'undoing'          => __( 'Undoing…', 'storesuite' ),
+						'undone_title'     => __( 'Reverted', 'storesuite' ),
+						'error_title'      => __( 'Undo failed', 'storesuite' ),
+						'ok_button'        => __( 'OK', 'storesuite' ),
+						'unexpected_error' => __( 'An unexpected error occurred. Please try again.', 'storesuite' ),
+						'confirm_title'    => __( 'Undo this change?', 'storesuite' ),
+						'confirm_text'     => __( 'Every field in this change is set back to its previous value. Fields edited again since then are left alone.', 'storesuite' ),
+						'confirm_button'   => __( 'Yes, undo it', 'storesuite' ),
+						'cancel_button'    => __( 'Cancel', 'storesuite' ),
+					),
+				)
+			);
 		}
 
 		if ( $is_orders ) {

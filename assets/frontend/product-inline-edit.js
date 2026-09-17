@@ -179,6 +179,14 @@
 							$newRow.removeClass( 'storesuite-inline-saved-flash' );
 						}, 1600 );
 						self.reset();
+
+						if (
+							response.data.undo &&
+							window.StoreSuite &&
+							window.StoreSuite.editHistory
+						) {
+							window.StoreSuite.editHistory.toast( response.data.undo );
+						}
 					} else {
 						self.fail( ( response && response.data && response.data.message ) || self.i18n().unexpected_error );
 					}
