@@ -43,15 +43,15 @@ $item_name = apply_filters( 'woocommerce_order_item_name', $item->get_name(), $i
 			echo '</div>';
 		}
         ?>
-        <?php 
+        <?php
         do_action( 'woocommerce_before_order_itemmeta', $item_id, $item, $_product );
-        
+
         storesuite_get_template_part(
             'orders/html-order-item-meta', '', array(
                 'item'     => $item,
             )
         );
-        
+
         do_action( 'woocommerce_after_order_itemmeta', $item_id, $item, $_product );
         ?>
     </td>

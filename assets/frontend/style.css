@@ -8177,3 +8177,15 @@ tr.storesuite-inline-saved-flash > td {
 .storesuite-filter-price-sep {
   color: var(--storesuite-text-color-light);
 }
+.storesuite-form-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.storesuite-form-range .storesuite-form-control {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.storesuite-form-range-sep {
+  color: var(--storesuite-text-color-light);
+}

@@ -275,6 +275,7 @@ final class StoreSuite {
 		$this->container['storesuite_product_hooks']               = new Product\ProductHooks();
 		$this->container['storesuite_variation_ajax']              = new Product\VariationAjax();
 		$this->container['storesuite_order_controller']            = new Order\OrderController();
+		$this->container['storesuite_order_export_controller']     = new Order\OrderExportController();
 		$this->container['storesuite_create_new_order']            = new Order\CreateNewOrder();
 		$this->container['storesuite_order_manager']               = new Order\OrderManager();
 		$this->container['storesuite_order_hooks']                 = new Order\OrderHooks();

@@ -85,6 +85,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								<option value="mark_completed"><?php esc_html_e( 'Change status to completed', 'storesuite' ); ?></option>
 								<option value="mark_cancelled"><?php esc_html_e( 'Change status to cancelled', 'storesuite' ); ?></option>
 								<option value="trash"><?php esc_html_e( 'Move to Trash', 'storesuite' ); ?></option>
+								<option value="export"><?php esc_html_e( 'Export', 'storesuite' ); ?></option>
 							</select>
 							<button type="submit" id="doaction" class="my-storesuite-button" form="storesuite-order-bulk-actions"><?php esc_html_e( 'Apply', 'storesuite' ); ?></button>
 						</div>
@@ -153,6 +154,14 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								</a>
 							</div>
 							<div class="col-md-auto">
+								<button type="button" class="my-storesuite-button storesuite-export-toggle" id="storesuite-order-export-toggle">
+									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" focusable="false">
+										<path d="m19.949,5.536l-3.484-3.486c-1.323-1.322-3.081-2.05-4.95-2.05h-4.515C4.243,0,2,2.243,2,5v14c0,2.757,2.243,5,5,5h10c2.757,0,5-2.243,5-5v-8.515c0-1.871-.729-3.628-2.051-4.95Zm-1.414,1.415c.318.317.587.67.805,1.05h-4.341c-.552,0-1-.449-1-1V2.659c.38.218.733.487,1.051.805l3.484,3.486Zm1.465,12.05c0,1.654-1.346,3-3,3H7c-1.654,0-3-1.346-3-3V5c0-1.654,1.346-3,3-3h4.515c.163,0,.325.008.485.023v4.977c0,1.654,1.346,3,3,3h4.977c.015.16.023.322.023.485v8.515Zm-4.293-2.895c.391.39.391,1.023,0,1.414l-1.613,1.614c-.577.577-1.336.866-2.094.866s-1.517-.289-2.094-.866l-1.613-1.614c-.391-.391-.391-1.024,0-1.414.391-.391,1.023-.391,1.414,0l1.293,1.293v-4.398c0-.552.447-1,1-1s1,.448,1,1v4.398l1.293-1.293c.391-.391,1.023-.391,1.414,0Z"/>
+									</svg>
+									<span class="storesuite-button-label"><?php esc_html_e( 'Export', 'storesuite' ); ?></span>
+								</button>
+							</div>
+							<div class="col-md-auto">
 								<button type="button" class="my-storesuite-button storesuite-filter-toggle" id="storesuite-order-filter-toggle">
 									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
 										<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
@@ -166,6 +175,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 			</div>
 			<!-- Off-canvas Order Filter -->
 			<?php storesuite_get_template_part( 'orders/order-filters-offcanvas' ); ?>
+			<?php storesuite_get_template_part( 'orders/order-export-modal' ); ?>
 			<form id="storesuite-order-bulk-actions" method="post">
 				<?php wp_nonce_field( 'storesuite_order_bulk_action', 'storesuite_bulk_action_nonce' ); ?>
 				<div class="storesuite-table-responsive">
