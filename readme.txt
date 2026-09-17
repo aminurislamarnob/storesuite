@@ -167,6 +167,7 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 * On update, the notifications table is created, the daily cleanup is scheduled, and rewrite rules are flushed automatically — no need to re-save permalinks after upgrading.
 * Fix undefined `--storesuite-title-text-color` references so title text uses the defined colour token.
 * Fix the WordPress login page (`wp-login.php`, or a custom login slug from plugins such as WPS Hide Login) redirecting logged-out visitors to My Account. StoreSuite now only picks a destination after a successful login and leaves the login screen alone otherwise.
+* Shop managers who are blocked from wp-admin now land on the StoreSuite dashboard instead of the shop homepage.
 
 = 1.2.3 =
 * Add optional, opt-in telemetry via the Appsero SDK. No data is collected unless you explicitly allow it from the admin notice.

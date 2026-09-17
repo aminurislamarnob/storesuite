@@ -2,9 +2,10 @@
 /**
  * Access-control tests for the Main service class.
  *
- * The post-login destination is a pure filter and is asserted directly. The
- * wp-admin blocking path calls wp_safe_redirect() and exits, so it cannot run
- * inside a test process; that flow belongs to the Playwright e2e suite.
+ * The post-login destination is a pure filter and is asserted directly; the
+ * wp-admin blocking path redirects and exits, so it runs through
+ * capture_redirect(). Browser-level behaviour (the login form actually
+ * rendering) belongs to the Playwright e2e suite.
  *
  * @package StoreSuite\Tests
  */
@@ -103,5 +104,52 @@ class MainTest extends StoreSuiteTestCase {
 			wc_get_page_permalink( 'myaccount' ),
 			$this->main()->redirect_after_login( '', get_user_by( 'id', $this->customer_id ) )
 		);
+	}
+
+	public function test_blocked_manager_lands_on_storesuite_dashboard() {
+		$this->create_dashboard_page();
+		$this->set_storesuite_option( 'storesuite_prevent_admin_access', 'yes' );
+		$this->set_admin_request( $this->shop_manager_id );
+
+		$this->assertSame( storesuite_get_navigation_url(), $this->capture_redirect( array( $this->main(), 'block_admin_access' ) ) );
+	}
+
+	public function test_blocked_manager_lands_on_home_without_dashboard_page() {
+		$this->set_storesuite_option( 'storesuite_dashboard_page_id', 0 );
+		$this->set_storesuite_option( 'storesuite_prevent_admin_access', 'yes' );
+		$this->set_admin_request( $this->shop_manager_id );
+
+		$this->assertSame( home_url(), $this->capture_redirect( array( $this->main(), 'block_admin_access' ) ) );
+	}
+
+	public function test_blocked_customer_lands_on_home() {
+		$this->create_dashboard_page();
+		$this->set_storesuite_option( 'storesuite_prevent_admin_access', 'yes' );
+		$this->set_admin_request( $this->customer_id );
+
+		$this->assertSame( home_url(), $this->capture_redirect( array( $this->main(), 'block_admin_access' ) ) );
+	}
+
+	public function test_admin_access_not_blocked_for_administrators_or_when_disabled() {
+		$this->create_dashboard_page();
+
+		$this->set_storesuite_option( 'storesuite_prevent_admin_access', 'yes' );
+		$this->set_admin_request( $this->admin_id );
+		$this->assertNull( $this->capture_redirect( array( $this->main(), 'block_admin_access' ) ) );
+
+		$this->set_storesuite_option( 'storesuite_prevent_admin_access', 'no' );
+		$this->set_admin_request( $this->shop_manager_id );
+		$this->assertNull( $this->capture_redirect( array( $this->main(), 'block_admin_access' ) ) );
+	}
+
+	/**
+	 * Pretend the given user is loading a regular wp-admin screen.
+	 *
+	 * @param int $user_id User ID.
+	 * @return void
+	 */
+	private function set_admin_request( $user_id ) {
+		wp_set_current_user( $user_id );
+		$GLOBALS['pagenow'] = 'index.php'; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Simulating an admin screen request.
 	}
 }

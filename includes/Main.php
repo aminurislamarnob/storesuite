@@ -77,7 +77,10 @@ class Main {
 		$user_role   = reset( $current_user->roles );
 
 		if ( ( 'yes' === $is_prevent_admin_access ) && in_array( $user_role, array( 'shop_manager', 'customer' ), true ) && ( ! in_array( $pagenow, $valid_pages, true ) ) ) {
-			wp_safe_redirect( home_url() );
+			// Managers have somewhere better to be than the shop homepage.
+			$redirect = current_user_can( 'manage_woocommerce' ) ? $this->get_storesuite_dashboard_url() : '';
+
+			wp_safe_redirect( $redirect ? $redirect : home_url() );
 			exit;
 		}
 	}
