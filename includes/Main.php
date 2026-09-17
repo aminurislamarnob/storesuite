@@ -22,7 +22,7 @@ class Main {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'login_redirect', array( $this, 'redirect_after_login' ), 1, 2 );
+		add_filter( 'login_redirect', array( $this, 'filter_login_redirect' ), 1, 3 );
 		add_filter( 'woocommerce_login_redirect', array( $this, 'redirect_after_login' ), 1, 2 );
 		add_action( 'admin_init', array( $this, 'block_admin_access' ) );
 		add_action( 'template_redirect', array( $this, 'redirect_if_not_logged_in_manager' ), 11 );
@@ -77,7 +77,10 @@ class Main {
 		$user_role   = reset( $current_user->roles );
 
 		if ( ( 'yes' === $is_prevent_admin_access ) && in_array( $user_role, array( 'shop_manager', 'customer' ), true ) && ( ! in_array( $pagenow, $valid_pages, true ) ) ) {
-			wp_safe_redirect( home_url() );
+			// Managers have somewhere better to be than the shop homepage.
+			$redirect = current_user_can( 'manage_woocommerce' ) ? $this->get_storesuite_dashboard_url() : '';
+
+			wp_safe_redirect( $redirect ? $redirect : home_url() );
 			exit;
 		}
 	}
@@ -115,27 +118,62 @@ class Main {
 	}
 
 	/**
-	 * Redirect after wooCommerce login
-	 * my account page
+	 * Adapter for the core `login_redirect` filter, which passes the requested
+	 * redirect between the destination and the user.
 	 *
-	 * @global string $action
+	 * @param string             $redirect_to           The redirect destination URL.
+	 * @param string             $requested_redirect_to The requested redirect destination URL.
+	 * @param \WP_User|\WP_Error $user                  WP_User on a successful login, WP_Error otherwise.
+	 * @return string
+	 */
+	public function filter_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+		return $this->redirect_after_login( $redirect_to, $user );
+	}
+
+	/**
+	 * Pick the post-login destination by role.
+	 *
+	 * Core applies `login_redirect` every time the wp-login.php form is
+	 * rendered, not only after a successful login, so anything that is not a
+	 * real user (a WP_Error, an empty string) must leave the URL untouched or
+	 * the login screen itself gets redirected away.
+	 *
+	 * @param string             $redirect_to The redirect destination URL.
+	 * @param \WP_User|\WP_Error $user        WP_User on a successful login, WP_Error otherwise.
+	 * @return string
 	 */
 	public function redirect_after_login( $redirect_to, $user ) {
+		if ( ! $user instanceof \WP_User || ! $user->exists() ) {
+			return $redirect_to;
+		}
 
 		// 1) Admins → WP admin dashboard.
-		if ( $user instanceof \WP_User && in_array( 'administrator', (array) $user->roles, true ) ) {
-			wp_safe_redirect( admin_url() );
-			exit();
+		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
+			return admin_url();
 		}
 
 		// 2) Non-admins who can manage WooCommerce → StoreSuite dashboard.
 		if ( user_can( $user, 'manage_woocommerce' ) ) {
-			$this->redirect_to_storesuite_dashboard(); // This already redirects & exits if page is set.
+			$dashboard_url = $this->get_storesuite_dashboard_url();
+
+			if ( $dashboard_url ) {
+				return $dashboard_url;
+			}
 		}
 
 		// 3) Everyone else → normal My Account page.
-		wp_safe_redirect( wc_get_page_permalink( 'myaccount' ) );
-		exit();
+		return wc_get_page_permalink( 'myaccount' );
+	}
+
+	/**
+	 * URL of the StoreSuite dashboard page, or an empty string when no page is set.
+	 *
+	 * @return string
+	 */
+	public function get_storesuite_dashboard_url() {
+		$page_id = (int) storesuite_get_option_by_key( 'storesuite_dashboard_page_id' );
+
+		return $page_id ? storesuite_get_navigation_url() : '';
 	}
 
 	/**
@@ -144,10 +182,10 @@ class Main {
 	 * @return void
 	 */
 	public function redirect_to_storesuite_dashboard() {
-		$page_id = (int) storesuite_get_option_by_key( 'storesuite_dashboard_page_id' );
+		$dashboard_url = $this->get_storesuite_dashboard_url();
 
-		if ( $page_id ) {
-			wp_safe_redirect( storesuite_get_navigation_url() );
+		if ( $dashboard_url ) {
+			wp_safe_redirect( $dashboard_url );
 			exit();
 		}
 	}

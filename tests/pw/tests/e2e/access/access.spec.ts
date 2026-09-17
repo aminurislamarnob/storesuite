@@ -12,6 +12,16 @@ test.describe( 'logged-out visitors', () => {
 		await expect( page ).toHaveURL( /my-account/ );
 		await expect( page.locator( '.my-storesuite-sidebar' ) ).toHaveCount( 0 );
 	} );
+
+	// Core fires login_redirect while rendering the login form, before anyone
+	// has logged in; StoreSuite used to treat that as a login and bounce the
+	// whole screen (and any custom login slug built on it) to My Account.
+	test( 'can open the WordPress login form', async ( { page } ) => {
+		await page.goto( '/wp-login.php' );
+
+		await expect( page ).toHaveURL( /wp-login\.php/ );
+		await expect( page.locator( '#loginform' ) ).toBeVisible();
+	} );
 } );
 
 test.describe( 'customers', () => {
