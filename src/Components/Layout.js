@@ -77,7 +77,12 @@ const Layout = () => {
 				) }
 				actions={
 					<>
-						<Button variant="secondary" disabled>
+						<Button
+							variant="secondary"
+							href="https://storesuite.dev/docs/"
+							target="_blank"
+							rel="noreferrer"
+						>
 							{ __( 'Documentation', 'storesuite' ) }
 						</Button>
 						<Button
