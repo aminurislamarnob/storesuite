@@ -110,6 +110,9 @@ class EditHistoryInstaller {
 			wp_schedule_event( time(), 'daily', EditHistoryHooks::CLEANUP_HOOK );
 		}
 
+		// The History page is a new rewrite endpoint; flush on the next request.
+		update_option( 'storesuite_flush_rewrite_rules', 1 );
+
 		update_option( self::DB_VERSION_OPTION, self::DB_VERSION );
 	}
 }

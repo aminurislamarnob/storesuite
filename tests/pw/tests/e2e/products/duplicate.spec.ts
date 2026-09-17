@@ -25,7 +25,10 @@ test.describe( 'duplicate row action', () => {
 	test( 'duplicating a coupon opens the draft copy with a suffixed code', async ( { page } ) => {
 		await page.goto( `${ dashboardPath }/coupons/` );
 
-		const row = page.locator( 'tr.single-coupon-item' ).filter( { hasText: seed.coupon } ).first();
+		const row = page
+			.locator( 'tr.single-coupon-item' )
+			.filter( { has: page.locator( 'td.tbl-coupon-code', { hasText: new RegExp( `^\\s*${ seed.coupon }\\s*$` ) } ) } )
+			.first();
 		await row.locator( '.storesuite-dropdown-icon' ).click();
 		await Promise.all( [
 			page.waitForURL( /\/edit-coupon\/\d+/ ),

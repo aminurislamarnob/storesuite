@@ -331,9 +331,9 @@ class Assets {
 			|| storesuite_is_endpoint_url( 'edit-attribute' )
 			|| storesuite_is_endpoint_url( 'attribute-terms' );
 		$is_account   = storesuite_is_endpoint_url( 'edit-account-details' );
+		$is_history   = storesuite_is_endpoint_url( 'edit-history' );
 		$is_import    = storesuite_is_endpoint_url( 'import-products' );
 		$is_inventory = storesuite_is_endpoint_url( 'inventory' );
-		$is_history   = storesuite_is_endpoint_url( 'edit-history' );
 
 		// List pages that get the shared bulk delete + quick edit behaviour.
 		$is_taxonomy_list = storesuite_is_endpoint_url( 'categories' )
@@ -344,7 +344,7 @@ class Assets {
 
 		$needs_media        = $is_products || $is_categories || $is_brands || $is_account;
 		$needs_form_handler = $is_products || $is_inventory || $is_coupons || $is_categories || $is_tags || $is_brands || $is_attributes || $is_account;
-		$needs_sweetalert   = $needs_form_handler || $is_orders;
+		$needs_sweetalert   = $needs_form_handler || $is_orders || $is_history;
 		$needs_select2      = $is_products || $is_inventory || $is_orders || $is_coupons;
 		// jQuery UI datepicker styles: any page that renders .date-picker inputs
 		// (the coupon expiry date, the product sale schedule, the order created

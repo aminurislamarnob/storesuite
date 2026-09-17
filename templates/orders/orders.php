@@ -31,6 +31,12 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 			$storesuite_bulk_history = isset( $_GET['history'] ) ? absint( wp_unslash( $_GET['history'] ) ) : 0;
 			// phpcs:enable
 
+			// Only offer Undo while the batch is still live (the URL keeps the ID across reloads).
+			if ( $storesuite_bulk_history ) {
+				$storesuite_bulk_batch   = ( new \PluginizeLab\StoreSuite\EditHistory\EditHistoryManager() )->get_batch( $storesuite_bulk_history );
+				$storesuite_bulk_history = $storesuite_bulk_batch && empty( $storesuite_bulk_batch->undone_at ) ? $storesuite_bulk_history : 0;
+			}
+
 			if ( $storesuite_bulk_updated || $storesuite_bulk_trashed || $storesuite_bulk_skipped ) :
 				?>
 				<div class="storesuite-bulk-edit-feedback storesuite-form-group" role="status">
