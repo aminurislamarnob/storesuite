@@ -158,6 +158,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								</a>
 							</div>
 							<div class="col-md-auto">
+								<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'orders' ) ); ?>
+							</div>
+							<div class="col-md-auto">
 								<button type="button" class="my-storesuite-button storesuite-export-toggle" id="storesuite-order-export-toggle">
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" focusable="false">
 										<path d="m19.949,5.536l-3.484-3.486c-1.323-1.322-3.081-2.05-4.95-2.05h-4.515C4.243,0,2,2.243,2,5v14c0,2.757,2.243,5,5,5h10c2.757,0,5-2.243,5-5v-8.515c0-1.871-.729-3.628-2.051-4.95Zm-1.414,1.415c.318.317.587.67.805,1.05h-4.341c-.552,0-1-.449-1-1V2.659c.38.218.733.487,1.051.805l3.484,3.486Zm1.465,12.05c0,1.654-1.346,3-3,3H7c-1.654,0-3-1.346-3-3V5c0-1.654,1.346-3,3-3h4.515c.163,0,.325.008.485.023v4.977c0,1.654,1.346,3,3,3h4.977c.015.16.023.322.023.485v8.515Zm-4.293-2.895c.391.39.391,1.023,0,1.414l-1.613,1.614c-.577.577-1.336.866-2.094.866s-1.517-.289-2.094-.866l-1.613-1.614c-.391-.391-.391-1.024,0-1.414.391-.391,1.023-.391,1.414,0l1.293,1.293v-4.398c0-.552.447-1,1-1s1,.448,1,1v4.398l1.293-1.293c.391-.391,1.023-.391,1.414,0Z"/>
@@ -198,13 +201,13 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								);
 								?>
 							</th>
-							<th><?php echo esc_html__( 'Order', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Status', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Order Total', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Total Items', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Customer', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Billing Phone', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Date', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'order' ); ?>><?php echo esc_html__( 'Order', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'status' ); ?>><?php echo esc_html__( 'Status', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'total' ); ?>><?php echo esc_html__( 'Order Total', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'items' ); ?>><?php echo esc_html__( 'Total Items', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'customer' ); ?>><?php echo esc_html__( 'Customer', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'phone' ); ?>><?php echo esc_html__( 'Billing Phone', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'orders', 'date' ); ?>><?php echo esc_html__( 'Date', 'storesuite' ); ?></th>
 							<th class="text-right"><?php echo esc_html__( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>
@@ -253,24 +256,24 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 										);
 										?>
 									</td>
-									<td data-title="<?php echo esc_attr__( 'Order', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'order' ); ?> data-title="<?php echo esc_attr__( 'Order', 'storesuite' ); ?>">
 										<?php $orders_obj->get_order_number_column_value( $order ); ?>
 									</td>
-									<td data-title="<?php echo esc_attr__( 'Status', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'status' ); ?> data-title="<?php echo esc_attr__( 'Status', 'storesuite' ); ?>">
 										<span class="storesuite-badge storesuite-badge-<?php echo esc_attr( storesuite_get_order_status_class( $order->get_status() ) ); ?>">
 											<?php echo esc_html( wc_get_order_status_name( $order->get_status() ) ); ?>
 										</span>
 									</td>
-									<td data-title="<?php echo esc_attr__( 'Total', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'total' ); ?> data-title="<?php echo esc_attr__( 'Total', 'storesuite' ); ?>">
 										<?php echo wp_kses_post( $order->get_formatted_order_total() ); ?>
 									</td>
-									<td data-title="<?php echo esc_html__( 'Total Items', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'items' ); ?> data-title="<?php echo esc_html__( 'Total Items', 'storesuite' ); ?>">
 										<?php echo esc_html( $order->get_item_count() ); ?>
 									</td>
-									<td data-title="<?php echo esc_attr__( 'Customer', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'customer' ); ?> data-title="<?php echo esc_attr__( 'Customer', 'storesuite' ); ?>">
 										<?php $orders_obj->get_order_customer_column_value( $order ); ?>
 									</td>
-									<td data-title="<?php echo esc_attr__( 'Billing Phone', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'phone' ); ?> data-title="<?php echo esc_attr__( 'Billing Phone', 'storesuite' ); ?>">
 										<?php
 										if ( $order->get_billing_phone() ) {
 											echo esc_html( $order->get_billing_phone() );
@@ -279,7 +282,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 										}
 										?>
 									</td>
-									<td data-title="<?php echo esc_attr__( 'Date', 'storesuite' ); ?>">
+									<td<?php storesuite_list_column_attrs( 'orders', 'date' ); ?> data-title="<?php echo esc_attr__( 'Date', 'storesuite' ); ?>">
 										<?php echo wp_kses_post( $orders_obj->get_order_date_column_value( $order ) ); ?>
 									</td>
 									<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">

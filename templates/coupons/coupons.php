@@ -42,6 +42,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							</div>
 						</form>
 					</div>
+					<div class="col-md-auto storesuite-toolbar-columns">
+						<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'coupons' ) ); ?>
+					</div>
 					<div class="col-md-auto text-right storesuite-toolbar-add">
 						<a href="<?php echo esc_url( storesuite_get_navigation_url( 'add-new-coupon' ) ); ?>" class="my-storesuite-button">
 							<svg xmlns="http://www.w3.org/2000/svg" id="Outline" viewBox="0 0 24 24" width="24" height="24">
@@ -88,13 +91,13 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								);
 								?>
 							</th>
-							<th><?php esc_html_e( 'Code', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Type', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Amount', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Description', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Usage / Limit', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Expiry Date', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Status', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'code' ); ?>><?php esc_html_e( 'Code', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'type' ); ?>><?php esc_html_e( 'Type', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'amount' ); ?>><?php esc_html_e( 'Amount', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'description' ); ?>><?php esc_html_e( 'Description', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'usage' ); ?>><?php esc_html_e( 'Usage / Limit', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'expiry' ); ?>><?php esc_html_e( 'Expiry Date', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'coupons', 'status' ); ?>><?php esc_html_e( 'Status', 'storesuite' ); ?></th>
 							<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>
@@ -119,13 +122,13 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									);
 									?>
 								</td>
-								<td class="tbl-coupon-code" data-title="<?php esc_attr_e( 'Code', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'code' ); ?> class="tbl-coupon-code" data-title="<?php esc_attr_e( 'Code', 'storesuite' ); ?>">
 									<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-coupon' ) . '%s', $coupon_id ) ); ?>"><?php echo esc_html( $coupon->get_code() ); ?></a>
 								</td>
-								<td data-title="<?php esc_attr_e( 'Type', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'type' ); ?> data-title="<?php esc_attr_e( 'Type', 'storesuite' ); ?>">
 									<?php echo esc_html( wc_get_coupon_type( $coupon->get_discount_type() ) ); ?>
 								</td>
-								<td data-title="<?php esc_attr_e( 'Amount', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'amount' ); ?> data-title="<?php esc_attr_e( 'Amount', 'storesuite' ); ?>">
 									<?php
 									if ( 'percent' === $coupon->get_discount_type() ) {
 										echo esc_html( $coupon->get_amount() ) . '%';
@@ -134,7 +137,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									}
 									?>
 								</td>
-								<td data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'description' ); ?> data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>">
 									<?php
 									$description = $coupon->get_description();
 									if ( $description ) {
@@ -144,7 +147,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									}
 									?>
 								</td>
-								<td data-title="<?php esc_attr_e( 'Usage / Limit', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'usage' ); ?> data-title="<?php esc_attr_e( 'Usage / Limit', 'storesuite' ); ?>">
 									<?php
 									$usage_count = $coupon->get_usage_count();
 									$usage_limit = $coupon->get_usage_limit();
@@ -157,7 +160,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									);
 									?>
 								</td>
-								<td data-title="<?php esc_attr_e( 'Expiry Date', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'expiry' ); ?> data-title="<?php esc_attr_e( 'Expiry Date', 'storesuite' ); ?>">
 									<?php
 									$expiry_date = $coupon->get_date_expires();
 									if ( $expiry_date ) {
@@ -167,7 +170,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									}
 									?>
 								</td>
-								<td data-title="<?php esc_attr_e( 'Status', 'storesuite' ); ?>">
+								<td<?php storesuite_list_column_attrs( 'coupons', 'status' ); ?> data-title="<?php esc_attr_e( 'Status', 'storesuite' ); ?>">
 									<span class="storesuite-badge storesuite-badge-<?php echo esc_attr( storesuite_get_post_status_class( get_post_status( $coupon_id ) ) ); ?>">
 										<?php echo esc_html( storesuite_get_post_status( get_post_status( $coupon_id ) ) ); ?>
 									</span>

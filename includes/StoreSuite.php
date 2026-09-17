@@ -292,6 +292,7 @@ final class StoreSuite {
 		$this->container['storesuite_notification_manager']        = new Notification\NotificationManager();
 		$this->container['storesuite_notification_hooks']          = new Notification\NotificationHooks();
 		$this->container['storesuite_notification_controller']     = new Notification\NotificationController();
+		$this->container['storesuite_column_manager']              = new ListTable\ColumnManager();
 		$this->container['storesuite_edit_history_hooks']          = new EditHistory\EditHistoryHooks();
 		$this->container['storesuite_edit_history_controller']     = new EditHistory\EditHistoryController();
 		$this->container['storesuite_notifications_rest_controller'] = new REST\NotificationsController();

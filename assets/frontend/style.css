@@ -8190,6 +8190,57 @@ tr.storesuite-inline-saved-flash > td {
   color: var(--storesuite-text-color-light);
 }
 
+/* Column manager */
+.storesuite-list-table th[data-col][hidden],
+.storesuite-list-table td[data-col][hidden],
+.my-storesuite-tbl th[data-col][hidden],
+.my-storesuite-tbl td[data-col][hidden] {
+  display: none !important;
+}
+.storesuite-column-manager {
+  display: inline-block;
+}
+.storesuite-column-manager .storesuite-dropdown-menu.storesuite-column-manager-menu {
+  top: calc(100% + 6px);
+  left: auto;
+  right: 0;
+  min-width: 200px;
+  max-width: 280px;
+  padding: 8px 0;
+  overflow: visible;
+}
+.storesuite-column-manager-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 15px;
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--storesuite-text-color);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.storesuite-column-manager-option:hover {
+  background: var(--storesuite-hover-background, rgba(0,0,0,.04));
+}
+.storesuite-column-manager-option.is-locked {
+  opacity: 0.55;
+  cursor: default;
+}
+.storesuite-column-manager-option input {
+  margin: 0;
+}
+.storesuite-column-manager-reset {
+  margin-top: 6px;
+  border-top: 1px solid rgba(0,0,0,.08);
+  padding-top: 10px !important;
+  color: var(--storesuite-color-button-background, #5539fd) !important;
+}
+.storesuite-column-manager-count {
+  margin-left: 6px;
+}
+
 /* Edit history */
 .storesuite-text-muted {
   color: var(--storesuite-text-color-light);
