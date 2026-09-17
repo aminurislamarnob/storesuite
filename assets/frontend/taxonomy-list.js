@@ -217,6 +217,9 @@
 						return;
 					}
 
+					// Close the row menu the click came from before the modal opens.
+					$trigger.closest( '.storesuite-dropdown-menu' ).stop( true, false ).slideUp( 150 );
+
 					$modalBody.empty();
 					self.blockUi();
 

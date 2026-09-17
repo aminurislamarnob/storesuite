@@ -1359,6 +1359,9 @@
 						return;
 					}
 
+					// Close the row menu the click came from before the modal opens.
+					$( this ).closest( '.storesuite-dropdown-menu' ).stop( true, false ).slideUp( 150 );
+
 					resetQuickEditModalContent();
 					activeQuickEditProductId = String( productId );
 					if (
