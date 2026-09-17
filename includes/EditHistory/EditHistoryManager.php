@@ -426,8 +426,7 @@ class EditHistoryManager {
 			$undo_batch_id = $this->record(
 				'undo',
 				$batch->object_type,
-				/* translators: %s: summary of the change that was undone. */
-				sprintf( __( 'Undo: %s', 'storesuite' ), $batch->summary ),
+				$batch->summary,
 				$undo_items,
 				$batch_id
 			);

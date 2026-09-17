@@ -29,90 +29,93 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 				</div>
 			<?php endif; ?>
 			<?php if ( ! empty( $batches ) ) : ?>
-				<div class="storesuite-card storesuite-card-with-header storesuite-mb-24">
-					<h3 class="storesuite-card-title"><?php esc_html_e( 'Edit History', 'storesuite' ); ?></h3>
-					<div class="storesuite-card-content storesuite-table-wrapper">
-						<table class="my-storesuite-tbl storesuite-list-table storesuite-edit-history-table">
-							<thead>
-								<tr>
-									<th><?php esc_html_e( 'Change', 'storesuite' ); ?></th>
-									<th><?php esc_html_e( 'By', 'storesuite' ); ?></th>
-									<th><?php esc_html_e( 'When', 'storesuite' ); ?></th>
-									<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
-								</tr>
-							</thead>
-							<tbody>
-								<?php foreach ( $batches as $storesuite_batch ) : ?>
-									<?php
-									$storesuite_user   = get_userdata( (int) $storesuite_batch->user_id );
-									$storesuite_items  = $manager->get_items( (int) $storesuite_batch->id );
-									$storesuite_undone = ! empty( $storesuite_batch->undone_at );
-									$storesuite_is_undo = 'undo' === $storesuite_batch->source;
-									?>
-									<tr class="storesuite-list-row storesuite-history-row<?php echo $storesuite_undone ? ' is-undone' : ''; ?>" data-batch-id="<?php echo esc_attr( (string) $storesuite_batch->id ); ?>">
-										<td data-title="<?php esc_attr_e( 'Change', 'storesuite' ); ?>">
-											<div class="storesuite-history-summary">
-												<span class="storesuite-badge storesuite-badge-<?php echo esc_attr( $storesuite_is_undo ? 'warning' : 'info' ); ?>"><?php echo esc_html( EditHistoryManager::source_label( $storesuite_batch->source ) ); ?></span>
-												<strong><?php echo esc_html( $storesuite_batch->summary ); ?></strong>
-												<?php if ( $storesuite_undone ) : ?>
-													<span class="storesuite-history-undone-flag"><?php esc_html_e( '(undone)', 'storesuite' ); ?></span>
-												<?php endif; ?>
-											</div>
-											<?php if ( ! empty( $storesuite_items ) ) : ?>
-												<details class="storesuite-history-details">
-													<summary>
+				<div class="storesuite-table-responsive">
+					<table class="my-storesuite-tbl storesuite-list-table storesuite-edit-history-table">
+						<thead>
+							<tr>
+								<th class="storesuite-history-change-col"><?php esc_html_e( 'Change', 'storesuite' ); ?></th>
+								<th><?php esc_html_e( 'By', 'storesuite' ); ?></th>
+								<th><?php esc_html_e( 'When', 'storesuite' ); ?></th>
+								<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
+							</tr>
+						</thead>
+						<tbody>
+							<?php foreach ( $batches as $storesuite_batch ) : ?>
+								<?php
+								$storesuite_user    = get_userdata( (int) $storesuite_batch->user_id );
+								$storesuite_items   = $manager->get_items( (int) $storesuite_batch->id );
+								$storesuite_undone  = ! empty( $storesuite_batch->undone_at );
+								$storesuite_is_undo = 'undo' === $storesuite_batch->source;
+								?>
+								<tr class="storesuite-list-row storesuite-history-row<?php echo $storesuite_undone ? ' is-undone' : ''; ?>" data-batch-id="<?php echo esc_attr( (string) $storesuite_batch->id ); ?>">
+									<td class="storesuite-history-change">
+										<div class="storesuite-history-summary">
+											<span class="storesuite-badge storesuite-badge-<?php echo esc_attr( $storesuite_is_undo ? 'warning' : 'info' ); ?>"><?php echo esc_html( EditHistoryManager::source_label( $storesuite_batch->source ) ); ?></span>
+											<span class="storesuite-history-title"><?php echo esc_html( $storesuite_batch->summary ); ?></span>
+											<?php if ( $storesuite_undone ) : ?>
+												<span class="storesuite-badge"><?php esc_html_e( 'Undone', 'storesuite' ); ?></span>
+											<?php endif; ?>
+										</div>
+										<?php if ( ! empty( $storesuite_items ) ) : ?>
+											<details class="storesuite-history-details">
+												<summary>
+													<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" aria-hidden="true" focusable="false"><path d="M15.4,9.88,10.81,5.29a1,1,0,0,0-1.41,0,1,1,0,0,0,0,1.42L14,11.29a1,1,0,0,1,0,1.42L9.4,17.29a1,1,0,0,0,1.41,1.42l4.59-4.59A3,3,0,0,0,15.4,9.88Z"/></svg>
+													<?php
+													echo esc_html(
+														sprintf(
+															/* translators: %d: number of field changes. */
+															_n( '%d field change', '%d field changes', count( $storesuite_items ), 'storesuite' ),
+															count( $storesuite_items )
+														)
+													);
+													?>
+												</summary>
+												<ul class="storesuite-history-items">
+													<?php foreach ( $storesuite_items as $storesuite_item ) : ?>
 														<?php
-														echo esc_html(
-															sprintf(
-																/* translators: %d: number of field changes. */
-																_n( '%d field change', '%d field changes', count( $storesuite_items ), 'storesuite' ),
-																count( $storesuite_items )
-															)
-														);
+														$storesuite_object_label = 'order' === $storesuite_item->object_type
+															/* translators: %d: order ID. */
+															? sprintf( __( 'Order #%d', 'storesuite' ), (int) $storesuite_item->object_id )
+															: get_the_title( (int) $storesuite_item->object_id );
+														$storesuite_object_url = 'order' === $storesuite_item->object_type
+															? storesuite_get_navigation_url( 'order-details' ) . (int) $storesuite_item->object_id
+															: storesuite_get_navigation_url( 'edit-product' ) . (int) $storesuite_item->object_id;
 														?>
-													</summary>
-													<ul class="storesuite-history-items">
-														<?php foreach ( $storesuite_items as $storesuite_item ) : ?>
-															<li>
-																<?php
-																$storesuite_object_label = 'order' === $storesuite_item->object_type
-																	/* translators: %d: order ID. */
-																	? sprintf( __( 'Order #%d', 'storesuite' ), (int) $storesuite_item->object_id )
-																	: get_the_title( (int) $storesuite_item->object_id );
-																$storesuite_object_url = 'order' === $storesuite_item->object_type
-																	? storesuite_get_navigation_url( 'order-details' ) . (int) $storesuite_item->object_id
-																	: storesuite_get_navigation_url( 'edit-product' ) . (int) $storesuite_item->object_id;
-																?>
-																<a href="<?php echo esc_url( $storesuite_object_url ); ?>"><?php echo esc_html( $storesuite_object_label ? $storesuite_object_label : '#' . (int) $storesuite_item->object_id ); ?></a>
-																<span class="storesuite-history-field"><?php echo esc_html( EditHistoryManager::field_label( $storesuite_item->field ) ); ?>:</span>
+														<li class="storesuite-history-item">
+															<a class="storesuite-history-object" href="<?php echo esc_url( $storesuite_object_url ); ?>"><?php echo esc_html( $storesuite_object_label ? $storesuite_object_label : '#' . (int) $storesuite_item->object_id ); ?></a>
+															<span class="storesuite-history-field"><?php echo esc_html( EditHistoryManager::field_label( $storesuite_item->field ) ); ?></span>
+															<span class="storesuite-history-diff">
 																<span class="storesuite-history-old"><?php echo esc_html( EditHistoryManager::format_value( $storesuite_item->object_type, $storesuite_item->field, $storesuite_item->old_value ) ); ?></span>
-																<span class="storesuite-history-arrow" aria-hidden="true">→</span>
+																<span class="storesuite-history-arrow" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="12" height="12" fill="currentColor" focusable="false"><path d="M23.12,9.91,19.25,6a1,1,0,0,0-1.42,0h0a1,1,0,0,0,0,1.41L21.39,11H1a1,1,0,0,0-1,1H0a1,1,0,0,0,1,1H21.45l-3.62,3.61a1,1,0,0,0,0,1.42h0a1,1,0,0,0,1.42,0l3.87-3.88A3,3,0,0,0,23.12,9.91Z"/></svg></span>
 																<span class="storesuite-history-new"><?php echo esc_html( EditHistoryManager::format_value( $storesuite_item->object_type, $storesuite_item->field, $storesuite_item->new_value ) ); ?></span>
-															</li>
-														<?php endforeach; ?>
-													</ul>
-												</details>
-											<?php endif; ?>
-										</td>
-										<td data-title="<?php esc_attr_e( 'By', 'storesuite' ); ?>"><?php echo esc_html( $storesuite_user ? $storesuite_user->display_name : __( 'Unknown', 'storesuite' ) ); ?></td>
-										<td data-title="<?php esc_attr_e( 'When', 'storesuite' ); ?>">
-											<time datetime="<?php echo esc_attr( $storesuite_batch->created_at ); ?>" title="<?php echo esc_attr( get_date_from_gmt( $storesuite_batch->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?>">
-												<?php
-												/* translators: %s: human time diff. */
-												echo esc_html( sprintf( __( '%s ago', 'storesuite' ), human_time_diff( strtotime( $storesuite_batch->created_at . ' UTC' ) ) ) );
-												?>
-											</time>
-										</td>
-										<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">
-											<?php if ( ! $storesuite_undone ) : ?>
-												<button type="button" class="my-storesuite-button my-storesuite-button-light storesuite-history-undo" data-batch-id="<?php echo esc_attr( (string) $storesuite_batch->id ); ?>"><?php esc_html_e( 'Undo', 'storesuite' ); ?></button>
-											<?php endif; ?>
-										</td>
-									</tr>
-								<?php endforeach; ?>
-							</tbody>
-						</table>
-					</div>
+															</span>
+														</li>
+													<?php endforeach; ?>
+												</ul>
+											</details>
+										<?php endif; ?>
+									</td>
+									<td data-title="<?php esc_attr_e( 'By', 'storesuite' ); ?>"><?php echo esc_html( $storesuite_user ? $storesuite_user->display_name : __( 'Unknown', 'storesuite' ) ); ?></td>
+									<td data-title="<?php esc_attr_e( 'When', 'storesuite' ); ?>">
+										<time datetime="<?php echo esc_attr( $storesuite_batch->created_at ); ?>" title="<?php echo esc_attr( get_date_from_gmt( $storesuite_batch->created_at, get_option( 'date_format' ) . ' ' . get_option( 'time_format' ) ) ); ?>">
+											<?php
+											/* translators: %s: human time diff. */
+											echo esc_html( sprintf( __( '%s ago', 'storesuite' ), human_time_diff( strtotime( $storesuite_batch->created_at . ' UTC' ) ) ) );
+											?>
+										</time>
+									</td>
+									<td class="text-right storesuite-history-actions<?php echo $storesuite_undone ? ' is-empty' : ''; ?>" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">
+										<?php if ( ! $storesuite_undone ) : ?>
+											<button type="button" class="my-storesuite-button my-storesuite-button-light storesuite-history-undo" data-batch-id="<?php echo esc_attr( (string) $storesuite_batch->id ); ?>">
+												<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="11" height="11" fill="currentColor" aria-hidden="true" focusable="false"><path d="M22,12A10,10,0,0,1,2.2,14a1,1,0,0,1,2-.4A8,8,0,1,0,4,12a1,1,0,0,1-2,0A10,10,0,0,1,22,12ZM8.71,8.71,10.59,6.83H7a1,1,0,0,1,0-2H13a1,1,0,0,1,1,1V11.83a1,1,0,0,1-2,0V8.25L9.41,9.83A1,1,0,0,1,8,9.83,1,1,0,0,1,8.71,8.71Z"/></svg>
+												<?php esc_html_e( 'Undo', 'storesuite' ); ?>
+											</button>
+										<?php endif; ?>
+									</td>
+								</tr>
+							<?php endforeach; ?>
+						</tbody>
+					</table>
 				</div>
 				<?php
 				if ( $total_pages > 1 ) {

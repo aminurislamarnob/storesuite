@@ -46,7 +46,8 @@ test.describe( 'edit history', () => {
 		const rows = page.locator( 'tr.storesuite-history-row' );
 		await expect( rows.first() ).toBeVisible();
 
-		await expect( rows.filter( { hasText: 'Undo: SKU changed on' } ).first() ).toBeVisible();
-		await expect( rows.filter( { hasText: '(undone)' } ).first() ).toBeVisible();
+		const undoRow = rows.filter( { has: page.locator( '.storesuite-badge', { hasText: /^Undo$/ } ) } ).filter( { hasText: 'SKU changed on' } );
+		await expect( undoRow.first() ).toBeVisible();
+		await expect( rows.filter( { has: page.locator( '.storesuite-badge', { hasText: /^Undone$/ } ) } ).first() ).toBeVisible();
 	} );
 } );

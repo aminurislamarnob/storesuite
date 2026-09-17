@@ -126,7 +126,7 @@ class EditHistoryManagerTest extends StoreSuiteTestCase {
 		$undo_batch = $this->manager->get_batch( $result['batch_id'] );
 		$this->assertSame( 'undo', $undo_batch->source );
 		$this->assertSame( (string) $batch_id, $undo_batch->undo_of );
-		$this->assertSame( 'Undo: Change', $undo_batch->summary );
+		$this->assertSame( 'Change', $undo_batch->summary, 'The undo batch keeps the original summary; its source badge says Undo.' );
 	}
 
 	public function test_undo_skips_fields_changed_since_the_batch() {
