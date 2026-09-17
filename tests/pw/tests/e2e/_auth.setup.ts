@@ -6,9 +6,9 @@ import { users } from '../../utils/testData';
 
 /**
  * Logs each role in through the WooCommerce My Account form once and saves
- * its storage state, so every spec starts already authenticated.
- * (wp-login.php redirects to My Account on this site, so the WooCommerce
- * form is the canonical login.)
+ * its storage state, so every spec starts already authenticated. (The
+ * WooCommerce form is used because it works regardless of any plugin that
+ * moves or hides wp-login.php.)
  *
  * StoreSuite's login_redirect then sends admins to wp-admin, managers to
  * the dashboard and customers back to My Account; the logged-in cookie is
