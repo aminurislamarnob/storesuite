@@ -8242,3 +8242,8 @@ ul.storesuite-notifications-list {
 .storesuite-acf-wysiwyg .wp-editor-wrap {
   max-width: 100%;
 }
+
+/* Image: the featured-image drop area, capped so it stays a tile in wide columns. */
+.storesuite-acf-image .image-drop-container {
+  max-width: 220px;
+}

@@ -60,6 +60,8 @@ class FieldSanitizer {
 				return DateFormats::to_storage( $type, $raw );
 			case 'wysiwyg':
 				return $this->sanitize_html( $raw );
+			case 'image':
+				return $this->sanitize_image( $raw );
 		}
 
 		return null;
@@ -188,6 +190,36 @@ class FieldSanitizer {
 	 */
 	protected function sanitize_html( $raw ): string {
 		return wp_kses_post( $this->to_string( $raw ) );
+	}
+
+	/**
+	 * Sanitise an `image` field value: the attachment ID.
+	 *
+	 * Empty clears the image. Anything that is not an existing image
+	 * attachment is rejected (null) so it never overwrites the stored value.
+	 *
+	 * @param mixed $raw Raw posted value.
+	 *
+	 * @return int|string|null
+	 */
+	protected function sanitize_image( $raw ) {
+		if ( ! is_scalar( $raw ) ) {
+			return null;
+		}
+
+		$value = trim( (string) $raw );
+
+		if ( '' === $value || '0' === $value ) {
+			return '';
+		}
+
+		if ( ! ctype_digit( $value ) ) {
+			return null;
+		}
+
+		$attachment_id = (int) $value;
+
+		return wp_attachment_is_image( $attachment_id ) ? $attachment_id : null;
 	}
 
 	/**

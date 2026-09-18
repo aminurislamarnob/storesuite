@@ -259,6 +259,32 @@ class FieldRenderer {
 	}
 
 	/**
+	 * Resolve ACF's comma-separated file extensions (`mime_types`) to MIME types
+	 * for the media frame's library filter.
+	 *
+	 * @param string $extensions Comma-separated extensions, e.g. "jpg, png".
+	 *
+	 * @return string[] MIME types; empty when no restriction applies.
+	 */
+	public function get_mime_types( string $extensions ): array {
+		$mimes = array();
+		$known = wp_get_mime_types();
+
+		foreach ( array_filter( array_map( 'trim', explode( ',', strtolower( $extensions ) ) ) ) as $extension ) {
+			$extension = ltrim( $extension, '.' );
+
+			foreach ( $known as $pattern => $mime ) {
+				if ( in_array( $extension, explode( '|', $pattern ), true ) ) {
+					$mimes[] = $mime;
+					break;
+				}
+			}
+		}
+
+		return array_values( array_unique( $mimes ) );
+	}
+
+	/**
 	 * Map ACF's percentage `wrapper.width` onto the 12-column grid.
 	 *
 	 * @param array $field ACF field array.

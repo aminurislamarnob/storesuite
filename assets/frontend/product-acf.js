@@ -19,6 +19,111 @@
 			this.bindRangeOutput( $groups );
 			this.bindColorPicker( $groups );
 			this.initDatePickers( $groups );
+			this.bindMediaPickers( $groups );
+		},
+
+		/**
+		 * Generic single-image picker, driven by data attributes on the
+		 * `[data-storesuite-media-picker]` wrapper: `data-target` (the hidden
+		 * input holding the attachment id), `data-preview-size`,
+		 * `data-mime-types` (library filter) and `data-title`. Any number of
+		 * pickers per form work independently. Clicking a filled picker
+		 * removes the image; clicking an empty one opens the media frame.
+		 */
+		bindMediaPickers: function ( $groups ) {
+			var self = this;
+
+			$groups.on( 'click keydown', '.storesuite-media-picker-drop', function ( event ) {
+				if (
+					event.type === 'keydown' &&
+					event.key !== 'Enter' &&
+					event.key !== ' '
+				) {
+					return;
+				}
+				event.preventDefault();
+
+				var $drop = $( this );
+				var $picker = $drop.closest( '[data-storesuite-media-picker]' );
+				var $input = $( $picker.data( 'target' ) );
+
+				if ( $input.val() ) {
+					self.clearMediaPicker( $picker, $drop, $input );
+					return;
+				}
+
+				self.openMediaFrame( $picker, $drop, $input );
+			} );
+		},
+
+		clearMediaPicker: function ( $picker, $drop, $input ) {
+			var i18n = window.storeSuiteFrontScript || {};
+
+			$input.val( '' ).trigger( 'change' );
+			$drop
+				.removeClass( 'image-drop-bg' )
+				.find( '.storesuite-media-picker-preview' )
+				.empty();
+			$drop
+				.find( '.image-drop-text span' )
+				.text( i18n.upload_image_text || 'Upload Image' );
+		},
+
+		openMediaFrame: function ( $picker, $drop, $input ) {
+			if ( typeof wp === 'undefined' || ! wp.media ) {
+				return;
+			}
+
+			var i18n = window.storeSuiteFrontScript || {};
+			var frame = $picker.data( 'storesuiteMediaFrame' );
+
+			if ( frame ) {
+				frame.open();
+				return;
+			}
+
+			var mimeTypes = String( $picker.data( 'mimeTypes' ) || '' )
+				.split( ',' )
+				.filter( Boolean );
+
+			frame = wp.media( {
+				title: $picker.data( 'title' ) || i18n.upload_product_image || '',
+				button: { text: i18n.insert_image || 'Insert Image' },
+				multiple: false,
+				library: { type: mimeTypes.length ? mimeTypes : 'image' },
+			} );
+
+			frame.on( 'select', function () {
+				var attachment = frame
+					.state()
+					.get( 'selection' )
+					.first()
+					.toJSON();
+				var size = $picker.data( 'previewSize' );
+				var sizes = attachment.sizes || {};
+				var url =
+					( size && sizes[ size ] && sizes[ size ].url ) ||
+					( sizes.full && sizes.full.url ) ||
+					attachment.url ||
+					'';
+
+				$input.val( attachment.id ).trigger( 'change' );
+				$drop
+					.addClass( 'image-drop-bg' )
+					.find( '.storesuite-media-picker-preview' )
+					.html(
+						$( '<img>' ).attr( {
+							src: url,
+							alt: attachment.alt || '',
+						} )
+					);
+				$drop
+					.find( '.image-drop-text span' )
+					.text( i18n.remove_image_text || 'Remove Image' );
+			} );
+
+			$picker.data( 'storesuiteMediaFrame', frame );
+			frame.open();
 		},
 
 		/**
