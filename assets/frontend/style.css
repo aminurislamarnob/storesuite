@@ -8161,3 +8161,79 @@ ul.storesuite-notifications-list {
   color: var(--storesuite-text-color-light);
   font-style: italic;
 }
+
+/* Choice lists: native checkbox / radio inputs beside their labels. */
+.storesuite-acf-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+.storesuite-acf-choices-horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+/* Outranks the generic `.storesuite-form-group label` block rule. */
+.my-storesuite-container .storesuite-form-group .storesuite-acf-choice,
+.my-storesuite-wrapper .storesuite-form-group .storesuite-acf-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+.storesuite-acf-choice input[type="checkbox"],
+.storesuite-acf-choice input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--storesuite-primary-bg);
+}
+
+/* Button group: radios rendered as a segmented control. */
+.storesuite-acf-button-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--storesuite-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.storesuite-acf-button-group-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.my-storesuite-container .storesuite-form-group .storesuite-acf-button-group-option,
+.my-storesuite-wrapper .storesuite-form-group .storesuite-acf-button-group-option {
+  display: block;
+  margin: 0;
+  padding: 0 16px;
+  height: 38px;
+  line-height: 38px;
+  font-weight: 500;
+  color: var(--storesuite-text-color);
+  background: var(--storesuite-bg-color-light);
+  border-right: 1px solid var(--storesuite-border-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.storesuite-acf-button-group-option:last-child {
+  border-right: 0;
+}
+.storesuite-acf-button-group-input:checked + .storesuite-acf-button-group-option {
+  background: var(--storesuite-primary-bg);
+  color: var(--storesuite-button-text-color);
+}
+.storesuite-acf-button-group-input:focus-visible + .storesuite-acf-button-group-option {
+  outline: 2px solid var(--storesuite-primary-bg);
+  outline-offset: -2px;
+}
+
+/* True/false: the standard switch, nested inside the field wrapper. */
+.storesuite-acf-field .storesuite-acf-switch {
+  min-height: 40px;
+  margin-bottom: 0;
+}

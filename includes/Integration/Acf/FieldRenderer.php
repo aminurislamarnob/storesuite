@@ -215,6 +215,50 @@ class FieldRenderer {
 	}
 
 	/**
+	 * The configured choices of a choice field, keyed by choice value (as strings).
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return array<string, string> Choice value => label.
+	 */
+	public function get_choices( array $field ): array {
+		$choices = isset( $field['choices'] ) && is_array( $field['choices'] ) ? $field['choices'] : array();
+		$result  = array();
+
+		foreach ( $choices as $choice_value => $choice_label ) {
+			$result[ (string) $choice_value ] = is_scalar( $choice_label ) ? (string) $choice_label : (string) $choice_value;
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Normalise a stored / default choice value to a list of strings.
+	 *
+	 * ACF stores single choices as a string and multi choices as an array
+	 * (or '' when empty); this lets templates compare uniformly.
+	 *
+	 * @param mixed $value Raw value.
+	 *
+	 * @return string[]
+	 */
+	public function get_selected_values( $value ): array {
+		if ( null === $value || '' === $value || false === $value ) {
+			return array();
+		}
+
+		$values = array();
+
+		foreach ( (array) $value as $item ) {
+			if ( is_scalar( $item ) ) {
+				$values[] = (string) $item;
+			}
+		}
+
+		return $values;
+	}
+
+	/**
 	 * Map ACF's percentage `wrapper.width` onto the 12-column grid.
 	 *
 	 * @param array $field ACF field array.

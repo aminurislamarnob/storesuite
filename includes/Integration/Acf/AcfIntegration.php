@@ -33,6 +33,11 @@ class AcfIntegration {
 		'url',
 		'password',
 		'color_picker',
+		'select',
+		'checkbox',
+		'radio',
+		'button_group',
+		'true_false',
 	);
 
 	/**

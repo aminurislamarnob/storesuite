@@ -42,9 +42,97 @@ class FieldSanitizer {
 				return $this->sanitize_password( $raw );
 			case 'color_picker':
 				return $this->sanitize_color( $raw );
+			case 'select':
+				return ! empty( $field['multiple'] )
+					? $this->sanitize_choices( $field, $raw )
+					: $this->sanitize_choice( $field, $raw );
+			case 'checkbox':
+				return $this->sanitize_choices( $field, $raw );
+			case 'radio':
+			case 'button_group':
+				return $this->sanitize_choice( $field, $raw );
+			case 'true_false':
+				return $this->sanitize_true_false( $raw );
 		}
 
 		return null;
+	}
+
+	/**
+	 * The configured choice values of a field, as strings.
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return string[]
+	 */
+	protected function get_choice_values( array $field ): array {
+		$choices = isset( $field['choices'] ) && is_array( $field['choices'] ) ? $field['choices'] : array();
+
+		return array_map( 'strval', array_keys( $choices ) );
+	}
+
+	/**
+	 * Sanitise a single-value choice (`select`, `radio`, `button_group`).
+	 *
+	 * Empty clears the value only when the field allows null; a value outside
+	 * the configured choices is rejected (null) so it never overwrites the
+	 * stored one.
+	 *
+	 * @param array $field ACF field array.
+	 * @param mixed $raw   Raw posted value.
+	 *
+	 * @return string|null
+	 */
+	protected function sanitize_choice( array $field, $raw ) {
+		$value = $this->to_string( $raw );
+
+		if ( '' === $value ) {
+			return ! empty( $field['allow_null'] ) ? '' : null;
+		}
+
+		return in_array( $value, $this->get_choice_values( $field ), true ) ? $value : null;
+	}
+
+	/**
+	 * Sanitise a multi-value choice (`checkbox`, multiple `select`).
+	 *
+	 * Values outside the configured choices are dropped. No remaining value
+	 * stores '' (how ACF represents an empty multi-value field) so clearing
+	 * every choice really clears it.
+	 *
+	 * @param array $field ACF field array.
+	 * @param mixed $raw   Raw posted value: an array, or '' from the sentinel input.
+	 *
+	 * @return string[]|string
+	 */
+	protected function sanitize_choices( array $field, $raw ) {
+		if ( ! is_array( $raw ) ) {
+			return '';
+		}
+
+		$allowed = $this->get_choice_values( $field );
+		$values  = array();
+
+		foreach ( $raw as $item ) {
+			$item = $this->to_string( $item );
+
+			if ( in_array( $item, $allowed, true ) && ! in_array( $item, $values, true ) ) {
+				$values[] = $item;
+			}
+		}
+
+		return empty( $values ) ? '' : $values;
+	}
+
+	/**
+	 * Sanitise a `true_false` field value to ACF's '1' / '0'.
+	 *
+	 * @param mixed $raw Raw posted value.
+	 *
+	 * @return string
+	 */
+	protected function sanitize_true_false( $raw ): string {
+		return '1' === $this->to_string( $raw ) ? '1' : '0';
 	}
 
 	/**
