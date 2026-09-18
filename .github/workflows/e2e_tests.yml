@@ -88,6 +88,12 @@ jobs:
                   curl -sL "https://downloads.wordpress.org/plugin/woocommerce.${{ matrix.wc }}.zip" -o /tmp/woocommerce.zip
                   unzip -q /tmp/woocommerce.zip -d "$WP_DIR/wp-content/plugins"
 
+            # ACF is not pinned: the integration targets the current free release on both lanes.
+            - name: Download Advanced Custom Fields
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/advanced-custom-fields.latest-stable.zip -o /tmp/acf.zip
+                  unzip -q /tmp/acf.zip -d "$WP_DIR/wp-content/plugins"
+
             - name: Install the site
               run: |
                   rsync -a --exclude '.git' --exclude 'node_modules' --exclude 'tests' ./ "$WP_DIR/wp-content/plugins/storesuite/"
