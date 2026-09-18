@@ -1,0 +1,6 @@
+Type,SKU,Name,Published,Short description,Description,In stock?,Stock,Regular price,Sale price,Categories,Tags,Weight (kg)
+simple,CSV-TEE-1,Cotton Crew T-Shirt,1,Soft everyday tee.,A midweight combed cotton crew neck that keeps its shape after washing.,1,25,25.00,,Clothing > Tops,"cotton, basics",0.2
+simple,CSV-MUG-2,Enamel Camp Mug,1,Chip-resistant enamel.,"Speckled enamel over steel, safe on a camp stove and happy in a dishwasher.",1,40,14.50,11.50,Kitchen,camping,0.35
+simple,CSV-BAG-3,Canvas Tote Bag,1,16oz natural canvas.,"A flat-bottomed tote with reinforced handles, sized for a laptop and a lunch.",1,12,22.00,,Accessories,"canvas, tote",0.4
+simple,CSV-CAP-4,Merino Wool Beanie,1,Fine-knit merino.,"Single-layer merino knit that packs flat, cut long enough to fold at the brim.",1,30,18.00,,Clothing > Hats,winter,0.15
+simple,CSV-PEN-5,Fineliner Pen Set,1,Set of six 0.4mm liners.,"Six water-based fineliners in a paper sleeve, archival and quick to dry.",1,100,9.99,7.99,Stationery,"pens, gift",0.1

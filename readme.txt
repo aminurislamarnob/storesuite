@@ -1,18 +1,21 @@
-=== StoreSuite – AI-Powered WooCommerce Frontend Dashboard & Complete Store Management Solution ===
-Contributors: aminurislam01
-Tags: frontend manager, shop manager, woocommerce order management, woocommerce product management, woocommerce ai
+=== StoreSuite – Frontend Shop Manager for WooCommerce with AI – Product, Order, Coupon Management & Analytics Dashboard ===
+Contributors: aminurislam01, pluginizelab
+Donate link: https://www.buymeacoffee.com/aiarnob
+Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce product management, shop manager, woocommerce ai
 Requires at least: 6.9
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-AI-assisted frontend dashboard to manage your WooCommerce store — products, orders, coupons, categories, and analytics in one place.
+Frontend shop manager dashboard for WooCommerce. Manage products, orders, coupons & analytics with AI — premium features, 100% free.
 
 == Description ==
 
-StoreSuite adds a frontend store management dashboard for WooCommerce. Give store managers one place to run the day-to-day: products, categories, tags, brands, coupons, orders, and key metrics—without switching between multiple admin screens.
+StoreSuite is a free frontend shop manager for WooCommerce that puts complete store management in one fast dashboard. Manage products (simple, variable, grouped, and external), orders, coupons, categories, tags, brands, and attributes — without opening wp-admin. Generate product titles, descriptions, and images with AI, export products to CSV, and track sales with a full analytics suite that matches WooCommerce admin reports: Revenue, Orders, Products, Customers, and more. Fully responsive on mobile and tablet, and 100% free with no feature gates, trials, or upsells.
+
+✨ **[All Features](https://storesuite.dev/features/)** | 📖 **[Documentation](https://storesuite.dev/docs/)** | 🆘 **[Support](https://wordpress.org/support/plugin/storesuite/#new-post)**
 
 = 💎 Premium-grade features, completely free =
 
@@ -23,7 +26,9 @@ StoreSuite includes capabilities that other store-management dashboards often lo
 * 📊 Real-time analytics, KPIs, and leaderboards
 * 📈 A full Analytics suite with WooCommerce-admin report parity (Revenue, Orders, Products, and more)
 * 📱 Fully responsive on mobile, tablet, and desktop
-* 📤 CSV product export
+* 📤 CSV product import and export
+* 🌗 Dark and light mode with per-user theme toggle
+* 🔔 Realtime dashboard notifications
 
 No feature gates. No trial limits. No upsell.
 
@@ -38,6 +43,7 @@ No feature gates. No trial limits. No upsell.
 * 🧩 **Variable products** – Manage attributes and variations with bulk actions and generate-all-variations
 * 📋 **Product attributes** – Manage attributes and their terms (add, edit, list)
 * 📤 **CSV export** – Export product lists to CSV for reporting, accounting, or migration, with a configurable export modal
+* 📥 **CSV import** – Import products from a CSV file with a guided wizard: upload, map columns to product fields, watch live progress, and review the results
 * 🗂️ **Categories** – Manage product categories (add, edit, list)
 * 🏷️ **Tags** – Manage product tags (add, edit, list)
 * 🏢 **Brands** – Manage product brands
@@ -45,9 +51,17 @@ No feature gates. No trial limits. No upsell.
 * 🛒 **Orders** – View, create, and edit orders with customer and item details
 * 📊 **Real-time dashboard analytics** – Sales KPIs, net sales chart, top products, recent orders, and quick actions
 * 📈 **Analytics reports** – A full analytics suite with WooCommerce-admin parity: Revenue, Orders, Products, Variations, Categories, Coupons, Taxes, Downloads, Stock, and Customers reports, each with summary KPIs, an interactive line/bar chart, sortable and paginated data tables, advanced filters, date-range comparison, and CSV export
+* 🌗 **Dark and light mode** – A header toggle switches the whole dashboard between light and dark; the choice is remembered per user and the operating system preference is honoured on the first visit
+* 🔔 **Dashboard notifications** – A bell in the header surfaces new orders, customer registrations, and product reviews in realtime, with a full notifications page and per-event settings
+* 🧾 **PDF invoice support** – Invoice, packing slip, and delivery note actions appear on the order list and order details when PDF Invoices & Packing Slips for WooCommerce or the WebToffee WooCommerce PDF Invoices plugin is active (see *StoreSuite Compatible Plugins* below)
 * 📱 **Fully responsive** – The entire frontend dashboard and analytics reports adapt to mobile and desktop screens with an off-canvas sidebar, stacked cards, and touch-friendly controls
 * 🔑 **Bring your own AI** – Built on the WordPress 7.0 central AI connector; generation runs on the provider and keys you configure in WordPress
 * ⚡ **Built for WooCommerce HPOS** – Fully compatible with High-Performance Order Storage
+
+= 🔌 StoreSuite Compatible Plugins =
+
+* [PDF Invoices & Packing Slips for WooCommerce](https://wordpress.org/plugins/woocommerce-pdf-invoices-packing-slips/) – adds Invoice and Packing Slip documents.
+* [WebToffee WooCommerce PDF Invoices, Packing Slips, Delivery Notes & Shipping Labels](https://wordpress.org/plugins/print-invoices-packing-slip-labels-for-woocommerce/) – adds Invoice, Packing Slip, Delivery Note, Shipping Label, and Dispatch Label actions.
 
 = How It Works =
 
@@ -125,7 +139,53 @@ Create a page, add the shortcode `[storesuite_dashboard]`, then go to **WooComme
 
 Yes. StoreSuite declares compatibility with WooCommerce High-Performance Order Storage (HPOS).
 
+== Privacy Policy ==
+
+StoreSuite uses [Appsero](https://appsero.com) SDK to collect some telemetry data upon user's confirmation. This helps us to troubleshoot problems faster & make product improvements.
+
+Appsero SDK **does not gather any data by default.** The SDK only starts gathering basic telemetry data **when a user allows it via the admin notice**. We collect the data to ensure a great user experience for all our users.
+
+Integrating Appsero SDK **DOES NOT IMMEDIATELY** start gathering data, **without confirmation from users in any case.**
+
+Learn more about how [Appsero collects and uses this data](https://appsero.com/privacy-policy/).
+
 == Changelog ==
+
+= 1.3.1 =
+* Fix the login screen redirecting to My Account before anyone had logged in. The redirect fired while the login **form** was rendering, which broke plain `wp-login.php` and hidden login URLs from plugins such as WPS Hide Login. The form now renders normally; the redirect only runs after a successful login.
+* Blocked shop managers who open `wp-admin` now land on the **StoreSuite dashboard** instead of the shop homepage.
+* The **Documentation** button in the settings header is now enabled and links to the StoreSuite docs.
+
+= 1.3.0 =
+* Add **dark mode** to the frontend dashboard: a sun/moon toggle in the header flips between light and dark, the choice is saved per user, and the operating system `prefers-color-scheme` setting is honoured on the first visit. The theme resolves before the first paint, so there is no flash of the wrong theme on load.
+* Dark mode covers the whole dashboard — tables, forms, badges, buttons, pagination, switches, selects, dialogs, the quick-edit modal, the filter off-canvas, the loading skeletons, order details, account and address forms, and the TinyMCE editor content.
+* Add a **dark mode theme picker** in **WooCommerce → StoreSuite → Appearance**: choose from Dark default, Soft dark, Midnight black, and Carbon. Each palette sets the dark neutrals only — the accent colour carries over from your light palette.
+* Dark mode also covers the full **Analytics** suite: report charts, summary KPI tiles, loading skeletons, data tables, advanced filters, the date-range picker, and the interval selects.
+* Add optional dark variants for the sidebar logo and sidebar icon, so branding stays legible in both themes.
+* Add **product CSV import** on the Products page: a guided wizard walks through uploading a CSV, mapping its columns to product fields, live import progress, and a summary of what was imported, with an expandable import log.
+* Add a **realtime notifications** system: a bell in the dashboard header badges new activity, with a full notifications page and per-event toggles in **WooCommerce → StoreSuite → Notifications** for new orders, new customer registrations, and new product reviews. Polling pauses while the browser tab is hidden. Notifications are visible only to users who can manage WooCommerce, and each recipient has their own copy — marking as read or clearing affects only that user.
+* Notifications older than 90 days are removed automatically by a daily cleanup task, so the notifications table does not grow without bound. The retention window is filterable with `storesuite_notification_retention_days`.
+* Add **PDF invoice plugin support**: when WooCommerce PDF Invoices & Packing Slips or WebToffee Print Invoices, Packing Slips, Delivery Notes & Shipping Labels is active, their documents appear as print and download actions in the order list row actions and in a Documents card on the order details page.
+* Add icons to the order row actions and open the browser print dialog directly for print actions.
+* Add two dashboard endpoints, `import-products` and `notifications`, with pagination support on the notifications list. Both slugs can be changed with the `storesuite_myshop_import_product_endpoint` and `storesuite_myshop_notifications_endpoint` options.
+* Add `storesuite_notification_poll_interval`, `storesuite_notification_retention_days`, `storesuite_notifications_per_page`, and `storesuite_order_list_row_actions` hooks, plus `storesuite_load_import_products_template` and `storesuite_load_notifications_template` for overriding the new pages.
+* On update, the notifications table is created, the daily cleanup is scheduled, and rewrite rules are flushed automatically — no need to re-save permalinks after upgrading.
+* Fix undefined `--storesuite-title-text-color` references so title text uses the defined colour token.
+* Fix the WordPress login page (`wp-login.php`, or a custom login slug from plugins such as WPS Hide Login) redirecting logged-out visitors to My Account. StoreSuite now only picks a destination after a successful login and leaves the login screen alone otherwise.
+* Shop managers who are blocked from wp-admin now land on the StoreSuite dashboard instead of the shop homepage.
+
+= 1.2.3 =
+* Add optional, opt-in telemetry via the Appsero SDK. No data is collected unless you explicitly allow it from the admin notice.
+* Document the telemetry behaviour in a new Privacy Policy section.
+
+= 1.2.2 =
+* Refresh the plugin listing: new title, tags, short description, and description intro.
+* Add All Features, Documentation, and Support links to the listing description.
+* Add a donate link and the PluginizeLab contributor to the listing.
+
+= 1.2.1 =
+* Add a Changelog page to the admin settings app, paginated with a "Load more" button.
+* Fix collapsed selectWoo fields on the order add/edit form.
 
 = 1.2.0 =
 * Add a full **Analytics** suite with WooCommerce-admin report parity: Revenue, Orders, Products, Variations, Categories, Coupons, Taxes, Downloads, Stock, and Customers reports.

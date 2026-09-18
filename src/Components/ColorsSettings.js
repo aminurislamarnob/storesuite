@@ -265,6 +265,135 @@ const COLOR_FIELDS = [
 	},
 ];
 
+// Dark mode is a choice of neutrals only — surfaces, text and borders. The accent
+// (buttons, active menu) always comes from the selected light palette, so a store
+// keeps its brand color in both modes. "default" matches the
+// :root[data-theme="dark"] block in assets/frontend/style.css.
+const DARK_THEMES = [
+	{
+		value: 'default',
+		colorOptions: [ '#0f172a', '#1e293b', '#334155', '#cbd5e1' ],
+		label: __( 'Dark default', 'storesuite' ),
+		description: __(
+			'The standard dark theme, with full contrast on a slate background.',
+			'storesuite'
+		),
+		colors: {
+			textColor: '#cbd5e1',
+			titleTextColor: '#f1f5f9',
+			liteTextColor: '#94a3b8',
+			iconColor: '#94a3b8',
+			sidebarMenuText: '#cbd5e1',
+			sidebarBackground: '#1e293b',
+			sidebarActiveText: '#f8fafc',
+			sidebarBorderColor: '#334155',
+			borderColor: '#334155',
+			liteBgColor: '#1e293b',
+			pageBg: '#0f172a',
+			surfaceBg: '#1e293b',
+		},
+	},
+	{
+		value: 'soft',
+		colorOptions: [ '#1c2128', '#22272e', '#373e47', '#adbac7' ],
+		label: __( 'Soft dark', 'storesuite' ),
+		description: __(
+			'A dark theme with reduced contrast for comfortable viewing in low-light environments.',
+			'storesuite'
+		),
+		colors: {
+			textColor: '#adbac7',
+			titleTextColor: '#cdd9e5',
+			liteTextColor: '#768390',
+			iconColor: '#768390',
+			sidebarMenuText: '#adbac7',
+			sidebarBackground: '#22272e',
+			sidebarActiveText: '#cdd9e5',
+			sidebarBorderColor: '#373e47',
+			borderColor: '#373e47',
+			liteBgColor: '#2d333b',
+			pageBg: '#1c2128',
+			surfaceBg: '#22272e',
+		},
+	},
+	{
+		value: 'midnight',
+		colorOptions: [ '#010409', '#0d1117', '#21262d', '#c9d1d9' ],
+		label: __( 'Midnight black', 'storesuite' ),
+		description: __(
+			'A near-black theme that saves power on OLED screens.',
+			'storesuite'
+		),
+		colors: {
+			textColor: '#c9d1d9',
+			titleTextColor: '#f0f6fc',
+			liteTextColor: '#8b949e',
+			iconColor: '#8b949e',
+			sidebarMenuText: '#c9d1d9',
+			sidebarBackground: '#0d1117',
+			sidebarActiveText: '#ffffff',
+			sidebarBorderColor: '#21262d',
+			borderColor: '#21262d',
+			liteBgColor: '#161b22',
+			pageBg: '#010409',
+			surfaceBg: '#0d1117',
+		},
+	},
+	{
+		value: 'carbon',
+		colorOptions: [ '#000000', '#0a0a0a', '#333333', '#a1a1a1' ],
+		label: __( 'Carbon', 'storesuite' ),
+		description: __(
+			'A true-black canvas with charcoal cards, grey text and subtle borders.',
+			'storesuite'
+		),
+		colors: {
+			textColor: '#a1a1a1',
+			titleTextColor: '#ededed',
+			liteTextColor: '#8f8f8f',
+			iconColor: '#8f8f8f',
+			sidebarMenuText: '#a1a1a1',
+			sidebarBackground: '#000000',
+			sidebarActiveText: '#ededed',
+			sidebarBorderColor: '#333333',
+			borderColor: '#333333',
+			liteBgColor: '#1f1f1f',
+			pageBg: '#000000',
+			surfaceBg: '#0a0a0a',
+		},
+	},
+];
+
+// Where each dark neutral is stored. Deliberately no accent keys — see DARK_THEMES.
+const DARK_COLOR_KEYS = {
+	textColor: 'storesuite_dark_text_color',
+	titleTextColor: 'storesuite_dark_title_text_color',
+	liteTextColor: 'storesuite_dark_lite_text_color',
+	iconColor: 'storesuite_dark_icon_color',
+	sidebarMenuText: 'storesuite_dark_color_sidebar_menu_text',
+	sidebarBackground: 'storesuite_dark_color_sidebar_background',
+	sidebarActiveText: 'storesuite_dark_color_sidebar_active_text',
+	sidebarBorderColor: 'storesuite_dark_color_sidebar_border',
+	borderColor: 'storesuite_dark_color_border',
+	liteBgColor: 'storesuite_dark_color_lite_bg',
+	pageBg: 'storesuite_dark_color_page_bg',
+	surfaceBg: 'storesuite_dark_color_surface_bg',
+};
+
+// Accent keys the dark preview borrows from the light palette.
+const ACCENT_KEYS = [
+	'buttonText',
+	'buttonBackground',
+	'buttonHoverText',
+	'buttonHoverBackground',
+	'sidebarActiveBackground',
+];
+
+const THEME_TABS = [
+	{ value: 'light', label: __( 'Light Mode', 'storesuite' ) },
+	{ value: 'dark', label: __( 'Dark Mode', 'storesuite' ) },
+];
+
 const LOGO_VARIANTS = [
 	{
 		value: 'dark',
@@ -280,6 +409,9 @@ const LOGO_VARIANTS = [
 
 const findPalette = ( slug ) =>
 	PREDEFINED_PALETTES.find( ( palette ) => palette.value === slug );
+
+const findDarkTheme = ( slug ) =>
+	DARK_THEMES.find( ( darkTheme ) => darkTheme.value === slug );
 
 const getInitialColors = ( settings ) => {
 	const mode = settings.storesuite_color_palette_mode ?? 'predefined';
@@ -301,6 +433,15 @@ const getInitialColors = ( settings ) => {
 		} )
 	);
 };
+
+// What dark mode actually renders: the chosen dark neutrals, with the light
+// palette's accent colors carried over unchanged.
+const mergeDarkColors = ( darkTheme, lightColors ) => ( {
+	...darkTheme.colors,
+	...Object.fromEntries(
+		ACCENT_KEYS.map( ( key ) => [ key, lightColors[ key ] ] )
+	),
+} );
 
 const ColorControl = ( {
 	label,
@@ -381,10 +522,66 @@ const ModeCard = ( { isActive, onClick, title, description } ) => (
 		</div>
 	</div>
 );
+// Same row as a light palette: radio, name, and a strip of the theme's neutrals.
+const DarkThemeItem = ( { darkTheme, isActive, onSelect } ) => {
+	const { label, value, colorOptions } = darkTheme;
+
+	return (
+		<div
+			className={ `storesuite-palette-item${
+				isActive ? ' is-active' : ''
+			}` }
+			onClick={ () => onSelect( value ) }
+			role="button"
+			tabIndex={ 0 }
+			onKeyDown={ ( event ) => {
+				if ( event.key === 'Enter' || event.key === ' ' ) {
+					onSelect( value );
+				}
+			} }
+		>
+			<div className="storesuite-palette-item__radio">
+				<input
+					id={ `storesuite-dark-theme-${ value }` }
+					type="radio"
+					name="storesuite_dark_theme"
+					value={ value }
+					checked={ isActive }
+					onChange={ () => onSelect( value ) }
+				/>
+				<span
+					className="storesuite-palette-item__indicator"
+					aria-hidden="true"
+				>
+					<svg viewBox="0 0 20 20" fill="currentColor">
+						<path
+							fillRule="evenodd"
+							d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+							clipRule="evenodd"
+						/>
+					</svg>
+				</span>
+				<label htmlFor={ `storesuite-dark-theme-${ value }` }>
+					{ label }
+				</label>
+			</div>
+			<div className="storesuite-color-swatches">
+				{ colorOptions.map( ( swatchColor, swatchIndex ) => (
+					<div
+						key={ swatchIndex }
+						className="storesuite-color-swatch"
+						style={ { backgroundColor: swatchColor } }
+					/>
+				) ) }
+			</div>
+		</div>
+	);
+};
 
 const ColorsSettings = () => {
 	const { settings, isSaving, saveSettings } = useSettings();
 
+	const [ activeTab, setActiveTab ] = useState( 'light' );
 	const [ paletteMode, setPaletteMode ] = useState(
 		settings.storesuite_color_palette_mode ?? 'predefined'
 	);
@@ -396,11 +593,19 @@ const ColorsSettings = () => {
 	const [ colors, setColors ] = useState( () =>
 		getInitialColors( settings )
 	);
+	const [ selectedDarkTheme, setSelectedDarkTheme ] = useState(
+		findDarkTheme( settings.storesuite_dark_theme )
+			? settings.storesuite_dark_theme
+			: 'default'
+	);
 	const [ logoVariant, setLogoVariant ] = useState(
 		settings.storesuite_attribution_logo_variant === 'light'
 			? 'light'
 			: 'dark'
 	);
+
+	const darkTheme = findDarkTheme( selectedDarkTheme ) || DARK_THEMES[ 0 ];
+	const darkColors = mergeDarkColors( darkTheme, colors );
 
 	const applyPalette = ( slug ) => {
 		const palette = findPalette( slug );
@@ -434,15 +639,24 @@ const ColorsSettings = () => {
 
 	const handleSubmit = ( event ) => {
 		event.preventDefault();
+
 		const data = {
 			storesuite_color_palette_mode: paletteMode,
 			storesuite_color_palette_name:
 				paletteMode === 'predefined' ? selectedPalette : '',
 			storesuite_attribution_logo_variant: logoVariant,
+			storesuite_dark_theme: selectedDarkTheme,
 		};
+
 		COLOR_FIELDS.forEach( ( { key, apiKey } ) => {
 			data[ apiKey ] = colors[ key ] ?? '';
 		} );
+
+		// Only the dark neutrals are stored; accents stay with the light palette.
+		Object.entries( DARK_COLOR_KEYS ).forEach( ( [ key, apiKey ] ) => {
+			data[ apiKey ] = darkTheme.colors[ key ] ?? '';
+		} );
+
 		saveSettings( data );
 	};
 
@@ -464,208 +678,99 @@ const ColorsSettings = () => {
 				</Card>
 				<Card>
 					<CardBody className="storesuite-form-section-body">
-						<div className="storesuite-color-mode-selector">
-							<ModeCard
-								isActive={ paletteMode === 'predefined' }
-								onClick={ () =>
-									handleModeChange( 'predefined' )
-								}
-								title={ __(
-									'Pre-defined Color Palette',
-									'storesuite'
-								) }
-								description={ __(
-									'Choose from ready-made color palettes to quickly style your dashboard.',
-									'storesuite'
-								) }
-							/>
-							<ModeCard
-								isActive={ paletteMode === 'custom' }
-								onClick={ () => handleModeChange( 'custom' ) }
-								title={ __(
-									'Custom Color Palette',
-									'storesuite'
-								) }
-								description={ __(
-									'Pick individual colors to match your brand identity.',
-									'storesuite'
-								) }
-							/>
+						<div
+							className="storesuite-theme-tabs"
+							role="tablist"
+							aria-label={ __( 'Color scheme', 'storesuite' ) }
+						>
+							{ THEME_TABS.map( ( { value, label } ) => (
+								<button
+									key={ value }
+									type="button"
+									role="tab"
+									aria-selected={ activeTab === value }
+									className={ `storesuite-theme-tab${
+										activeTab === value ? ' is-active' : ''
+									}` }
+									onClick={ () => setActiveTab( value ) }
+								>
+									{ label }
+								</button>
+							) ) }
 						</div>
 
-						<div className="storesuite-colors-layout">
-							<div className="storesuite-colors-left">
-								{ paletteMode === 'predefined' ? (
-									<div className="storesuite-palette-list">
-										{ PREDEFINED_PALETTES.map(
-											( palette ) => (
-												<div
-													key={ palette.value }
-													className={ `storesuite-palette-item${
-														selectedPalette ===
-														palette.value
-															? ' is-active'
-															: ''
-													}` }
-													onClick={ () =>
-														handlePaletteSelect(
-															palette.value
-														)
-													}
-												>
-													<div className="storesuite-palette-item__radio">
-														<input
-															id={ `storesuite-palette-${ palette.value }` }
-															type="radio"
-															name="storesuite_color_palette"
-															value={
-																palette.value
-															}
-															checked={
-																selectedPalette ===
-																palette.value
-															}
-															onChange={ () =>
-																handlePaletteSelect(
-																	palette.value
-																)
-															}
-														/>
-														<span
-															className="storesuite-palette-item__indicator"
-															aria-hidden="true"
-														>
-															<svg
-																viewBox="0 0 20 20"
-																fill="currentColor"
-															>
-																<path
-																	fillRule="evenodd"
-																	d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-																	clipRule="evenodd"
-																/>
-															</svg>
-														</span>
-														<label
-															htmlFor={ `storesuite-palette-${ palette.value }` }
-														>
-															{ palette.label }
-														</label>
-													</div>
-													<div className="storesuite-color-swatches">
-														{ palette.colorOptions.map(
-															(
-																swatchColor,
-																swatchIndex
-															) => (
-																<div
-																	key={
-																		swatchIndex
-																	}
-																	className="storesuite-color-swatch"
-																	style={ {
-																		backgroundColor:
-																			swatchColor,
-																	} }
-																/>
-															)
-														) }
-													</div>
-												</div>
-											)
+						{ activeTab === 'light' ? (
+							<>
+								<div className="storesuite-color-mode-selector">
+									<ModeCard
+										isActive={
+											paletteMode === 'predefined'
+										}
+										onClick={ () =>
+											handleModeChange( 'predefined' )
+										}
+										title={ __(
+											'Pre-defined Color Palette',
+											'storesuite'
 										) }
-									</div>
-								) : (
-									<>
-										<div className="storesuite-custom-color-header">
-											<h4>
-												{ __(
-													'Choose the color:',
-													'storesuite'
-												) }
-											</h4>
-											<button
-												type="button"
-												className="storesuite-reset-btn"
-												onClick={ handleResetColors }
-											>
-												{ __(
-													'Reset all',
-													'storesuite'
-												) }
-											</button>
-										</div>
-										<div className="storesuite-custom-color-list storesuite-settings-group">
-											{ COLOR_FIELDS.map(
-												( {
-													key,
-													label,
-													defaultValue,
-												} ) => (
-													<ColorControl
-														key={ key }
-														colorKey={ key }
-														label={ label }
-														value={ colors[ key ] }
-														defaultValue={
-															defaultValue
-														}
-														onChange={ ( value ) =>
-															setColors(
-																( prev ) => ( {
-																	...prev,
-																	[ key ]:
-																		value,
-																} )
-															)
-														}
-													/>
-												)
-											) }
-										</div>
-										<div className="storesuite-sidebar-footer-logo">
-											<div className="storesuite-custom-color-header storesuite-logo-variant-header">
-												<h4>
-													{ __(
-														'Sidebar Footer Attribution Logo:',
-														'storesuite'
-													) }
-												</h4>
-											</div>
-											<div className="storesuite-palette-list storesuite-logo-variant-list">
-												{ LOGO_VARIANTS.map(
-													( variant ) => (
+										description={ __(
+											'Choose from ready-made color palettes to quickly style your dashboard.',
+											'storesuite'
+										) }
+									/>
+									<ModeCard
+										isActive={ paletteMode === 'custom' }
+										onClick={ () =>
+											handleModeChange( 'custom' )
+										}
+										title={ __(
+											'Custom Color Palette',
+											'storesuite'
+										) }
+										description={ __(
+											'Pick individual colors to match your brand identity.',
+											'storesuite'
+										) }
+									/>
+								</div>
+
+								<div className="storesuite-colors-layout">
+									<div className="storesuite-colors-left">
+										{ paletteMode === 'predefined' ? (
+											<div className="storesuite-palette-list">
+												{ PREDEFINED_PALETTES.map(
+													( palette ) => (
 														<div
 															key={
-																variant.value
+																palette.value
 															}
 															className={ `storesuite-palette-item${
-																logoVariant ===
-																variant.value
+																selectedPalette ===
+																palette.value
 																	? ' is-active'
 																	: ''
 															}` }
 															onClick={ () =>
-																setLogoVariant(
-																	variant.value
+																handlePaletteSelect(
+																	palette.value
 																)
 															}
 														>
 															<div className="storesuite-palette-item__radio">
 																<input
-																	id={ `storesuite-logo-variant-${ variant.value }` }
+																	id={ `storesuite-palette-${ palette.value }` }
 																	type="radio"
-																	name="storesuite_attribution_logo_variant"
+																	name="storesuite_color_palette"
 																	value={
-																		variant.value
+																		palette.value
 																	}
 																	checked={
-																		logoVariant ===
-																		variant.value
+																		selectedPalette ===
+																		palette.value
 																	}
 																	onChange={ () =>
-																		setLogoVariant(
-																			variant.value
+																		handlePaletteSelect(
+																			palette.value
 																		)
 																	}
 																/>
@@ -685,31 +790,218 @@ const ColorsSettings = () => {
 																	</svg>
 																</span>
 																<label
-																	htmlFor={ `storesuite-logo-variant-${ variant.value }` }
+																	htmlFor={ `storesuite-palette-${ palette.value }` }
 																>
 																	{
-																		variant.label
+																		palette.label
 																	}
-																	<span className="storesuite-logo-variant-hint">
-																		{
-																			variant.description
-																		}
-																	</span>
 																</label>
+															</div>
+															<div className="storesuite-color-swatches">
+																{ palette.colorOptions.map(
+																	(
+																		swatchColor,
+																		swatchIndex
+																	) => (
+																		<div
+																			key={
+																				swatchIndex
+																			}
+																			className="storesuite-color-swatch"
+																			style={ {
+																				backgroundColor:
+																					swatchColor,
+																			} }
+																		/>
+																	)
+																) }
 															</div>
 														</div>
 													)
 												) }
 											</div>
-										</div>
-									</>
-								) }
-							</div>
+										) : (
+											<>
+												<div className="storesuite-custom-color-header">
+													<h4>
+														{ __(
+															'Choose the color:',
+															'storesuite'
+														) }
+													</h4>
+													<button
+														type="button"
+														className="storesuite-reset-btn"
+														onClick={
+															handleResetColors
+														}
+													>
+														{ __(
+															'Reset all',
+															'storesuite'
+														) }
+													</button>
+												</div>
+												<div className="storesuite-custom-color-list storesuite-settings-group">
+													{ COLOR_FIELDS.map(
+														( {
+															key,
+															label,
+															defaultValue,
+														} ) => (
+															<ColorControl
+																key={ key }
+																colorKey={ key }
+																label={ label }
+																value={
+																	colors[
+																		key
+																	]
+																}
+																defaultValue={
+																	defaultValue
+																}
+																onChange={ (
+																	value
+																) =>
+																	setColors(
+																		(
+																			prev
+																		) => ( {
+																			...prev,
+																			[ key ]:
+																				value,
+																		} )
+																	)
+																}
+															/>
+														)
+													) }
+												</div>
+												<div className="storesuite-sidebar-footer-logo">
+													<div className="storesuite-custom-color-header storesuite-logo-variant-header">
+														<h4>
+															{ __(
+																'Sidebar Footer Attribution Logo:',
+																'storesuite'
+															) }
+														</h4>
+													</div>
+													<div className="storesuite-palette-list storesuite-logo-variant-list">
+														{ LOGO_VARIANTS.map(
+															( variant ) => (
+																<div
+																	key={
+																		variant.value
+																	}
+																	className={ `storesuite-palette-item${
+																		logoVariant ===
+																		variant.value
+																			? ' is-active'
+																			: ''
+																	}` }
+																	onClick={ () =>
+																		setLogoVariant(
+																			variant.value
+																		)
+																	}
+																>
+																	<div className="storesuite-palette-item__radio">
+																		<input
+																			id={ `storesuite-logo-variant-${ variant.value }` }
+																			type="radio"
+																			name="storesuite_attribution_logo_variant"
+																			value={
+																				variant.value
+																			}
+																			checked={
+																				logoVariant ===
+																				variant.value
+																			}
+																			onChange={ () =>
+																				setLogoVariant(
+																					variant.value
+																				)
+																			}
+																		/>
+																		<span
+																			className="storesuite-palette-item__indicator"
+																			aria-hidden="true"
+																		>
+																			<svg
+																				viewBox="0 0 20 20"
+																				fill="currentColor"
+																			>
+																				<path
+																					fillRule="evenodd"
+																					d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+																					clipRule="evenodd"
+																				/>
+																			</svg>
+																		</span>
+																		<label
+																			htmlFor={ `storesuite-logo-variant-${ variant.value }` }
+																		>
+																			{
+																				variant.label
+																			}
+																			<span className="storesuite-logo-variant-hint">
+																				{
+																					variant.description
+																				}
+																			</span>
+																		</label>
+																	</div>
+																</div>
+															)
+														) }
+													</div>
+												</div>
+											</>
+										) }
+									</div>
 
-							<div className="storesuite-colors-right">
-								<ColorPreview colors={ colors } />
-							</div>
-						</div>
+									<div className="storesuite-colors-right">
+										<ColorPreview colors={ colors } />
+									</div>
+								</div>
+							</>
+						) : (
+							<>
+								<p className="storesuite-dark-theme-intro">
+									{ __(
+										'Pick how dark mode looks. Your light palette keeps supplying the accent colors — only the backgrounds, text and borders change.',
+										'storesuite'
+									) }
+								</p>
+								<div className="storesuite-colors-layout">
+									<div className="storesuite-colors-left">
+										<div className="storesuite-palette-list">
+											{ DARK_THEMES.map( ( theme ) => (
+												<DarkThemeItem
+													key={ theme.value }
+													darkTheme={ theme }
+													isActive={
+														selectedDarkTheme ===
+														theme.value
+													}
+													onSelect={
+														setSelectedDarkTheme
+													}
+												/>
+											) ) }
+										</div>
+									</div>
+
+									<div className="storesuite-colors-right">
+										<ColorPreview
+											colors={ darkColors }
+											theme="dark"
+										/>
+									</div>
+								</div>
+							</>
+						) }
 
 						<Button
 							variant="primary"

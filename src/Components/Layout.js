@@ -14,6 +14,7 @@ import { store as noticesStore } from '@wordpress/notices';
 
 import { useSettings } from '../context/SettingsContext';
 import {
+	BellIcon,
 	ClockIcon,
 	CodeBracketSquareIcon,
 	GearIcon,
@@ -40,6 +41,11 @@ const BUILT_IN_TABS = [
 		to: '/ai-settings',
 		icon: SparklesIcon,
 		label: __( 'AI', 'storesuite' ),
+	},
+	{
+		to: '/notifications-settings',
+		icon: BellIcon,
+		label: __( 'Notifications', 'storesuite' ),
 	},
 	{
 		to: '/modules',
@@ -131,7 +137,12 @@ const Layout = () => {
 				) }
 				actions={
 					<>
-						<Button variant="secondary" disabled>
+						<Button
+							variant="secondary"
+							href="https://storesuite.dev/docs/"
+							target="_blank"
+							rel="noreferrer"
+						>
 							{ __( 'Documentation', 'storesuite' ) }
 						</Button>
 						<Button

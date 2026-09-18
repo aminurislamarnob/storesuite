@@ -18,7 +18,7 @@ final class StoreSuite {
 	 *
 	 * @var string
 	 */
-	public $version = '1.2.0';
+	public $version = '1.3.1';
 
 	/**
 	 * Instance of self
@@ -114,6 +114,14 @@ final class StoreSuite {
 
 		// Create plugin page.
 		Installer::create_plugin_page();
+
+		// Create the notifications table.
+		Notification\NotificationInstaller::create_table();
+
+		// Schedule the daily notifications retention cleanup.
+		if ( ! wp_next_scheduled( Notification\NotificationHooks::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time(), 'daily', Notification\NotificationHooks::CLEANUP_HOOK );
+		}
 	}
 
 	/**
@@ -124,6 +132,7 @@ final class StoreSuite {
 	public function register_rest_route() {
 		$this->container['storesuite_admin_settings_controller']->register_routes();
 		$this->container['storesuite_modules_controller']->register_routes();
+		$this->container['storesuite_notifications_rest_controller']->register_routes();
 		$this->container['storesuite_admin_changelog_controller']->register_routes();
 	}
 
@@ -163,7 +172,9 @@ final class StoreSuite {
 	 *
 	 * Nothing being called here yet.
 	 */
-	public function deactivate() {     }
+	public function deactivate() {
+		wp_clear_scheduled_hook( Notification\NotificationHooks::CLEANUP_HOOK );
+	}
 
 	/**
 	 * Define all constants
@@ -280,17 +291,23 @@ final class StoreSuite {
 		$this->container['storesuite_product_ai']                  = new Product\ProductAI();
 		$this->container['storesuite_product_image_ai']            = new Product\ProductImageAI();
 		$this->container['storesuite_product_export_controller']   = new Product\ProductExportController();
+		$this->container['storesuite_product_import_controller']   = new Product\ProductImportController();
 		$this->container['storesuite_product_hooks']               = new Product\ProductHooks();
 		$this->container['storesuite_variation_ajax']              = new Product\VariationAjax();
 		$this->container['storesuite_order_controller']            = new Order\OrderController();
 		$this->container['storesuite_create_new_order']            = new Order\CreateNewOrder();
 		$this->container['storesuite_order_manager']               = new Order\OrderManager();
 		$this->container['storesuite_order_hooks']                 = new Order\OrderHooks();
+		$this->container['storesuite_pdf_invoices_integration']    = new Integration\PdfInvoicesIntegration();
 		$this->container['storesuite_coupon_controller']           = new Coupon\CouponController();
 		$this->container['storesuite_coupon_manager']              = new Coupon\CouponManager();
 		$this->container['storesuite_coupon_bulk_edit']            = new Coupon\CouponBulkEdit();
 		$this->container['storesuite_account_controller']          = new Account\AccountController();
 		$this->container['storesuite_handle_paginations']          = new HandlePaginations();
+		$this->container['storesuite_notification_manager']        = new Notification\NotificationManager();
+		$this->container['storesuite_notification_hooks']          = new Notification\NotificationHooks();
+		$this->container['storesuite_notification_controller']     = new Notification\NotificationController();
+		$this->container['storesuite_notifications_rest_controller'] = new REST\NotificationsController();
 
 		// Analytics (uses WooCommerce analytics packages — no SQL filtering needed).
 		$this->container['analytics_permissions'] = new Analytics\RestPermissions();
@@ -327,9 +344,12 @@ final class StoreSuite {
 	 * @return void
 	 */
 	public function maybe_flush_rewrite_rules() {
-		if ( get_option( 'storesuite_flush_rewrite_rules' ) ) {
+		// Flush when explicitly scheduled (activation) or when the plugin version changed, so newly added
+		// dashboard endpoints (e.g. import-products) register without a manual reactivation.
+		if ( get_option( 'storesuite_flush_rewrite_rules' ) || STORESUITE_PLUGIN_VERSION !== get_option( 'storesuite_rewrite_version' ) ) {
 			flush_rewrite_rules();
 			delete_option( 'storesuite_flush_rewrite_rules' );
+			update_option( 'storesuite_rewrite_version', STORESUITE_PLUGIN_VERSION );
 		}
 	}
 

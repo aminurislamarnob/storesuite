@@ -97,14 +97,15 @@ class Assets {
 
 		wp_register_script( 'storesuite_admin_script', $admin_script, array(), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_global_script', STORESUITE_PLUGIN_ASSET . '/frontend/global.js', array( 'jquery' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_notifications_script', STORESUITE_PLUGIN_ASSET . '/frontend/notifications.js', array( 'jquery', 'storesuite_global_script' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_script', $frontend_script, array( 'jquery' ), STORESUITE_PLUGIN_VERSION, true );
 
 		// Dashboard scripts.
-		wp_register_script( 'storesuite_form_handler_script', $frontend_form_handler_script, array( 'storesuite_selectWoo', 'jquery-ui-datepicker' ), filemtime( STORESUITE_DIR . '/assets/frontend/form-handler.js' ), true );
+		wp_register_script( 'storesuite_form_handler_script', $frontend_form_handler_script, array( 'storesuite_selectWoo', 'jquery-ui-datepicker' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_sweetalert2_script', $frontend_sweetalert2, array(), '11.14.5', true );
 
 		// Order scripts.
-		wp_register_script( 'storesuite_order_script', $frontend_order_script, array( 'storesuite_selectWoo' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_order_script', $frontend_order_script, array( 'storesuite_selectWoo', 'jquery-ui-datepicker' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_product_script', $frontend_product_script, array( 'storesuite_script', 'storesuite_form_handler_script', 'storesuite_selectWoo', 'jquery-ui-datepicker', 'jquery-ui-sortable', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 		// AI copy generation, split from product.js. Depends on the product
 		// script so the localized StoreSuite_Product global is available.
@@ -114,11 +115,38 @@ class Assets {
 		wp_register_script( 'storesuite_variation_script', $frontend_variation_script, array( 'jquery', 'storesuite_selectWoo', 'storesuite_sweetalert2_script', 'jquery-ui-sortable', 'jquery-ui-datepicker' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_product_export_script', $frontend_product_export, array( 'jquery', 'storesuite_product_script', 'storesuite_selectWoo', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 
+		// WooCommerce's product CSV import wizard JS (reused verbatim; drives the AJAX batch import).
+		wp_register_script( 'wc-product-import', WC()->plugin_url() . '/assets/js/admin/wc-product-import.js', array( 'jquery' ), WC_VERSION, true );
+		// wc-product-import.js relies on the global `ajaxurl`, which WordPress only defines in wp-admin.
+		wp_add_inline_script( 'wc-product-import', 'window.ajaxurl = window.ajaxurl || ' . wp_json_encode( admin_url( 'admin-ajax.php' ) ) . ';', 'before' );
+
 		// Shared bulk delete + quick edit behaviour for the taxonomy/attribute list pages.
 		wp_register_script( 'storesuite_taxonomy_list_script', $frontend_taxonomy_list, array( 'jquery', 'storesuite_script', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
 
 		// Bulk edit + bulk trash behaviour for the coupons list page.
 		wp_register_script( 'storesuite_coupon_bulk_script', $frontend_coupon_bulk, array( 'jquery', 'storesuite_script', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
+	}
+
+	/**
+	 * Resolve a cache-busting version string for a bundled asset.
+	 *
+	 * In production the plugin version is used so caches persist across page
+	 * loads. When SCRIPT_DEBUG is enabled (development), the file's modification
+	 * time is used instead so edits are picked up without a plugin version bump.
+	 * Falls back to the plugin version if the file is unreadable.
+	 *
+	 * @param string $path Absolute filesystem path to the asset.
+	 * @return string|int Version string usable as the wp_register_style() $ver.
+	 */
+	private function asset_version( string $path ) {
+		if ( defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG ) {
+			$mtime = @filemtime( $path ); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged -- graceful fallback below.
+			if ( false !== $mtime ) {
+				return $mtime;
+			}
+		}
+
+		return STORESUITE_PLUGIN_VERSION;
 	}
 
 	/**
@@ -133,13 +161,22 @@ class Assets {
 		$bs_grid_style                    = STORESUITE_PLUGIN_ASSET . '/frontend/bootstrap-grid.min.css';
 		$frontend_sweetalert2_style       = STORESUITE_PLUGIN_ASSET . '/frontend/library/sweetalert2.min.css';
 
+		// Frequently-edited frontend stylesheets: version by plugin version in
+		// production, or by file mtime under SCRIPT_DEBUG so local edits are
+		// picked up without a plugin version bump.
+		$frontend_style_ver     = $this->asset_version( STORESUITE_DIR . '/assets/frontend/style.css' );
+		$frontend_responsive_ver = $this->asset_version( STORESUITE_DIR . '/assets/frontend/responsive.css' );
+
 		wp_register_style( 'storesuite_admin_style', $admin_style, array(), STORESUITE_PLUGIN_VERSION );
-		wp_register_style( 'storesuite_style', $frontend_style, array(), STORESUITE_PLUGIN_VERSION );
-		wp_register_style( 'storesuite_responsive_style', $frontend_responsive_style, array( 'storesuite_style' ), STORESUITE_PLUGIN_VERSION );
+		wp_register_style( 'storesuite_style', $frontend_style, array(), $frontend_style_ver );
+		wp_register_style( 'storesuite_responsive_style', $frontend_responsive_style, array( 'storesuite_style' ), $frontend_responsive_ver );
 		wp_register_style( 'storesuite_bs_grid', $bs_grid_style, array(), STORESUITE_PLUGIN_VERSION );
 
 		wp_register_style( 'storesuite_sweetalert2_style', $frontend_sweetalert2_style, array(), '11.14.5' );
 		wp_register_style( 'storesuite_jquery-ui-style', WC()->plugin_url() . '/assets/css/jquery-ui/jquery-ui.min.css', array(), STORESUITE_PLUGIN_VERSION );
+
+		// WooCommerce admin styles power the reused product import wizard (steps bar, mapping table, progress).
+		wp_register_style( 'woocommerce_admin_styles', WC()->plugin_url() . '/assets/css/admin.css', array(), WC_VERSION );
 	}
 
 	/**
@@ -238,6 +275,39 @@ class Assets {
 		// dashboard page including the React root and analytics route.
 		wp_enqueue_script( 'storesuite_global_script' );
 
+		// Notifications bell polling — every dashboard page, managers only.
+		if ( current_user_can( 'manage_woocommerce' ) ) {
+			wp_enqueue_script( 'storesuite_notifications_script' );
+			wp_localize_script(
+				'storesuite_notifications_script',
+				'StoreSuite_Notifications',
+				array(
+					'rest_url'          => esc_url_raw( rest_url( 'storesuite/v1/notifications' ) ),
+					'nonce'             => wp_create_nonce( 'wp_rest' ),
+					/**
+					 * Filters the notifications poll interval in seconds.
+					 *
+					 * @param int $interval Poll interval in seconds.
+					 */
+					'interval'          => max( 15, (int) apply_filters( 'storesuite_notification_poll_interval', 60 ) ),
+					'cursor'            => ( new \PluginizeLab\StoreSuite\Notification\NotificationManager() )->get_cursor(),
+					'notifications_url' => storesuite_get_navigation_url( 'notifications' ),
+					'i18n'              => array(
+						'are_you_sure'      => __( 'Are you sure?', 'storesuite' ),
+						'confirm_clear_all' => __( 'Delete all notifications? This cannot be undone.', 'storesuite' ),
+						'yes_clear'         => __( 'Yes, clear all!', 'storesuite' ),
+						'cancel_button'     => __( 'Cancel', 'storesuite' ),
+					),
+				)
+			);
+
+			// The Clear all confirmation on the notifications page uses SweetAlert2.
+			if ( storesuite_is_endpoint_url( 'notifications' ) ) {
+				wp_enqueue_script( 'storesuite_sweetalert2_script' );
+				wp_enqueue_style( 'storesuite_sweetalert2_style' );
+			}
+		}
+
 		// React-only routes (dashboard root + analytics) render with
 		// @woocommerce/components and don't need the legacy jQuery stack
 		// or wp_enqueue_media(). Enqueueing those here adds ~700KB of
@@ -273,6 +343,7 @@ class Assets {
 			|| storesuite_is_endpoint_url( 'edit-attribute' )
 			|| storesuite_is_endpoint_url( 'attribute-terms' );
 		$is_account = storesuite_is_endpoint_url( 'edit-account-details' );
+		$is_import  = storesuite_is_endpoint_url( 'import-products' );
 
 		// List pages that get the shared bulk delete + quick edit behaviour.
 		$is_taxonomy_list = storesuite_is_endpoint_url( 'categories' )
@@ -285,9 +356,9 @@ class Assets {
 		$needs_form_handler = $is_products || $is_coupons || $is_categories || $is_tags || $is_brands || $is_attributes || $is_account;
 		$needs_sweetalert   = $needs_form_handler || $is_orders;
 		$needs_select2      = $is_products || $is_orders || $is_coupons;
-		// jQuery UI datepicker styles: any form-handler page that renders
-		// .date-picker inputs (currently the coupon expiry date) needs them.
-		$needs_jquery_ui = $is_products || $is_coupons;
+		// jQuery UI datepicker styles: any page that renders .date-picker inputs
+		// (the coupon expiry date, the product sale schedule, the order created date).
+		$needs_jquery_ui = $is_products || $is_coupons || $is_orders;
 
 		if ( $needs_jquery_ui ) {
 			wp_enqueue_style( 'storesuite_jquery-ui-style' );
@@ -295,6 +366,13 @@ class Assets {
 
 		if ( $needs_select2 ) {
 			wp_enqueue_style( 'select2' );
+		}
+
+		// Product import wizard reuses WooCommerce's importer UI. The `wc-product-import` script is
+		// enqueued + localized by the wizard's import() step itself (it needs wc_product_import_params,
+		// which only exists on that step), so we only load the styles here.
+		if ( $is_import ) {
+			wp_enqueue_style( 'woocommerce_admin_styles' );
 		}
 
 		// Account address tab needs WooCommerce's country/state select behaviour.

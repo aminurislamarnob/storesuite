@@ -56,6 +56,16 @@ class Assets {
 		wp_enqueue_style( 'storesuite-dashboard' );
 		wp_set_script_translations( 'storesuite-dashboard', 'storesuite', STORESUITE_DIR . '/languages' );
 
+		// The StoreSuite shell stylesheet (storesuite_style) carries the
+		// dark-mode overrides. It is registered without dependencies and
+		// enqueued early, so on this React route it would otherwise print
+		// BEFORE this build's index.css and the WooCommerce admin component
+		// styles it depends on — all of which set the same summary/card
+		// selectors at equal specificity and win on source order, flashing the
+		// KPI cards back to white. Make the shell depend on this build so it is
+		// always printed last (after wc-components, via this handle's deps).
+		$this->load_shell_after( 'storesuite-dashboard' );
+
 		$dashboard_url = storesuite_get_navigation_url();
 		$analytics_url = storesuite_get_navigation_url( 'analytics' );
 
@@ -82,5 +92,22 @@ class Assets {
 			'var storeSuiteDashboardSettings = ' . wp_json_encode( $settings ),
 			'before'
 		);
+	}
+
+	/**
+	 * Force the StoreSuite shell stylesheet to be printed after the given
+	 * (already enqueued) handle by appending it as a dependency. Dependencies
+	 * are resolved at print time, so this works regardless of enqueue order and
+	 * only takes effect on pages where $handle is registered.
+	 *
+	 * @param string $handle Style handle the shell must load after.
+	 * @return void
+	 */
+	private function load_shell_after( string $handle ): void {
+		$styles = wp_styles();
+		if ( isset( $styles->registered['storesuite_style'] )
+			&& ! in_array( $handle, $styles->registered['storesuite_style']->deps, true ) ) {
+			$styles->registered['storesuite_style']->deps[] = $handle;
+		}
 	}
 }

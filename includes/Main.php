@@ -22,7 +22,7 @@ class Main {
 	 * Constructor.
 	 */
 	public function __construct() {
-		add_filter( 'login_redirect', array( $this, 'redirect_after_login' ), 1, 2 );
+		add_filter( 'login_redirect', array( $this, 'filter_login_redirect' ), 1, 3 );
 		add_filter( 'woocommerce_login_redirect', array( $this, 'redirect_after_login' ), 1, 2 );
 		add_action( 'admin_init', array( $this, 'block_admin_access' ) );
 		add_action( 'template_redirect', array( $this, 'redirect_if_not_logged_in_manager' ), 11 );
@@ -31,6 +31,7 @@ class Main {
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_storesuite_dashboard_btn_css' ), 20 );
 		add_action( 'wp_enqueue_scripts', array( $this, 'add_storesuite_css_variables' ), 20 );
 		add_filter( 'user_has_cap', array( $this, 'grant_storesuite_caps_to_managers' ), 10, 2 );
+		add_action( 'wp_head', array( $this, 'add_storesuite_theme_mode_script' ), 1 );
 	}
 
 	/**
@@ -65,6 +66,33 @@ class Main {
 	}
 
 	/**
+	 * Print an inline head script that resolves the dashboard color scheme
+	 * (light/dark) before first paint to avoid a flash of the wrong theme.
+	 *
+	 * The user's explicit choice is read from localStorage; when unset we fall
+	 * back to the operating system's `prefers-color-scheme` preference.
+	 */
+	public function add_storesuite_theme_mode_script() {
+		if ( ! storesuite_is_dashboard_page() ) {
+			return;
+		}
+		?>
+		<script id="storesuite-theme-mode">
+			( function () {
+				try {
+					var storedMode = localStorage.getItem( 'storesuite_theme_mode' );
+					var prefersDark = window.matchMedia && window.matchMedia( '(prefers-color-scheme: dark)' ).matches;
+					var mode = ( storedMode === 'dark' || storedMode === 'light' ) ? storedMode : ( prefersDark ? 'dark' : 'light' );
+					document.documentElement.setAttribute( 'data-theme', mode );
+				} catch ( error ) {
+					document.documentElement.setAttribute( 'data-theme', 'light' );
+				}
+			} )();
+		</script>
+		<?php
+	}
+
+	/**
 	 * Block user access to admin panel for specific roles
 	 *
 	 * @global string $pagenow
@@ -90,7 +118,10 @@ class Main {
 		$blocked_roles = apply_filters( 'storesuite_blocked_admin_roles', array( 'shop_manager', 'customer' ) );
 
 		if ( ( 'yes' === $is_prevent_admin_access ) && in_array( $user_role, $blocked_roles, true ) && ( ! in_array( $pagenow, $valid_pages, true ) ) ) {
-			wp_safe_redirect( home_url() );
+			// Managers have somewhere better to be than the shop homepage.
+			$redirect = ( current_user_can( 'manage_woocommerce' ) || current_user_can( 'storesuite_access_dashboard' ) ) ? $this->get_storesuite_dashboard_url() : '';
+
+			wp_safe_redirect( $redirect ? $redirect : home_url() );
 			exit;
 		}
 	}
@@ -128,28 +159,63 @@ class Main {
 	}
 
 	/**
-	 * Redirect after wooCommerce login
-	 * my account page
+	 * Adapter for the core `login_redirect` filter, which passes the requested
+	 * redirect between the destination and the user.
 	 *
-	 * @global string $action
+	 * @param string             $redirect_to           The redirect destination URL.
+	 * @param string             $requested_redirect_to The requested redirect destination URL.
+	 * @param \WP_User|\WP_Error $user                  WP_User on a successful login, WP_Error otherwise.
+	 * @return string
+	 */
+	public function filter_login_redirect( $redirect_to, $requested_redirect_to, $user ) {
+		return $this->redirect_after_login( $redirect_to, $user );
+	}
+
+	/**
+	 * Pick the post-login destination by role.
+	 *
+	 * Core applies `login_redirect` every time the wp-login.php form is
+	 * rendered, not only after a successful login, so anything that is not a
+	 * real user (a WP_Error, an empty string) must leave the URL untouched or
+	 * the login screen itself gets redirected away.
+	 *
+	 * @param string             $redirect_to The redirect destination URL.
+	 * @param \WP_User|\WP_Error $user        WP_User on a successful login, WP_Error otherwise.
+	 * @return string
 	 */
 	public function redirect_after_login( $redirect_to, $user ) {
+		if ( ! $user instanceof \WP_User || ! $user->exists() ) {
+			return $redirect_to;
+		}
 
 		// 1) Admins → WP admin dashboard.
-		if ( $user instanceof \WP_User && in_array( 'administrator', (array) $user->roles, true ) ) {
-			wp_safe_redirect( admin_url() );
-			exit();
+		if ( in_array( 'administrator', (array) $user->roles, true ) ) {
+			return admin_url();
 		}
 
 		// 2) Non-admins who can manage WooCommerce, or hold a granular
 		// StoreSuite dashboard capability → StoreSuite dashboard.
 		if ( user_can( $user, 'manage_woocommerce' ) || user_can( $user, 'storesuite_access_dashboard' ) ) {
-			$this->redirect_to_storesuite_dashboard(); // This already redirects & exits if page is set.
+			$dashboard_url = $this->get_storesuite_dashboard_url();
+
+			if ( $dashboard_url ) {
+				return $dashboard_url;
+			}
 		}
 
 		// 3) Everyone else → normal My Account page.
-		wp_safe_redirect( wc_get_page_permalink( 'myaccount' ) );
-		exit();
+		return wc_get_page_permalink( 'myaccount' );
+	}
+
+	/**
+	 * URL of the StoreSuite dashboard page, or an empty string when no page is set.
+	 *
+	 * @return string
+	 */
+	public function get_storesuite_dashboard_url() {
+		$page_id = (int) storesuite_get_option_by_key( 'storesuite_dashboard_page_id' );
+
+		return $page_id ? storesuite_get_navigation_url() : '';
 	}
 
 	/**
@@ -158,10 +224,10 @@ class Main {
 	 * @return void
 	 */
 	public function redirect_to_storesuite_dashboard() {
-		$page_id = (int) storesuite_get_option_by_key( 'storesuite_dashboard_page_id' );
+		$dashboard_url = $this->get_storesuite_dashboard_url();
 
-		if ( $page_id ) {
-			wp_safe_redirect( storesuite_get_navigation_url() );
+		if ( $dashboard_url ) {
+			wp_safe_redirect( $dashboard_url );
 			exit();
 		}
 	}
@@ -241,18 +307,47 @@ class Main {
 			'--storesuite-border-color'           => 'storesuite_color_border',
 		);
 
-		$rules = array();
-		foreach ( $css_vars as $var_name => $option_key ) {
-			$value = storesuite_get_option_by_key( $option_key );
-			if ( $value !== '' && $value !== null ) {
-				$rules[] = $var_name . ': ' . esc_attr( $value );
-			}
-		}
-		if ( empty( $rules ) ) {
+		/*
+		 * Dark mode overrides only the neutrals — surfaces, text and borders. The button
+		 * and active-menu accents are intentionally left out so the light palette's
+		 * primary colors carry over from the `:root{}` block above.
+		 *
+		 * These are written to a `html[data-theme="dark"]:root` block so they outrank the
+		 * built-in `:root[data-theme="dark"]` palette in style.css, which stays the
+		 * fallback when a store has never saved a dark theme.
+		 */
+		$dark_css_vars = array(
+			'--storesuite-text-black'           => 'storesuite_dark_title_text_color',
+			'--storesuite-text-color'           => 'storesuite_dark_text_color',
+			'--storesuite-text-color-light'     => 'storesuite_dark_lite_text_color',
+			'--storesuite-icon-color'           => 'storesuite_dark_icon_color',
+			'--storesuite-sidebar-bg-color'     => 'storesuite_dark_color_sidebar_background',
+			'--storesuite-sidebar-menu-text'    => 'storesuite_dark_color_sidebar_menu_text',
+			'--storesuite-sidebar-active-text'  => 'storesuite_dark_color_sidebar_active_text',
+			'--storesuite-sidebar-border-color' => 'storesuite_dark_color_sidebar_border',
+			'--storesuite-bg-color-light'       => 'storesuite_dark_color_lite_bg',
+			'--storesuite-border-color'         => 'storesuite_dark_color_border',
+			'--storesuite-page-bg'              => 'storesuite_dark_color_page_bg',
+			'--storesuite-surface-bg'           => 'storesuite_dark_color_surface_bg',
+			'--storesuite-surface-elevated'     => 'storesuite_dark_color_surface_bg',
+		);
+
+		$rules      = $this->build_css_variable_rules( $css_vars );
+		$dark_rules = $this->build_css_variable_rules( $dark_css_vars );
+
+		if ( empty( $rules ) && empty( $dark_rules ) ) {
 			return;
 		}
 
-		$css = ':root{ ' . esc_attr( implode( ';', $rules ) ) . ' }';
+		$css = '';
+
+		if ( ! empty( $rules ) ) {
+			$css .= ':root{ ' . esc_attr( implode( ';', $rules ) ) . ' }';
+		}
+
+		if ( ! empty( $dark_rules ) ) {
+			$css .= 'html[data-theme="dark"]:root{ ' . esc_attr( implode( ';', $dark_rules ) ) . ' }';
+		}
 
 		if ( storesuite_get_option_by_key( 'storesuite_color_palette_mode' ) === 'predefined' ) {
 			$css .= '.storesuite-table-search-icon svg,'
@@ -263,5 +358,26 @@ class Main {
 		wp_register_style( 'storesuite-css-variables', false );
 		wp_enqueue_style( 'storesuite-css-variables' );
 		wp_add_inline_style( 'storesuite-css-variables', $css );
+	}
+
+	/**
+	 * Turn a CSS variable => option key map into `--var: value` declarations.
+	 *
+	 * Options that were never saved are skipped so the stylesheet defaults apply.
+	 *
+	 * @param array $css_vars Map of CSS variable name to settings option key.
+	 * @return array List of declarations.
+	 */
+	private function build_css_variable_rules( $css_vars ) {
+		$rules = array();
+
+		foreach ( $css_vars as $var_name => $option_key ) {
+			$value = storesuite_get_option_by_key( $option_key );
+			if ( $value !== '' && $value !== null ) {
+				$rules[] = $var_name . ': ' . esc_attr( $value );
+			}
+		}
+
+		return $rules;
 	}
 }

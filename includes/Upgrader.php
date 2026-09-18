@@ -45,6 +45,10 @@ class Upgrader {
 			$this->migrate_to_1_1_4();
 		}
 
+		if ( version_compare( $stored, '1.3.0', '<' ) ) {
+			$this->migrate_to_1_3_0();
+		}
+
 		update_option( self::DB_VERSION_OPTION, $current );
 	}
 
@@ -78,6 +82,27 @@ class Upgrader {
 	 * @return void
 	 */
 	private function migrate_to_1_1_4() {
+		update_option( 'storesuite_flush_rewrite_rules', 1 );
+	}
+
+	/**
+	 * Set up the notifications system added in 1.3.0.
+	 *
+	 * The activation hook does not fire on plugin updates, so existing
+	 * installs need the notifications table created, the daily retention
+	 * cleanup scheduled, and a rewrite flush for the new `notifications`
+	 * endpoint. All three steps are idempotent (dbDelta, wp_next_scheduled
+	 * guard, set/delete flag).
+	 *
+	 * @return void
+	 */
+	private function migrate_to_1_3_0() {
+		Notification\NotificationInstaller::create_table();
+
+		if ( ! wp_next_scheduled( Notification\NotificationHooks::CLEANUP_HOOK ) ) {
+			wp_schedule_event( time(), 'daily', Notification\NotificationHooks::CLEANUP_HOOK );
+		}
+
 		update_option( 'storesuite_flush_rewrite_rules', 1 );
 	}
 }

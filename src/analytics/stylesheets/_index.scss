@@ -9,6 +9,25 @@
 	.woocommerce-layout__main {
 		padding: 0;
 	}
+
+	// The advanced-filters / Compare Variations card renders flush against the
+	// filter row above it, so the two read as one block. Separate them.
+	.woocommerce-filters__advanced-filters {
+		margin-top: 16px;
+	}
+
+	// WC sizes every basic filter to the same percentage of the row, which is
+	// too narrow for the date-range picker: with a comparison period selected it
+	// stacks two long date labels, and both wrap onto a second line. Widen just
+	// that filter — `is-multi-line` is the only thing distinguishing it. Left to
+	// the mobile block below the breakpoint, where filters already go full-width.
+	@media ( min-width: 783px ) {
+		.woocommerce-filters-filter:has(
+				.woocommerce-dropdown-button.is-multi-line
+			) {
+			min-width: 340px;
+		}
+	}
 }
 
 // The report subtitle is the first thing inside the app, right below the shared

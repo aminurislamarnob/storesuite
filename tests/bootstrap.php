@@ -26,8 +26,13 @@ tests_add_filter(
 	'muplugins_loaded',
 	function () use ( $storesuite_plugin_root ) {
 		// WooCommerce must load first: StoreSuite bails on plugins_loaded when
-		// the WooCommerce class is absent.
-		require dirname( $storesuite_plugin_root ) . '/woocommerce/woocommerce.php';
+		// the WooCommerce class is absent. CI points WC_DIR at a standalone
+		// checkout; locally it is the sibling plugin directory.
+		$storesuite_wc_dir = getenv( 'WC_DIR' );
+		if ( ! $storesuite_wc_dir ) {
+			$storesuite_wc_dir = dirname( $storesuite_plugin_root ) . '/woocommerce';
+		}
+		require rtrim( $storesuite_wc_dir, '/' ) . '/woocommerce.php';
 		require $storesuite_plugin_root . '/storesuite.php';
 	}
 );

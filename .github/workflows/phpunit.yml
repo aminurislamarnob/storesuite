@@ -1,0 +1,69 @@
+# Runs on every pull request, and additionally on direct pushes to the
+# release-critical branches so merges get a run even without a PR event.
+on:
+    pull_request:
+    push:
+        branches:
+            - develop
+            - feat/dark-light-mode
+
+name: Tests
+jobs:
+    runPHPUnit:
+        name: Run PHPUnit
+        runs-on: ubuntu-latest
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_ROOT_PASSWORD: root
+                    MYSQL_DATABASE: wordpress_test
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+                    --health-interval=10s
+                    --health-timeout=5s
+                    --health-retries=10
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.1'
+                  extensions: mysqli
+                  coverage: none
+                  tools: composer:v2
+
+            - name: Get composer cache directory
+              id: composercache
+              run: echo "dir=$(composer config cache-files-dir)" >> $GITHUB_OUTPUT
+
+            - name: Cache dependencies
+              uses: actions/cache@v4
+              with:
+                  path: ${{ steps.composercache.outputs.dir }}
+                  key: "${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}"
+                  restore-keys: ${{ runner.os }}-composer-
+
+            - name: Install dependencies
+              run: composer install --prefer-dist --no-progress
+
+            - name: Download WordPress core
+              run: curl -sL https://wordpress.org/latest.tar.gz | tar -xz -C /tmp
+
+            - name: Download WooCommerce
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip -o /tmp/woocommerce.zip
+                  unzip -q /tmp/woocommerce.zip -d /tmp
+
+            - name: Run PHPUnit
+              env:
+                  WP_CORE_DIR: /tmp/wordpress
+                  WC_DIR: /tmp/woocommerce
+                  WP_DB_NAME: wordpress_test
+                  WP_DB_USER: root
+                  WP_DB_PASS: root
+                  WP_DB_HOST: 127.0.0.1:3306
+              run: vendor/bin/phpunit

@@ -10,6 +10,7 @@
 		bindEvents: function () {
 			$( '#customer_user' ).show().selectWoo().hide();
 			this.handleSelect2Customer(); // Handle select2 customer
+			this.initDatePicker(); // Handle order date picker
 			$( '#customer_user' ).on( 'change', this.changeCustomerUser );
 			$( '.edit-storesuite-order-billing-address' ).on(
 				'click',
@@ -19,6 +20,18 @@
 				'click',
 				this.showShippingAddressFields
 			);
+		},
+
+		/**
+		 * Initialize datepicker for the order created date field.
+		 */
+		initDatePicker: function () {
+			$( 'input.date-picker' ).datepicker( {
+				defaultDate: '',
+				dateFormat: 'yy-mm-dd',
+				numberOfMonths: 1,
+				showButtonPanel: true,
+			} );
 		},
 
 		handleSelect2Customer: function () {

@@ -1,0 +1,17 @@
+{
+	"name": "storesuite-playwright-tests",
+	"version": "1.0.0",
+	"private": true,
+	"description": "Playwright end-to-end tests for the StoreSuite frontend dashboard.",
+	"scripts": {
+		"test": "playwright test",
+		"test:e2e": "playwright test --project=e2e_tests",
+		"test:headed": "playwright test --project=e2e_tests --headed",
+		"test:debug": "playwright test --project=e2e_tests --debug",
+		"report": "playwright show-report"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.62.1",
+		"dotenv": "^17.2.4"
+	}
+}

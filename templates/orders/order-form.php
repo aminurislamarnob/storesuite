@@ -527,7 +527,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 								<?php
 								$order_date_created_localised = ! is_null( $order->get_date_created() ) ? $order->get_date_created()->getOffsetTimestamp() : '';
 								?>
-								<input type="date" class="date-picker storesuite-form-control date-input" name="order_date" maxlength="10" value="<?php echo esc_attr( date_i18n( 'Y-m-d', $order_date_created_localised ) ); ?>" pattern="<?php echo esc_attr( apply_filters( 'woocommerce_date_input_html_pattern', '[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])' ) ); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment ?>" />@
+								<input type="text" class="date-picker storesuite-form-control date-input" name="order_date" maxlength="10" autocomplete="off" placeholder="<?php esc_attr_e( 'YYYY-MM-DD', 'storesuite' ); ?>" value="<?php echo esc_attr( date_i18n( 'Y-m-d', $order_date_created_localised ) ); ?>" pattern="<?php echo esc_attr( apply_filters( 'woocommerce_date_input_html_pattern', '[0-9]{4}-(0[1-9]|1[012])-(0[1-9]|1[0-9]|2[0-9]|3[01])' ) ); // phpcs:ignore WooCommerce.Commenting.CommentHooks.MissingHookComment ?>" />@
 								&lrm;
 								<input type="number" class="hour storesuite-form-control time-input" placeholder="<?php esc_attr_e( 'h', 'storesuite' ); ?>" name="order_date_hour" min="0" max="23" step="1" value="<?php echo esc_attr( date_i18n( 'H', $order_date_created_localised ) ); ?>" pattern="([01]?[0-9]{1}|2[0-3]{1})" />:
 								<input type="number" class="minute storesuite-form-control time-input" placeholder="<?php esc_attr_e( 'm', 'storesuite' ); ?>" name="order_date_minute" min="0" max="59" step="1" value="<?php echo esc_attr( date_i18n( 'i', $order_date_created_localised ) ); ?>" pattern="[0-5]{1}[0-9]{1}" />

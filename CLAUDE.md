@@ -18,7 +18,17 @@ npm run format                   # Prettier
 bash bin/build.sh                # release ZIP
 ```
 
-**Tests:** `composer test` runs the wp-phpunit integration suite in `tests/` (currently `Module\Manager` lifecycle coverage). Bootstrap (`tests/bootstrap.php`) loads WooCommerce + StoreSuite into a throwaway WP install backed by a local MySQL database (`storesuite_tests`); connection/ABSPATH defaults live in `tests/wp-tests-config.php` and can be overridden via `WP_TESTS_*` env vars — locally set in the gitignored `phpunit.xml`. Keep `wp-phpunit/wp-phpunit` matched to the WP core version. Tests inject fixture modules via the `storesuite_register_modules` filter and point `storesuite_modules_dir` away from real modules; note `Manager::discover()` uses `include_once`, so only one test per process may discover `tests/fixtures/modules/` from disk.
+## Testing
+
+```bash
+composer test                    # PHPUnit — every *Test.php under tests/ (both suites below)
+cd tests/pw && npm test          # Playwright e2e + REST API suites (see tests/pw/README.md for site setup)
+```
+
+- **PHPUnit, `tests/` suite** (bootstrap `tests/bootstrap.php`, namespace `PluginizeLab\StoreSuite\Tests\`): loads WooCommerce + StoreSuite into a throwaway WP install backed by a local MySQL database (`storesuite_tests`); connection/ABSPATH defaults live in `tests/wp-tests-config.php` and can be overridden via `WP_TESTS_*` env vars — locally set in the gitignored `phpunit.xml`. Keep `wp-phpunit/wp-phpunit` matched to the WP core version. Module tests inject fixture modules via the `storesuite_register_modules` filter and point `storesuite_modules_dir` away from real modules; note `Manager::discover()` uses `include_once`, so only one test per process may discover `tests/fixtures/modules/` from disk.
+- **PHPUnit, `tests/php/` suite** (merged from develop; namespace `PluginizeLab\StoreSuite\Test\`, PSR-4 via composer `autoload-dev`): base classes `StoreSuiteTestCase` / `StoreSuiteAjaxTestCase` provide user fixtures, entity factories (`self::factory()->product->create()`), a `do_ajax()` dispatch helper and `capture_redirect()` for redirect-and-exit paths. Its own `tests/php/bootstrap.php` (env `WP_CORE_DIR`, `WC_DIR`, `WP_DB_*`) is what CI uses.
+- **Playwright** (`tests/pw/`): self-contained npm project — browser e2e specs (co-located page objects per feature folder, storage-state auth for admin/shop manager/customer) plus HTTP-level REST contract specs in `tests/api` using application passwords. `bin/e2e-provision.sh` seeds any wp-cli-reachable site. An older Playwright suite also lives in `tests/e2e/`.
+- **CI**: PHPCS + PHPUnit run on every pull request; PHPUnit also runs on pushes to `develop`. The e2e suite runs nightly in dual lanes (latest WP/WC gates; pinned versions advisory) plus `workflow_dispatch`.
 
 ## Architecture
 
@@ -26,7 +36,7 @@ bash bin/build.sh                # release ZIP
 
 **PHP (`includes/`):** namespace `PluginizeLab\StoreSuite`, PSR-4 from `includes/`. Everything prefixed `storesuite_`.
 - **Domain dirs** (`Product/`, `Order/`, `Coupon/`, `ProductCategory/`, `ProductTag/`, `ProductBrand/`, `Account/`): Controller (registers `wp_ajax_storesuite_*`, handles forms, loads templates) + Manager (CRUD via WooCommerce APIs); some add a Hooks class for WP/WC integrations.
-- **REST:** `REST/SettingsController.php` — namespace `storesuite/v1`, base `settings`; requires `manage_woocommerce`.
+- **REST:** `REST/SettingsController.php` — namespace `storesuite/v1`, base `settings`; requires `manage_options` (admin-only).
 - **Core services:** `Assets.php` (enqueues; strips theme/disallowed plugin assets on dashboard, filters `storesuite_allowed_plugin_slugs` / `storesuite_allowed_asset_handles`), `Rewrites.php` (dashboard rewrite endpoints; slugs via `storesuite_myshop_*_endpoint` options; resolves the WC My Account `orders` query-var conflict), `Main.php` (login redirects, admin blocking for shop_manager/customer, admin-bar hiding, CSS var injection), dashboard home KPI widgets (React app in `src/dashboard/`, widget registry filterable via the `storesuite_dashboard_analytics_reports_list` JS hook in `src/dashboard/get-reports.js`), `Cache.php` (transient/object-cache wrapper, `storesuite_` prefix / `storesuite` group), `DashboardMenu.php` (sidebar nav via `storesuite_dashboard_navigation`, permission-gated; final list filterable via `storesuite_dashboard_menus`).
 - **Settings:** single serialized `storesuite_settings` option; read via `storesuite_get_option_by_key($key)`.
 - **Globals (`includes/functions.php`):** `storesuite_get_template_part()`, `storesuite_is_endpoint_url()`, nav URLs, page checks, `storesuite_log()`, access-control redirects.

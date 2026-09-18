@@ -57,6 +57,12 @@ class Assets {
 		wp_enqueue_style( 'storesuite-analytics' );
 		wp_set_script_translations( 'storesuite-analytics', 'storesuite', STORESUITE_DIR . '/languages' );
 
+		// Force the StoreSuite shell stylesheet (dark-mode overrides) to print
+		// after this build's index.css and the WooCommerce admin component
+		// styles it depends on; they target the same selectors at equal
+		// specificity and would otherwise win on source order.
+		$this->load_shell_after( 'storesuite-analytics' );
+
 		$analytics_url = storesuite_get_navigation_url( 'analytics' );
 		$dashboard_url = storesuite_get_navigation_url();
 
@@ -80,5 +86,22 @@ class Assets {
 			'var storeSuiteAnalyticsSettings = ' . wp_json_encode( $settings ),
 			'before'
 		);
+	}
+
+	/**
+	 * Force the StoreSuite shell stylesheet to be printed after the given
+	 * (already enqueued) handle by appending it as a dependency. Dependencies
+	 * are resolved at print time, so this works regardless of enqueue order and
+	 * only takes effect on pages where $handle is registered.
+	 *
+	 * @param string $handle Style handle the shell must load after.
+	 * @return void
+	 */
+	private function load_shell_after( string $handle ): void {
+		$styles = wp_styles();
+		if ( isset( $styles->registered['storesuite_style'] )
+			&& ! in_array( $handle, $styles->registered['storesuite_style']->deps, true ) ) {
+			$styles->registered['storesuite_style']->deps[] = $handle;
+		}
 	}
 }

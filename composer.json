@@ -7,6 +7,11 @@
 			"PluginizeLab\\StoreSuite\\": "includes/"
 		}
 	},
+	"autoload-dev": {
+		"psr-4": {
+			"PluginizeLab\\StoreSuite\\Test\\": "tests/php/src/"
+		}
+	},
 	"authors": [
 		{
 			"name": "Aminur Islam Arnob",
@@ -26,6 +31,9 @@
 		"symfony/var-dumper": "6.4.x-dev"
 	},
 	"scripts": {
+		"test": [
+			"vendor/bin/phpunit"
+		],
 		"phpcs": [
 			"vendor/bin/phpcs -p -s"
 		],
@@ -34,14 +42,14 @@
 		],
 		"phpcbf": [
 			"vendor/bin/phpcbf -p"
-		],
-		"test": [
-			"vendor/bin/phpunit"
 		]
 	},
 	"config": {
 		"allow-plugins": {
 			"dealerdirect/phpcodesniffer-composer-installer": true
 		}
+	},
+	"require": {
+		"appsero/client": "^2.0"
 	}
 }

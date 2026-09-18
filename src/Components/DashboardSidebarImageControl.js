@@ -3,12 +3,12 @@ import { __ } from '@wordpress/i18n';
 import { Button } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
-export default function DashboardSidebarImageControl( {
-	label,
-	help,
-	attachmentId,
-	onChange,
-} ) {
+const MODES = [
+	{ value: 'light', label: __( 'Light mode', 'storesuite' ) },
+	{ value: 'dark', label: __( 'Dark mode', 'storesuite' ) },
+];
+
+function ImagePicker( { attachmentId, onChange, isDark } ) {
 	const [ previewUrl, setPreviewUrl ] = useState( '' );
 	const id = parseInt( attachmentId, 10 ) || 0;
 
@@ -58,15 +58,13 @@ export default function DashboardSidebarImageControl( {
 	};
 
 	return (
-		<div className="storesuite-settings-group storesuite-sidebar-image-control">
-			<p className="storesuite-sidebar-image-control__label">{ label }</p>
-			{ help && (
-				<p className="storesuite-sidebar-image-control__help">
-					{ help }
-				</p>
-			) }
+		<>
 			{ previewUrl && (
-				<div className="storesuite-sidebar-image-control__preview">
+				<div
+					className={ `storesuite-sidebar-image-control__preview${
+						isDark ? ' is-dark' : ''
+					}` }
+				>
 					<img src={ previewUrl } alt="" />
 				</div>
 			) }
@@ -86,6 +84,67 @@ export default function DashboardSidebarImageControl( {
 					</Button>
 				) }
 			</div>
+		</>
+	);
+}
+
+export default function DashboardSidebarImageControl( {
+	label,
+	help,
+	darkHelp,
+	attachmentId,
+	darkAttachmentId,
+	onChange,
+	onDarkChange,
+} ) {
+	const [ mode, setMode ] = useState( 'light' );
+	const isDark = mode === 'dark';
+
+	return (
+		<div className="storesuite-settings-group storesuite-sidebar-image-control">
+			<p className="storesuite-sidebar-image-control__label">{ label }</p>
+			<div className="storesuite-theme-tabs storesuite-theme-tabs--compact">
+				{ MODES.map( ( { value, label: modeLabel } ) => (
+					<button
+						key={ value }
+						type="button"
+						className={ `storesuite-theme-tab${
+							mode === value ? ' is-active' : ''
+						}` }
+						aria-pressed={ mode === value }
+						onClick={ () => setMode( value ) }
+					>
+						{ modeLabel }
+					</button>
+				) ) }
+			</div>
+			{ isDark
+				? !! darkHelp && (
+						<p className="storesuite-sidebar-image-control__help">
+							{ darkHelp }
+						</p>
+				  )
+				: !! help && (
+						<p className="storesuite-sidebar-image-control__help">
+							{ help }
+						</p>
+				  ) }
+			{ /* Each mode keeps its own picker instance so switching tabs
+			     re-reads the preview for that attachment. */ }
+			{ isDark ? (
+				<ImagePicker
+					key="dark"
+					attachmentId={ darkAttachmentId }
+					onChange={ onDarkChange }
+					isDark
+				/>
+			) : (
+				<ImagePicker
+					key="light"
+					attachmentId={ attachmentId }
+					onChange={ onChange }
+				/>
+			) }
 		</div>
 	);
 }

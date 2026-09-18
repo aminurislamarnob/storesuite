@@ -67,6 +67,15 @@ class Dashboard extends MyStoreSuiteShortcode {
 			return ob_get_clean();
 		}
 
+		if ( isset( $wp->query_vars['import-products'] ) ) {
+			if ( ! current_user_can( 'manage_woocommerce' ) ) {
+                storesuite_get_template_part( 'global/no-permission' );
+            } else {
+                do_action( 'storesuite_load_import_products_template', $wp->query_vars );
+            }
+			return ob_get_clean();
+		}
+
 		if ( isset( $wp->query_vars['add-new-product'] ) ) {
 			if ( ! current_user_can( 'manage_woocommerce' ) ) {
                 storesuite_get_template_part( 'global/no-permission' );
@@ -193,6 +202,11 @@ class Dashboard extends MyStoreSuiteShortcode {
 
 		if ( isset( $wp->query_vars['edit-account-details'] ) ) {
 			storesuite_get_template_part( 'account/edit-account' );
+			return ob_get_clean();
+		}
+
+		if ( isset( $wp->query_vars['notifications'] ) ) {
+			do_action( 'storesuite_load_notifications_template', $wp->query_vars );
 			return ob_get_clean();
 		}
 

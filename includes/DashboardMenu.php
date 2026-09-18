@@ -156,6 +156,23 @@ class DashboardMenu {
 		 */
 		$logo_url = apply_filters( 'storesuite_sidebar_attribution_logo_url', $logo_url, $use_dark_logo );
 
+		/*
+		 * Dark mode is a client-side toggle, so the sidebar can turn dark under a
+		 * palette that resolved to the dark logo. When that is the case, emit the
+		 * light logo alongside it and let CSS show whichever matches the active
+		 * theme — swapping in JS would flash the wrong logo on every load.
+		 */
+		$dark_mode_logo_url = '';
+
+		if ( $use_dark_logo ) {
+			/** This filter is documented above. */
+			$dark_mode_logo_url = apply_filters(
+				'storesuite_sidebar_attribution_logo_url',
+				STORESUITE_PLUGIN_ASSET . '/frontend/images/storesuite-logo-light.png',
+				false
+			);
+		}
+
 		/**
 		 * Filters the StoreSuite sidebar attribution logo link URL.
 		 *
@@ -164,9 +181,16 @@ class DashboardMenu {
 		$link_url = apply_filters( 'storesuite_sidebar_attribution_link_url', 'https://aiarnob.com/product/storesuite/' );
 
 		if ( ! empty( $logo_url ) ) {
+			$logo_class = $dark_mode_logo_url ? 'storesuite-sidebar-branding-logo storesuite-sidebar-branding-logo--light-mode' : 'storesuite-sidebar-branding-logo';
+
 			echo '<div class="storesuite-sidebar-branding">';
 			echo '<a class="storesuite-sidebar-branding-link" href="' . esc_url( $link_url ) . '" target="_blank" rel="noopener noreferrer">';
-			echo '<img class="storesuite-sidebar-branding-logo" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr__( 'StoreSuite', 'storesuite' ) . '" />';
+			echo '<img class="' . esc_attr( $logo_class ) . '" src="' . esc_url( $logo_url ) . '" alt="' . esc_attr__( 'StoreSuite', 'storesuite' ) . '" />';
+
+			if ( $dark_mode_logo_url ) {
+				echo '<img class="storesuite-sidebar-branding-logo storesuite-sidebar-branding-logo--dark-mode" src="' . esc_url( $dark_mode_logo_url ) . '" alt="' . esc_attr__( 'StoreSuite', 'storesuite' ) . '" />';
+			}
+
 			echo '</a>';
 			echo '</div>';
 		}

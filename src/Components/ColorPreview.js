@@ -6,12 +6,20 @@ const STAT_CARDS = [ 1, 2, 3, 4 ];
 const CHART_LINES = [ 1, 2, 3 ];
 const TEXT_LINES = [ 1, 2 ];
 
-const ColorPreview = ( { colors } ) => (
+const ColorPreview = ( { colors, theme = 'light' } ) => (
 	<div className="storesuite-color-preview">
 		<p className="storesuite-preview-label">
 			{ __( 'Preview', 'storesuite' ) }
 		</p>
-		<div className="storesuite-preview-wrap">
+		<div
+			className={ `storesuite-preview-wrap${
+				theme === 'dark' ? ' is-dark' : ''
+			}` }
+			style={ {
+				'--storesuite-preview-page-bg': colors.pageBg,
+				'--storesuite-preview-surface-bg': colors.surfaceBg,
+			} }
+		>
 			<div className="storesuite-preview-header">
 				<div className="storesuite-preview-dots">
 					{ HEADER_DOTS.map( ( dotIndex ) => (

@@ -240,11 +240,22 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 											</span>
 											<ul class="storesuite-dropdown-menu">
 												<li>
-													<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'order-details' ) . '%s', $order->get_id() ) ); ?>" class="dropdown-link"><?php esc_html_e( 'View', 'storesuite' ); ?></a>
+													<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'order-details' ) . '%s', $order->get_id() ) ); ?>" class="dropdown-link"><svg width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false"><use href="#storesuite-icon-view"></use></svg><?php esc_html_e( 'View', 'storesuite' ); ?></a>
 												</li>
 												<li>
-													<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-order' ) . '%s', $order->get_id() ) ); ?>" class="dropdown-link"><?php echo esc_html__( 'Edit', 'storesuite' ); ?></a>
+													<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-order' ) . '%s', $order->get_id() ) ); ?>" class="dropdown-link"><svg width="16" height="16" fill="currentColor" aria-hidden="true" focusable="false"><use href="#storesuite-icon-edit"></use></svg><?php echo esc_html__( 'Edit', 'storesuite' ); ?></a>
 												</li>
+												<?php
+												/**
+												 * Fires inside an order row's action dropdown.
+												 *
+												 * Allows plugins to add extra <li> action items (e.g. PDF-invoice
+												 * / packing-slip document links).
+												 *
+												 * @param WC_Order $order Current order.
+												 */
+												do_action( 'storesuite_order_list_row_actions', $order );
+												?>
 											</ul>
 										</div>
 									</td>

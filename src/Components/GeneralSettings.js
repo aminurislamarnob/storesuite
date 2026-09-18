@@ -30,6 +30,12 @@ const GeneralSettings = () => {
 	const [ sidebarIconId, setSidebarIconId ] = useState(
 		parseInt( settings.storesuite_dashboard_sidebar_icon_id, 10 ) || 0
 	);
+	const [ sidebarLogoDarkId, setSidebarLogoDarkId ] = useState(
+		parseInt( settings.storesuite_dashboard_sidebar_logo_dark_id, 10 ) || 0
+	);
+	const [ sidebarIconDarkId, setSidebarIconDarkId ] = useState(
+		parseInt( settings.storesuite_dashboard_sidebar_icon_dark_id, 10 ) || 0
+	);
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/pages?per_page=100&page=1' } )
@@ -56,6 +62,8 @@ const GeneralSettings = () => {
 			storesuite_prevent_admin_access: preventAdminAccess ? 'yes' : 'no',
 			storesuite_dashboard_sidebar_logo_id: sidebarLogoId,
 			storesuite_dashboard_sidebar_icon_id: sidebarIconId,
+			storesuite_dashboard_sidebar_logo_dark_id: sidebarLogoDarkId,
+			storesuite_dashboard_sidebar_icon_dark_id: sidebarIconDarkId,
 		} );
 	};
 
@@ -102,8 +110,14 @@ const GeneralSettings = () => {
 								'Shown in the expanded sidebar. If set, the site title is visually hidden but kept for screen readers.',
 								'storesuite'
 							) }
+							darkHelp={ __(
+								'Used when the dashboard is in dark mode. If empty, the light mode logo is used.',
+								'storesuite'
+							) }
 							attachmentId={ sidebarLogoId }
+							darkAttachmentId={ sidebarLogoDarkId }
 							onChange={ setSidebarLogoId }
+							onDarkChange={ setSidebarLogoDarkId }
 						/>
 						<DashboardSidebarImageControl
 							label={ __(
@@ -114,8 +128,14 @@ const GeneralSettings = () => {
 								'Shown in the collapsed (icon-only) sidebar. If empty, the logo is used when collapsed when a logo is set.',
 								'storesuite'
 							) }
+							darkHelp={ __(
+								'Used when the dashboard is in dark mode. If empty, the light mode icon is used.',
+								'storesuite'
+							) }
 							attachmentId={ sidebarIconId }
+							darkAttachmentId={ sidebarIconDarkId }
 							onChange={ setSidebarIconId }
+							onDarkChange={ setSidebarIconDarkId }
 						/>
 						<div className="storesuite-settings-group admin-area-access">
 							<ToggleControl

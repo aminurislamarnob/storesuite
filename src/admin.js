@@ -23,6 +23,7 @@ import ModulesSettings from './Components/ModulesSettings';
 import ModuleSettings from './Components/ModuleSettings';
 import PaginationSettings from './Components/PaginationSettings';
 import AISettings from './Components/AISettings';
+import NotificationsSettings from './Components/NotificationsSettings';
 import Changelog from './Components/Changelog';
 
 /**
@@ -123,6 +124,10 @@ const App = () => {
 							element={ <PaginationSettings /> }
 						/>
 						<Route path="ai-settings" element={ <AISettings /> } />
+						<Route
+							path="notifications-settings"
+							element={ <NotificationsSettings /> }
+						/>
 						<Route path="changelog" element={ <Changelog /> } />
 						<Route path="modules" element={ <ModulesSettings /> } />
 						<Route

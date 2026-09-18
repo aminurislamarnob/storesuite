@@ -254,6 +254,30 @@ function storesuite_is_ai_field_enabled( $field ) {
 	return 'no' !== storesuite_get_option_by_key( $option_map[ $field ] );
 }
 
+/**
+ * Whether dashboard notifications are enabled for a given event type.
+ *
+ * Controlled from the admin "Notifications" settings page. Each event
+ * defaults to enabled until a merchant explicitly turns it off. Checked at
+ * insert time, so disabled events are never recorded.
+ *
+ * @param string $type Event type: new_order, new_customer, or product_review.
+ * @return bool
+ */
+function storesuite_is_notification_enabled( $type ) {
+	$option_map = array(
+		'new_order'      => 'storesuite_notification_new_order',
+		'new_customer'   => 'storesuite_notification_new_customer',
+		'product_review' => 'storesuite_notification_product_review',
+	);
+
+	if ( ! isset( $option_map[ $type ] ) ) {
+		return false;
+	}
+
+	return 'no' !== storesuite_get_option_by_key( $option_map[ $type ] );
+}
+
 
 /**
  * Get navigation URL for the store suite dashboard.

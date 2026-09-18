@@ -296,6 +296,63 @@
 			this.handleOrderFilterOffcanvas(); // Handle order filter off-canvas
 			this.handleBulkActionCheckbox(); // Handle bulk action checkbox
 			this.handleSearchToggle(); // Toggle the search box on mobile
+			this.handlePrintDocument(); // Print PDF-invoice plugin documents
+		},
+		/**
+		 * Print an invoice-plugin document instead of navigating to it.
+		 *
+		 * The document endpoint returns printable HTML, so it is loaded into a
+		 * hidden iframe and printed from there, leaving the dashboard in place.
+		 */
+		handlePrintDocument: function () {
+			$( document ).on(
+				'click',
+				'.storesuite-print-document',
+				function ( event ) {
+					event.preventDefault();
+
+					var url = $( this ).attr( 'href' );
+					if ( ! url ) {
+						return;
+					}
+
+					$.get( url )
+						.done( function ( html, status, xhr ) {
+							var type = xhr.getResponseHeader( 'Content-Type' );
+
+							// The endpoint reports failures as a plain-text body.
+							if ( type && type.indexOf( 'text/plain' ) !== -1 ) {
+								window.open( url, '_blank' );
+								return;
+							}
+
+							var iframe = document.createElement( 'iframe' );
+							iframe.style.display = 'none';
+							document.body.appendChild( iframe );
+
+							iframe.contentWindow.addEventListener(
+								'afterprint',
+								function () {
+									iframe.remove();
+								}
+							);
+
+							var doc = iframe.contentWindow.document;
+							doc.open();
+							doc.write( html );
+							doc.close();
+
+							// Give the document a tick to lay out its styles and images.
+							setTimeout( function () {
+								iframe.contentWindow.focus();
+								iframe.contentWindow.print();
+							}, 500 );
+						} )
+						.fail( function () {
+							window.open( url, '_blank' );
+						} );
+				}
+			);
 		},
 		handleSearchToggle: function () {
 			var searchToggle = $( '#storesuite-search-toggle' );

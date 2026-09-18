@@ -6,6 +6,7 @@ export { SwatchIcon as PaletteIcon } from '@heroicons/react/24/outline';
 export { RectangleStackIcon as CollectionIcon } from '@heroicons/react/24/outline';
 export { SparklesIcon } from '@heroicons/react/24/outline';
 export {
+	BellIcon,
 	CheckBadgeIcon,
 	ChevronLeftIcon,
 	ClockIcon,

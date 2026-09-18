@@ -5,6 +5,144 @@
 			this.handleSubmenuToggle();
 			this.handleDropdown();
 			this.closeDropdownOutside();
+			this.handleThemeToggle();
+		},
+
+		handleThemeToggle: function () {
+			var themePreferenceStorageKey = 'storesuite_theme_mode';
+			var $themeToggle = $( '.storesuite-theme-toggle' );
+			var $root = $( document.documentElement );
+
+			if ( ! $themeToggle.length ) {
+				return;
+			}
+
+			function persistThemePreference( mode ) {
+				try {
+					localStorage.setItem( themePreferenceStorageKey, mode );
+				} catch ( storageError ) {}
+			}
+
+			function currentMode() {
+				return $root.attr( 'data-theme' ) === 'dark' ? 'dark' : 'light';
+			}
+
+			// Dark styles for the TinyMCE content iframe. WordPress bundles
+			// TinyMCE 4 (lightgray skin) with no dark skin, and its init
+			// serialization mangles a server-side content_style that contains
+			// quotes — so we inject the stylesheet straight into the iframe and
+			// gate it on a data-theme attribute we toggle here.
+			function buildEditorDarkCss() {
+				var s = 'html[data-theme=dark] body.mce-content-body';
+				return (
+					s + '{background-color:#243449;color:rgb(203 213 225);}' +
+					s + ' h1,' + s + ' h2,' + s + ' h3,' + s + ' h4,' + s + ' h5,' + s + ' h6{color:#f1f5f9;}' +
+					s + ' a{color:#3b6ce0;}' +
+					s + ' blockquote{border-left-color:rgb(51 65 85);color:rgb(148 163 184);}' +
+					s + ' hr{border-color:rgb(51 65 85);}' +
+					s + ' table td,' + s + ' table th{border-color:rgb(51 65 85);}' +
+					s + ' code,' + s + ' pre{background-color:#172033;color:rgb(203 213 225);}'
+				);
+			}
+
+			// Mirror the dashboard theme onto a single TinyMCE content iframe.
+			function themeEditor( editor ) {
+				var doc = editor.getDoc && editor.getDoc();
+				if ( ! doc || ! doc.documentElement ) {
+					return;
+				}
+				if ( ! doc.getElementById( 'storesuite-editor-dark' ) ) {
+					var style = doc.createElement( 'style' );
+					style.id = 'storesuite-editor-dark';
+					style.textContent = buildEditorDarkCss();
+					( doc.head || doc.documentElement ).appendChild( style );
+				}
+				doc.documentElement.setAttribute( 'data-theme', currentMode() );
+			}
+
+			// Editors initialize asynchronously, so handle both editors that are
+			// already up and ones that init later (including after a toggle).
+			function syncEditorsTheme() {
+				if ( ! window.tinymce || ! window.tinymce.editors ) {
+					return;
+				}
+				window.tinymce.editors.forEach( function ( editor ) {
+					if ( editor.initialized ) {
+						themeEditor( editor );
+					} else {
+						editor.on( 'init', function () {
+							themeEditor( editor );
+						} );
+					}
+				} );
+			}
+
+			// The sidebar logo and icon can each have a dark variant. Both URLs
+			// ride along on the image as data attributes so the swap is a src
+			// change rather than a re-render.
+			function applyBrandingImages( mode ) {
+				$( '.storesuite-sidebar-logo [data-storesuite-dark-src]' ).attr(
+					'src',
+					function () {
+						return (
+							$( this ).data(
+								mode === 'dark'
+									? 'storesuiteDarkSrc'
+									: 'storesuiteLightSrc'
+							) || $( this ).attr( 'src' )
+						);
+					}
+				);
+			}
+
+			function applyThemeMode( mode ) {
+				$root.attr( 'data-theme', mode );
+				$themeToggle.attr(
+					'aria-pressed',
+					mode === 'dark' ? 'true' : 'false'
+				);
+				applyBrandingImages( mode );
+				syncEditorsTheme();
+			}
+
+			// TinyMCE (wp-tinymce.js) often loads after this script, so polling
+			// avoids missing editors that initialize later — e.g. when the page
+			// is reloaded while dark mode is active.
+			function whenTinymceReady( onReady ) {
+				if ( window.tinymce ) {
+					onReady();
+					return;
+				}
+				var attempts = 0;
+				var poll = setInterval( function () {
+					attempts++;
+					if ( window.tinymce ) {
+						clearInterval( poll );
+						onReady();
+					} else if ( attempts > 50 ) {
+						clearInterval( poll );
+					}
+				}, 100 );
+			}
+
+			// Reflect the theme resolved by the inline head script on load.
+			applyThemeMode( currentMode() );
+
+			// Theme existing editors plus any added after TinyMCE is ready.
+			whenTinymceReady( function () {
+				syncEditorsTheme();
+				window.tinymce.on( 'AddEditor', function ( event ) {
+					event.editor.on( 'init', function () {
+						themeEditor( event.editor );
+					} );
+				} );
+			} );
+
+			$themeToggle.on( 'click', function () {
+				var nextMode = currentMode() === 'dark' ? 'light' : 'dark';
+				applyThemeMode( nextMode );
+				persistThemePreference( nextMode );
+			} );
 		},
 
 		handleSubmenuToggle: function () {

@@ -1,0 +1,144 @@
+name: E2E Tests
+
+# Deliberately not per-PR (browser suites are expensive). Two nightly lanes:
+#   latest — current WordPress + WooCommerce; this lane gates.
+#   pinned — known-good versions, advisory only (continue-on-error), so a
+#            red night immediately answers "did WordPress/WooCommerce break
+#            us, or did we break ourselves".
+# The push trigger is scoped to this file so workflow changes validate
+# themselves; scheduled runs start once this workflow reaches the default
+# branch.
+on:
+    push:
+        paths:
+            - '.github/workflows/e2e_tests.yml'
+    schedule:
+        - cron: '10 2 * * *'
+    workflow_dispatch:
+
+jobs:
+    e2e:
+        name: Playwright (${{ matrix.lane }} WP/WC)
+        runs-on: ubuntu-latest
+        timeout-minutes: 40
+        continue-on-error: ${{ matrix.lane == 'pinned' }}
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - lane: latest
+                      wp: latest
+                      wc: latest-stable
+                    - lane: pinned
+                      wp: '6.8'
+                      wc: '10.1.2'
+        env:
+            WP_DIR: /tmp/wp-e2e
+            BASE_URL: http://127.0.0.1:9999
+        services:
+            mysql:
+                image: mysql:8.0
+                env:
+                    MYSQL_ROOT_PASSWORD: root
+                    MYSQL_DATABASE: storesuite_e2e
+                ports:
+                    - 3306:3306
+                options: >-
+                    --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+                    --health-interval=10s
+                    --health-timeout=5s
+                    --health-retries=10
+        steps:
+            - uses: actions/checkout@v4
+
+            - name: Setup PHP
+              uses: shivammathur/setup-php@v2
+              with:
+                  php-version: '8.2'
+                  extensions: mysqli
+                  coverage: none
+                  tools: composer:v2, wp-cli
+
+            - name: Setup Node
+              uses: actions/setup-node@v4
+              with:
+                  node-version: '20'
+                  cache: npm
+                  cache-dependency-path: |
+                      package-lock.json
+                      tests/pw/package-lock.json
+
+            - name: Build the plugin
+              run: |
+                  composer install --no-dev --prefer-dist --no-progress
+                  npm ci --no-audit --no-fund
+                  npm run build
+
+            - name: Download WordPress (${{ matrix.wp }})
+              run: |
+                  if [ "${{ matrix.wp }}" = "latest" ]; then
+                      curl -sL https://wordpress.org/latest.tar.gz | tar -xz -C /tmp
+                  else
+                      curl -sL "https://wordpress.org/wordpress-${{ matrix.wp }}.tar.gz" | tar -xz -C /tmp
+                  fi
+                  mv /tmp/wordpress "$WP_DIR"
+
+            - name: Download WooCommerce (${{ matrix.wc }})
+              run: |
+                  curl -sL "https://downloads.wordpress.org/plugin/woocommerce.${{ matrix.wc }}.zip" -o /tmp/woocommerce.zip
+                  unzip -q /tmp/woocommerce.zip -d "$WP_DIR/wp-content/plugins"
+
+            - name: Install the site
+              run: |
+                  rsync -a --exclude '.git' --exclude 'node_modules' --exclude 'tests' ./ "$WP_DIR/wp-content/plugins/storesuite/"
+                  wp config create --path="$WP_DIR" --dbname=storesuite_e2e --dbuser=root --dbpass=root --dbhost=127.0.0.1 --skip-check --extra-php <<'PHP'
+                  define( 'WP_DEBUG', true );
+                  define( 'WP_DEBUG_LOG', true );
+                  define( 'WP_DEBUG_DISPLAY', false );
+                  define( 'DISABLE_WP_CRON', true );
+                  define( 'AUTOMATIC_UPDATER_DISABLED', true );
+                  PHP
+                  wp core install --path="$WP_DIR" --url="$BASE_URL" --title="StoreSuite E2E" \
+                      --admin_user=admin --admin_password=password --admin_email=admin@example.com --skip-email
+
+            - name: Provision test data
+              run: |
+                  WP_CLI="wp --path=$WP_DIR" bash tests/pw/bin/e2e-provision.sh | tee /tmp/provision.log
+                  {
+                      echo "BASE_URL=$BASE_URL"
+                      grep -E '^(ADMIN|MANAGER)_APP_PASSWORD=' /tmp/provision.log
+                  } > tests/pw/.env
+
+            - name: Start the web server
+              run: |
+                  cp tests/pw/bin/router.php "$WP_DIR/router.php"
+                  ( cd "$WP_DIR" && nohup php -S 127.0.0.1:9999 router.php > /tmp/php-server.log 2>&1 & )
+                  for i in $(seq 1 30); do
+                      code=$(curl -s -o /dev/null -w '%{http_code}' "$BASE_URL/" || true)
+                      [ "$code" = "200" ] && exit 0
+                      sleep 1
+                  done
+                  echo "Server did not come up:" && tail -50 /tmp/php-server.log && exit 1
+
+            - name: Install Playwright
+              working-directory: tests/pw
+              run: |
+                  npm ci --no-audit --no-fund
+                  npx playwright install --with-deps chromium
+
+            - name: Run Playwright tests
+              working-directory: tests/pw
+              run: npx playwright test
+
+            - name: Upload artifacts
+              if: failure()
+              uses: actions/upload-artifact@v4
+              with:
+                  name: e2e-artifacts-${{ matrix.lane }}
+                  path: |
+                      tests/pw/playwright-report
+                      tests/pw/test-results
+                      /tmp/wp-e2e/wp-content/debug.log
+                      /tmp/php-server.log
+                  if-no-files-found: ignore
+                  retention-days: 7

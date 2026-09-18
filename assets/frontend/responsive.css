@@ -670,6 +670,15 @@
 	.storesuite-kpi-summary .col:last-child .storesuite-kpi-card {
 		border-bottom: none;
 	}
+
+	.storesuite-dropdown.storesuite-header-dropdown.storesuite-notifications-dropdown .storesuite-dropdown-menu {
+		width: 280px;
+		right: -60px;
+	}
+
+	.storesuite-notifications-list .storesuite-notification-item {
+		padding: 14px 16px;
+	}
 }
 
 /* Tablet + landscape phones ≥768px: compact toolbar, horizontally scrollable list table */

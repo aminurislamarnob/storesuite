@@ -1,0 +1,5 @@
+Type,SKU,Name,Published,Short description,In stock?,Stock,Regular price,Categories
+simple,CSV-OK-6,Recycled Notebook,1,96 pages of recycled stock.,1,50,8.00,Stationery
+widget,CSV-BAD-7,Mystery Widget,1,Row 2 declares a product type WooCommerce does not have.,1,10,12.00,Misc
+simple,CSV-OK-9,Linen Napkin Set,1,Set of four stonewashed napkins.,1,18,32.00,Kitchen
+simple,CSV-OK-6,Recycled Notebook (duplicate row),1,Row 4 repeats the SKU from row 1.,1,50,8.00,Stationery
