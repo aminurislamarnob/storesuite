@@ -7,14 +7,39 @@ const { execFileSync } = require( 'child_process' );
 const WP_ROOT = path.resolve( __dirname, '..', '..', '..', '..', '..' );
 
 /**
+ * Run a PHP snippet on the site via wp-cli and return exactly what it echoed.
+ *
+ * The snippet's output is fenced between markers so anything other plugins
+ * print during bootstrap or shutdown (deprecation notices, loggers flushing
+ * on CLI exit) can never leak into a value the specs interpolate back into
+ * PHP or compare against.
+ *
+ * @param {string} php PHP code (without opening tag), ending in `;`.
+ * @return {string} Trimmed output of the snippet itself.
+ */
+function wpEval( php ) {
+	const BEGIN = '__SS_E2E_BEGIN__';
+	const END = '__SS_E2E_END__';
+	const fenced = `echo '${ BEGIN }'; ${ php } echo '${ END }';`;
+	const out = execFileSync( 'wp', [ 'eval', fenced ], { cwd: WP_ROOT, encoding: 'utf8' } );
+	const start = out.indexOf( BEGIN );
+	const end = out.indexOf( END, start );
+	if ( start === -1 || end === -1 ) {
+		throw new Error( `wp eval produced no fenced output:\n${ out }` );
+	}
+	return out.slice( start + BEGIN.length, end ).trim();
+}
+
+/**
  * Read one key from the serialized storesuite_settings option ('' if unset).
  *
  * @param {string} key Setting key.
  * @return {string} Current value.
  */
 function getStoreSuiteSetting( key ) {
-	const php = `$s = (array) get_option( 'storesuite_settings', array() ); echo isset( $s['${ key }'] ) ? $s['${ key }'] : '';`;
-	return execFileSync( 'wp', [ 'eval', php ], { cwd: WP_ROOT, encoding: 'utf8' } ).trim();
+	return wpEval(
+		`$s = (array) get_option( 'storesuite_settings', array() ); echo isset( $s['${ key }'] ) ? $s['${ key }'] : '';`
+	);
 }
 
 /**
@@ -28,7 +53,7 @@ function setStoreSuiteSetting( key, value ) {
 	const php = value
 		? `$s = (array) get_option( 'storesuite_settings', array() ); $s['${ key }'] = '${ value }'; update_option( 'storesuite_settings', $s );`
 		: `$s = (array) get_option( 'storesuite_settings', array() ); unset( $s['${ key }'] ); update_option( 'storesuite_settings', $s );`;
-	execFileSync( 'wp', [ 'eval', php ], { cwd: WP_ROOT, encoding: 'utf8' } );
+	wpEval( php );
 }
 
 const USERS = {
@@ -94,7 +119,11 @@ async function expectSwal( page, text ) {
 	// Dismiss so the next interaction isn't blocked by the overlay. Use
 	// SweetAlert2's own API — the popup's scale-in animation makes
 	// coordinate-based clicks land on the backdrop and dismiss instead.
-	await page.evaluate( () => window.Swal && window.Swal.clickConfirm() );
+	// Some success handlers redirect shortly after the popup; if that
+	// navigation lands first the context is gone and the popup with it.
+	await page
+		.evaluate( () => window.Swal && window.Swal.clickConfirm() )
+		.catch( () => {} );
 	await popup.waitFor( { state: 'hidden' } ).catch( () => {} );
 }
 
@@ -120,16 +149,6 @@ async function confirmSwal( page ) {
  */
 function uniq() {
 	return String( Date.now() );
-}
-
-/**
- * Run a PHP snippet on the site via wp-cli and return trimmed stdout.
- *
- * @param {string} php PHP code (without opening tag).
- * @return {string} stdout.
- */
-function wpEval( php ) {
-	return execFileSync( 'wp', [ 'eval', php ], { cwd: WP_ROOT, encoding: 'utf8' } ).trim();
 }
 
 /**

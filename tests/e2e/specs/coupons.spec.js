@@ -27,6 +27,8 @@ test( 'coupon lifecycle: add, list, delete', async ( { page } ) => {
 	await page.fill( '#description', 'Created by Playwright.' );
 	await page.click( '#storesuite-add-coupon button[type="submit"]' );
 	await expectSwal( page, /successfully created/i );
+	// The add handler redirects to the coupons list after the popup.
+	await settleReload( page );
 
 	// --- Appears in the list ---
 	await page.goto( listUrl );
@@ -55,6 +57,8 @@ test( 'an existing coupon can be edited', async ( { page } ) => {
 	await page.fill( '#coupon_amount', '25' );
 	await page.click( '#storesuite-edit-coupon button[type="submit"]' );
 	await expectSwal( page, /(updated|success)/i );
+	// The edit handler redirects to the coupons list after the popup.
+	await settleReload( page );
 
 	// Persisted: reload the edit screen and check the amount.
 	await page.goto( dashboardUrl( 'edit-coupon' ) + id );

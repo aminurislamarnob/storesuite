@@ -23,6 +23,15 @@ function wp( args ) {
 
 module.exports = async () => {
 	wp( [ 'plugin', 'activate', 'storesuite', '--quiet' ] );
+
+	// The inventory, dashboard-nav and modules-admin specs assume the
+	// Inventory Manager module is active. Activate through the Manager so
+	// its activate() hook (schema install) runs like it would from the UI.
+	wp( [
+		'eval',
+		"pluginizelab_storesuite()->modules->activate( 'inventory-manager' );",
+	] );
+
 	wp( [ 'rewrite', 'flush', '--quiet' ] );
 
 	const users = [
