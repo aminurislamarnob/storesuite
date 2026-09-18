@@ -91,10 +91,17 @@ class AcfIntegration {
 	protected $rejected = array();
 
 	/**
-	 * Constructor. Bails unless ACF is active.
+	 * Settings key of the admin kill switch ('yes' / 'no', default 'yes').
+	 *
+	 * @var string
+	 */
+	const SETTING_KEY = 'storesuite_acf_product_fields';
+
+	/**
+	 * Constructor. Bails unless ACF is active and the integration is enabled.
 	 */
 	public function __construct() {
-		if ( ! self::is_acf_active() ) {
+		if ( ! self::is_acf_active() || ! self::is_enabled() ) {
 			return;
 		}
 
@@ -122,6 +129,17 @@ class AcfIntegration {
 	 */
 	public static function is_acf_active(): bool {
 		return class_exists( 'ACF' );
+	}
+
+	/**
+	 * Whether the integration is switched on in the admin General settings.
+	 *
+	 * Defaults to on so existing sites get the feature without configuration.
+	 *
+	 * @return bool
+	 */
+	public static function is_enabled(): bool {
+		return 'no' !== storesuite_get_option_by_key( self::SETTING_KEY );
 	}
 
 	/**

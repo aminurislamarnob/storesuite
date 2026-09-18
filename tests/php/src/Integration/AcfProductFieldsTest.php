@@ -167,6 +167,39 @@ class AcfProductFieldsTest extends StoreSuiteAjaxTestCase {
 		$this->assertInstanceOf( AcfIntegration::class, \pluginizelab_storesuite()->storesuite_acf_integration );
 	}
 
+	public function test_integration_is_on_by_default_and_the_kill_switch_turns_it_off() {
+		$this->require_acf();
+
+		$this->assertTrue( AcfIntegration::is_enabled(), 'Unset means enabled.' );
+
+		$enabled = new AcfIntegration();
+		$this->assertNotFalse( has_action( 'storesuite_product_form_after_others', array( $enabled, 'render_field_groups' ) ) );
+		$this->assertNotFalse( has_filter( 'storesuite_sanitize_acf_fields', array( $enabled, 'sanitize_fields' ) ) );
+		$this->assertNotFalse( has_action( 'wp_enqueue_scripts', array( $enabled, 'enqueue_script' ) ) );
+
+		$this->set_storesuite_option( 'storesuite_acf_product_fields', 'no' );
+		$this->assertFalse( AcfIntegration::is_enabled() );
+
+		$disabled = new AcfIntegration();
+		$this->assertFalse( has_action( 'storesuite_product_form_after_others', array( $disabled, 'render_field_groups' ) ), 'No card.' );
+		$this->assertFalse( has_filter( 'storesuite_sanitize_acf_fields', array( $disabled, 'sanitize_fields' ) ), 'No POST handling.' );
+		$this->assertFalse( has_filter( 'storesuite_product_pre_save_validation', array( $disabled, 'validate_fields' ) ) );
+		$this->assertFalse( has_action( 'storesuite_new_product_added', array( $disabled, 'save_fields' ) ) );
+		$this->assertFalse( has_action( 'wp_enqueue_scripts', array( $disabled, 'enqueue_script' ) ), 'No script.' );
+
+		$this->set_storesuite_option( 'storesuite_acf_product_fields', 'yes' );
+		$this->assertTrue( AcfIntegration::is_enabled() );
+
+		// Detach the extra instances so they do not leak into other tests.
+		remove_action( 'storesuite_product_form_after_others', array( $enabled, 'render_field_groups' ) );
+		remove_filter( 'storesuite_sanitize_acf_fields', array( $enabled, 'sanitize_fields' ) );
+		remove_filter( 'storesuite_product_pre_save_validation', array( $enabled, 'validate_fields' ) );
+		remove_action( 'storesuite_new_product_added', array( $enabled, 'save_fields' ) );
+		remove_action( 'storesuite_product_updated', array( $enabled, 'save_fields' ) );
+		remove_action( 'init', array( $enabled, 'register_script' ), 11 );
+		remove_action( 'wp_enqueue_scripts', array( $enabled, 'enqueue_script' ), 20 );
+	}
+
 	// -------------------------------------------------------------------------
 	// Rendering.
 	// -------------------------------------------------------------------------
