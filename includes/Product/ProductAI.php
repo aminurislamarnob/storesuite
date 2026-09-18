@@ -235,9 +235,39 @@ class ProductAI {
 	 * @return string|\WP_Error
 	 */
 	private function generate_one( $field, array $context ) {
-		return wp_ai_client_prompt( $this->build_prompt( $field, $context ) )
-			->using_system_instruction( $this->get_system_instruction( $field ) )
+		$prompt      = $this->build_prompt( $field, $context );
+		$instruction = $this->get_system_instruction( $field );
+		$generator   = self::get_text_generator();
+
+		if ( $generator ) {
+			return call_user_func( $generator, $prompt, $instruction, $field );
+		}
+
+		return wp_ai_client_prompt( $prompt )
+			->using_system_instruction( $instruction )
 			->generate_text();
+	}
+
+	/**
+	 * A custom text generator, if one has been supplied.
+	 *
+	 * When present it replaces the WordPress core AI Client for every text
+	 * generation and makes text AI count as available. It is the seam the test
+	 * suites use (no provider on CI), and lets a store plug in its own model.
+	 *
+	 * @return callable|null Callable taking ( string $prompt, string $system_instruction, string $field )
+	 *                       and returning the generated text or a WP_Error.
+	 */
+	public static function get_text_generator() {
+		/**
+		 * Filters the text generator used for AI product copy.
+		 *
+		 * @param callable|null $generator Callable ( $prompt, $system_instruction, $field ): string|WP_Error, or null
+		 *                                 to use the WordPress core AI Client.
+		 */
+		$generator = apply_filters( 'storesuite_ai_text_generator', null );
+
+		return is_callable( $generator ) ? $generator : null;
 	}
 
 	/**
