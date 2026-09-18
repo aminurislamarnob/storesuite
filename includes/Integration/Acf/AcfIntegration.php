@@ -38,6 +38,9 @@ class AcfIntegration {
 		'radio',
 		'button_group',
 		'true_false',
+		'date_picker',
+		'date_time_picker',
+		'time_picker',
 	);
 
 	/**

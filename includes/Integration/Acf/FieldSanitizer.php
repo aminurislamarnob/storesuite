@@ -53,6 +53,11 @@ class FieldSanitizer {
 				return $this->sanitize_choice( $field, $raw );
 			case 'true_false':
 				return $this->sanitize_true_false( $raw );
+			case 'date_picker':
+			case 'date_time_picker':
+			case 'time_picker':
+				// Malformed input clears the value rather than storing garbage.
+				return DateFormats::to_storage( $type, $raw );
 		}
 
 		return null;

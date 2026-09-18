@@ -18,6 +18,27 @@
 
 			this.bindRangeOutput( $groups );
 			this.bindColorPicker( $groups );
+			this.initDatePickers( $groups );
+		},
+
+		/**
+		 * jQuery UI datepicker on date fields, configured like the sale-price
+		 * date fields (ISO output, one month, button panel).
+		 */
+		initDatePickers: function ( $groups ) {
+			if ( typeof $.fn.datepicker !== 'function' ) {
+				return;
+			}
+
+			$groups.find( '.storesuite-acf-datepicker' ).datepicker( {
+				defaultDate: '',
+				dateFormat: 'yy-mm-dd',
+				numberOfMonths: 1,
+				showButtonPanel: true,
+				onSelect: function () {
+					$( this ).trigger( 'change' );
+				},
+			} );
 		},
 
 		/**
