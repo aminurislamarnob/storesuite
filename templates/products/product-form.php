@@ -6,7 +6,6 @@
  */
 
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CostOfGoodsSoldController;
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -174,7 +173,7 @@ if ( $cogs_is_enabled ) {
 }
 
 // Point of Sale feature availability.
-$pos_feature_enabled = FeaturesUtil::feature_is_enabled( 'point_of_sale' );
+$pos_feature_enabled = storesuite_is_pos_feature_enabled();
 ?>
 <form id="storesuite-add-product" method="POST">
 		<div class="row">
