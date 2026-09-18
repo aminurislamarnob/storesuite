@@ -41,8 +41,15 @@ class InstallerSettingsTest extends WP_UnitTestCase {
 	 */
 	private function table_exists() {
 		global $wpdb;
-		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching
-		return (bool) $wpdb->get_var( $wpdb->prepare( 'SHOW TABLES LIKE %s', Installer::stock_log_table() ) );
+
+		// SHOW TABLES does not list the TEMPORARY tables the test suite
+		// creates, so probe the table with a query instead.
+		$suppress = $wpdb->suppress_errors();
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching, WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		$result = $wpdb->query( 'SELECT 1 FROM ' . Installer::stock_log_table() . ' LIMIT 1' );
+		$wpdb->suppress_errors( $suppress );
+
+		return false !== $result;
 	}
 
 	/*

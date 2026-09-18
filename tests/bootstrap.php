@@ -43,6 +43,13 @@ tests_add_filter(
 	'setup_theme',
 	function () {
 		WC_Install::install();
+
+		// WooCommerce's "newly installed" admin_init pass (HPOS enablement)
+		// self-joins the orders table, which MySQL 8 cannot do against the
+		// TEMPORARY tables the test suite creates ("Can't reopen table").
+		// Every Ajax test fires admin_init, so mark the install as settled.
+		update_option( 'woocommerce_newly_installed', 'no' );
+
 		$GLOBALS['wp_roles'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
 		wp_roles();
 	}
@@ -51,6 +58,53 @@ tests_add_filter(
 require $storesuite_wp_phpunit_dir . '/includes/bootstrap.php';
 
 require __DIR__ . '/fixtures/FixtureModule.php';
+
+// WooCommerce deprecates parts of its own API and keeps calling them
+// internally (the analytics feature-flag shim, the POS check in the CSV
+// exporter, ...). WP_UnitTestCase fails any test that triggers a deprecation
+// it did not declare, so each WooCommerce release could break tests that never
+// touched the deprecated code. When the nearest plugin frame below the
+// deprecated call is WooCommerce itself, declare the notice as expected on the
+// running test case; deprecated calls made from StoreSuite still fail.
+add_action(
+	'deprecated_function_run',
+	function ( $function_name ) {
+		$frames  = debug_backtrace( DEBUG_BACKTRACE_IGNORE_ARGS ); // phpcs:ignore WordPress.PHP.DevelopmentFunctions.error_log_debug_backtrace
+		$start   = 0;
+		$origin  = '';
+		$plugins = array(
+			'woocommerce' => wp_normalize_path( WC_ABSPATH ),
+			'storesuite'  => trailingslashit( wp_normalize_path( STORESUITE_DIR ) ),
+		);
+
+		foreach ( $frames as $i => $frame ) {
+			if ( isset( $frame['function'] ) && in_array( $frame['function'], array( '_deprecated_function', 'wc_deprecated_function' ), true ) ) {
+				$start = $i + 1;
+			}
+		}
+
+		for ( $i = $start; $i < count( $frames ); $i++ ) {
+			$file = isset( $frames[ $i ]['file'] ) ? wp_normalize_path( $frames[ $i ]['file'] ) : '';
+			foreach ( $plugins as $slug => $dir ) {
+				if ( '' !== $file && 0 === strpos( $file, $dir ) ) {
+					$origin = $slug;
+					break 2;
+				}
+			}
+		}
+
+		if ( 'woocommerce' !== $origin ) {
+			return;
+		}
+
+		foreach ( $GLOBALS['wp_filter']['deprecated_function_run']->callbacks[10] ?? array() as $callback ) {
+			if ( is_array( $callback['function'] ) && $callback['function'][0] instanceof WP_UnitTestCase_Base ) {
+				$callback['function'][0]->setExpectedDeprecated( $function_name );
+			}
+		}
+	},
+	9
+);
 require __DIR__ . '/Integration/StoreSuiteAjaxTestCase.php';
 
 // Neutralize core/plugin/theme update checks. Ajax tests fire `admin_init`

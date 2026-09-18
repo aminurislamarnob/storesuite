@@ -1,8 +1,8 @@
 /**
  * Playwright E2E configuration.
  *
- * Runs against the local Herd WordPress install (https://westore-headless.test)
- * with StoreSuite + WooCommerce active. Test users and seed data are created
+ * Runs against the local Herd WordPress install (https://westore-headless.test,
+ * override with E2E_BASE_URL) with StoreSuite + WooCommerce active. Test users and seed data are created
  * by tests/e2e/global-setup.js via wp-cli; logins are performed once in
  * tests/e2e/auth.setup.js and reused through storage states.
  *
@@ -20,7 +20,7 @@ module.exports = defineConfig( {
 	timeout: 30000,
 	reporter: [ [ 'list' ] ],
 	use: {
-		baseURL: 'https://westore-headless.test',
+		baseURL: process.env.E2E_BASE_URL || 'https://westore-headless.test',
 		/* Herd serves a self-signed certificate. */
 		ignoreHTTPSErrors: true,
 		trace: 'retain-on-failure',
