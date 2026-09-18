@@ -215,6 +215,8 @@ class Assets {
 					'logoUrl'                    => STORESUITE_PLUGIN_ASSET . '/frontend/images/storesuite-logo-dark.png',
 					'aiDefaultInstructions'      => \PluginizeLab\StoreSuite\Product\ProductAI::default_system_instructions(),
 					'aiDefaultImageInstruction'  => \PluginizeLab\StoreSuite\Product\ProductImageAI::default_image_instruction(),
+					// Extra AI settings blocks contributed by integrations (e.g. Yoast SEO).
+					'aiSettingsGroups'           => \PluginizeLab\StoreSuite\Product\ProductAI::get_settings_groups(),
 					// Whether at least one AI provider is connected (text or image).
 					'aiConnected'                => \PluginizeLab\StoreSuite\Product\ProductAI::is_text_supported() || \PluginizeLab\StoreSuite\Product\ProductImageAI::is_supported(),
 					'connectorsUrl'              => admin_url( 'options-connectors.php' ),
@@ -718,6 +720,18 @@ class Assets {
 						'insert_action'   => 'storesuite_insert_product_image',
 						'prompt_required' => __( 'Please describe the image you want to generate.', 'storesuite' ),
 						'inserting'       => __( 'Inserting…', 'storesuite' ),
+					),
+					// Every generatable field: label, insert target, textarea rows, target length.
+					'fields'        => array_map(
+						static function ( $definition ) {
+							return array(
+								'label'  => $definition['label'],
+								'target' => $definition['target'],
+								'rows'   => isset( $definition['rows'] ) ? (int) $definition['rows'] : 3,
+								'length' => isset( $definition['length'] ) ? (int) $definition['length'] : 0,
+							);
+						},
+						\PluginizeLab\StoreSuite\Product\ProductAI::get_fields()
 					),
 					'i18n'          => array(
 						'generate'        => __( 'Generate with AI', 'storesuite' ),

@@ -157,6 +157,23 @@ Variables are placeholders that fill themselves in — `%%title%%` becomes the p
 
 Click **Insert variable** next to the SEO title or meta description and pick from the list, or type **%** in the field and keep typing to narrow it down. The most useful ones — **Site title**, **Title**, and **Separator** — are at the top. The preview shows the finished result straight away.
 
+#### Letting AI draft it
+
+![Generate button and AI suggestion with counter](screenshots/screenshot-53.png)
+
+If your store has AI set up (see the **AI** tab in settings), a **Generate with AI** button sits next to **Insert variable** on the SEO title, meta description, and every social title and description — the same helpers Yoast offers in the WordPress admin.
+
+Click it and StoreSuite writes a suggestion from what's already on the form: the product title, its descriptions, and your **Focus keyphrase**, which it works in naturally. It knows which field it's writing for, so an SEO title comes out short and search-friendly while a social description reads like something worth sharing.
+
+The suggestion opens in a small window where you can edit it. A counter underneath shows the length against the target for that field — for example **52 / 60** — and turns red if you go over. **Regenerate** asks for a different take (use the **‹ ›** arrows to compare), and **Insert** drops it into the field, where the Google preview and length bar update straight away.
+
+Two things to know:
+
+- The AI never adds your store name or variables. If you want ` - Your Store` on the end of an SEO title, add `%%sep%% %%sitename%%` with **Insert variable** after inserting.
+- Generation needs a product title or short description to work from, so fill one of those in first.
+
+> **Tip:** Set the **Focus keyphrase** before you click **Generate** — it's the single biggest influence on what comes back.
+
 ### The Social tab
 
 ![Social tab](screenshots/screenshot-51.png)

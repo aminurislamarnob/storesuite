@@ -137,4 +137,51 @@ class SettingsControllerTest extends StoreSuiteTestCase {
 		$this->do_rest_request( 'POST', self::ROUTE, array( 'storesuite_dashboard_sidebar_logo_id' => 0 ) );
 		$this->assertSame( '', storesuite_get_option_by_key( 'storesuite_dashboard_sidebar_logo_id' ) );
 	}
+
+	/**
+	 * Settings of AI fields registered by integrations are accepted, sanitized and returned.
+	 *
+	 * @return void
+	 */
+	public function test_registered_ai_field_settings_round_trip() {
+		wp_set_current_user( $this->admin_id );
+
+		$register = function ( $fields ) {
+			$fields['tagline'] = array(
+				'label'               => 'Tagline',
+				'target'              => '#tagline',
+				'enabled_setting'     => 'storesuite_ai_field_tagline',
+				'instruction_setting' => 'storesuite_ai_instruction_tagline',
+			);
+			return $fields;
+		};
+		add_filter( 'storesuite_ai_text_fields', $register );
+		$this->reset_rest_server();
+
+		$response = $this->do_rest_request(
+			'POST',
+			self::ROUTE,
+			array(
+				'storesuite_ai_field_tagline'       => 'no',
+				'storesuite_ai_instruction_tagline' => "Be <b>bold</b>.\nAlways.",
+			)
+		);
+
+		$this->assertSame( 200, $response->get_status() );
+		$data = $response->get_data();
+		$this->assertSame( 'no', $data['storesuite_ai_field_tagline'] );
+		$this->assertSame( "Be bold.\nAlways.", $data['storesuite_ai_instruction_tagline'] );
+
+		// The toggle only accepts yes/no, like the built-in AI toggles.
+		$response = $this->do_rest_request( 'POST', self::ROUTE, array( 'storesuite_ai_field_tagline' => 'maybe' ) );
+		$this->assertSame( 400, $response->get_status() );
+		$this->assertSame( 'no', storesuite_get_option_by_key( 'storesuite_ai_field_tagline' ) );
+
+		remove_filter( 'storesuite_ai_text_fields', $register );
+		$this->reset_rest_server();
+
+		// Once the field is gone its keys are unknown again and ignored.
+		$response = $this->do_rest_request( 'POST', self::ROUTE, array( 'storesuite_ai_field_tagline' => 'yes' ) );
+		$this->assertSame( 'no', storesuite_get_option_by_key( 'storesuite_ai_field_tagline' ), 'Unregistered keys must not be written.' );
+	}
 }

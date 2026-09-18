@@ -139,13 +139,13 @@ class SettingsController extends WP_REST_Controller {
 			$storesuite_settings['storesuite_coupon_per_page'] = sanitize_text_field( $request->get_param( 'storesuite_coupon_per_page' ) );
 		}
 
-		$ai_field_keys = array(
-			'storesuite_ai_field_title',
-			'storesuite_ai_field_description',
-			'storesuite_ai_field_short_description',
-			'storesuite_ai_field_featured_image',
-			'storesuite_ai_field_gallery_image',
-			'storesuite_ai_field_bundle',
+		$ai_field_keys = array_merge(
+			array(
+				'storesuite_ai_field_featured_image',
+				'storesuite_ai_field_gallery_image',
+				'storesuite_ai_field_bundle',
+			),
+			$this->get_registered_ai_keys( 'enabled_setting' )
 		);
 		foreach ( $ai_field_keys as $key ) {
 			if ( $request->has_param( $key ) ) {
@@ -164,11 +164,9 @@ class SettingsController extends WP_REST_Controller {
 			}
 		}
 
-		$ai_instruction_keys = array(
-			'storesuite_ai_instruction_title',
-			'storesuite_ai_instruction_description',
-			'storesuite_ai_instruction_short_description',
-			'storesuite_ai_image_instruction',
+		$ai_instruction_keys = array_merge(
+			array( 'storesuite_ai_image_instruction' ),
+			$this->get_registered_ai_keys( 'instruction_setting' )
 		);
 		foreach ( $ai_instruction_keys as $key ) {
 			if ( $request->has_param( $key ) ) {
@@ -268,6 +266,60 @@ class SettingsController extends WP_REST_Controller {
 	}
 
 	/**
+	 * Settings keys declared by the AI text fields (built-in and registered by integrations).
+	 *
+	 * The built-in fields declare the storesuite_ai_field_* and
+	 * storesuite_ai_instruction_* keys the settings page has always had, so the
+	 * registry is the single source of these keys.
+	 *
+	 * @param string $which `enabled_setting` or `instruction_setting`.
+	 * @return string[] Unique settings keys.
+	 */
+	private function get_registered_ai_keys( $which ) {
+		$keys = array();
+
+		foreach ( \PluginizeLab\StoreSuite\Product\ProductAI::get_fields() as $definition ) {
+			if ( ! empty( $definition[ $which ] ) ) {
+				$keys[] = $definition[ $which ];
+			}
+		}
+
+		return array_values( array_unique( $keys ) );
+	}
+
+	/**
+	 * Schema entries for AI settings keys declared by registered fields that the
+	 * static schema below does not already list.
+	 *
+	 * @param array $properties Static schema properties.
+	 * @return array Properties with the registered keys added.
+	 */
+	private function add_registered_ai_schema( array $properties ) {
+		foreach ( $this->get_registered_ai_keys( 'enabled_setting' ) as $key ) {
+			if ( ! isset( $properties[ $key ] ) ) {
+				$properties[ $key ] = array(
+					'description' => __( 'Whether AI generation is offered for this field.', 'storesuite' ),
+					'type'        => 'string',
+					'enum'        => array( 'yes', 'no' ),
+					'context'     => array( 'view', 'edit' ),
+				);
+			}
+		}
+
+		foreach ( $this->get_registered_ai_keys( 'instruction_setting' ) as $key ) {
+			if ( ! isset( $properties[ $key ] ) ) {
+				$properties[ $key ] = array(
+					'description' => __( 'Custom system instruction for AI generation of this field. Falls back to the built-in default when empty.', 'storesuite' ),
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+				);
+			}
+		}
+
+		return $properties;
+	}
+
+	/**
 	 * Get the schema for a single item, if any.
 	 *
 	 * @return array
@@ -277,219 +329,221 @@ class SettingsController extends WP_REST_Controller {
 			'$schema'    => 'http://json-schema.org/draft-04/schema#',
 			'title'      => 'settings',
 			'type'       => 'object',
-			'properties' => array(
-				'storesuite_dashboard_page_id'             => array(
-					'description' => __( 'Dashboard Page.', 'storesuite' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_prevent_admin_access'          => array(
-					'description' => __( 'Prevent vendors from accessing wp-admin. If HPOS is enabled, admin access is blocked regardless.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_dashboard_sidebar_logo_id'     => array(
-					'description' => __( 'Attachment ID for the dashboard sidebar logo image.', 'storesuite' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_dashboard_sidebar_icon_id'     => array(
-					'description' => __( 'Attachment ID for the dashboard sidebar icon (shown when the sidebar is collapsed).', 'storesuite' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_dashboard_sidebar_logo_dark_id' => array(
-					'description' => __( 'Attachment ID for the dashboard sidebar logo used in dark mode. Falls back to the light logo when empty.', 'storesuite' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_dashboard_sidebar_icon_dark_id' => array(
-					'description' => __( 'Attachment ID for the dashboard sidebar icon used in dark mode. Falls back to the light icon when empty.', 'storesuite' ),
-					'type'        => 'integer',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_product_per_page'              => array(
-					'description' => __( 'Products Per Page.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_order_per_page'                => array(
-					'description' => __( 'Orders Per Page.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_category_per_page'             => array(
-					'description' => __( 'Categories Per Page.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_tag_per_page'                  => array(
-					'description' => __( 'Tags Per Page.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_brand_per_page'                => array(
-					'description' => __( 'Brands Per Page.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_coupon_per_page'               => array(
-					'description' => __( 'Coupons Per Page.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_button_text'             => array(
-					'description' => __( 'Button text color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_button_background'       => array(
-					'description' => __( 'Button background color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_button_border'           => array(
-					'description' => __( 'Button border color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_button_hover_text'       => array(
-					'description' => __( 'Button hover text color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_button_hover_background' => array(
-					'description' => __( 'Button hover background color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_button_hover_border'     => array(
-					'description' => __( 'Button hover border color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_sidebar_menu_text'       => array(
-					'description' => __( 'Dashboard sidebar menu text color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_sidebar_background'      => array(
-					'description' => __( 'Dashboard sidebar background color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_sidebar_active_text'     => array(
-					'description' => __( 'Dashboard sidebar active/hover menu text color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_sidebar_active_background' => array(
-					'description' => __( 'Dashboard sidebar active menu background color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_sidebar_border' => array(
-					'description' => __( 'Dashboard sidebar border color.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_palette_mode' => array(
-					'description' => __( 'Color palette mode: predefined or custom.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'predefined', 'custom' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_dark_theme' => array(
-					'description' => __( 'Active dark mode theme slug. Only the neutrals change; the light palette supplies the accent colors.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_color_palette_name' => array(
-					'description' => __( 'Active predefined color palette slug.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_attribution_logo_variant' => array(
-					'description' => __( 'Attribution logo variant for the custom palette: dark or light.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'dark', 'light' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_field_title'           => array(
-					'description' => __( 'Enable AI generation for the product title.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_field_description'     => array(
-					'description' => __( 'Enable AI generation for the product long description.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_field_short_description' => array(
-					'description' => __( 'Enable AI generation for the product short description.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_field_featured_image'  => array(
-					'description' => __( 'Enable AI generation for the product featured image.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_field_gallery_image'   => array(
-					'description' => __( 'Enable AI generation for the product gallery images.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_field_bundle'          => array(
-					'description' => __( 'Enable the global "Generate with AI" button that drafts all product copy at once.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_notification_new_order'   => array(
-					'description' => __( 'Record a dashboard notification when a new order is placed.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_notification_new_customer' => array(
-					'description' => __( 'Record a dashboard notification when a new customer registers.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_notification_product_review' => array(
-					'description' => __( 'Record a dashboard notification when a product review is submitted.', 'storesuite' ),
-					'type'        => 'string',
-					'enum'        => array( 'yes', 'no' ),
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_instruction_title'     => array(
-					'description' => __( 'Custom system instruction for the product title. Falls back to the built-in default when empty.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_instruction_description' => array(
-					'description' => __( 'Custom system instruction for the product long description. Falls back to the built-in default when empty.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_instruction_short_description' => array(
-					'description' => __( 'Custom system instruction for the product short description. Falls back to the built-in default when empty.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
-				'storesuite_ai_image_instruction'     => array(
-					'description' => __( 'Custom styling guidance appended to product image prompts. Falls back to the built-in default when empty.', 'storesuite' ),
-					'type'        => 'string',
-					'context'     => array( 'view', 'edit' ),
-				),
+			'properties' => $this->add_registered_ai_schema(
+				array(
+					'storesuite_dashboard_page_id'             => array(
+						'description' => __( 'Dashboard Page.', 'storesuite' ),
+						'type'        => 'integer',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_prevent_admin_access'          => array(
+						'description' => __( 'Prevent vendors from accessing wp-admin. If HPOS is enabled, admin access is blocked regardless.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_dashboard_sidebar_logo_id'     => array(
+						'description' => __( 'Attachment ID for the dashboard sidebar logo image.', 'storesuite' ),
+						'type'        => 'integer',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_dashboard_sidebar_icon_id'     => array(
+						'description' => __( 'Attachment ID for the dashboard sidebar icon (shown when the sidebar is collapsed).', 'storesuite' ),
+						'type'        => 'integer',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_dashboard_sidebar_logo_dark_id' => array(
+						'description' => __( 'Attachment ID for the dashboard sidebar logo used in dark mode. Falls back to the light logo when empty.', 'storesuite' ),
+						'type'        => 'integer',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_dashboard_sidebar_icon_dark_id' => array(
+						'description' => __( 'Attachment ID for the dashboard sidebar icon used in dark mode. Falls back to the light icon when empty.', 'storesuite' ),
+						'type'        => 'integer',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_product_per_page'              => array(
+						'description' => __( 'Products Per Page.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_order_per_page'                => array(
+						'description' => __( 'Orders Per Page.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_category_per_page'             => array(
+						'description' => __( 'Categories Per Page.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_tag_per_page'                  => array(
+						'description' => __( 'Tags Per Page.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_brand_per_page'                => array(
+						'description' => __( 'Brands Per Page.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_coupon_per_page'               => array(
+						'description' => __( 'Coupons Per Page.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_button_text'             => array(
+						'description' => __( 'Button text color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_button_background'       => array(
+						'description' => __( 'Button background color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_button_border'           => array(
+						'description' => __( 'Button border color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_button_hover_text'       => array(
+						'description' => __( 'Button hover text color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_button_hover_background' => array(
+						'description' => __( 'Button hover background color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_button_hover_border'     => array(
+						'description' => __( 'Button hover border color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_sidebar_menu_text'       => array(
+						'description' => __( 'Dashboard sidebar menu text color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_sidebar_background'      => array(
+						'description' => __( 'Dashboard sidebar background color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_sidebar_active_text'     => array(
+						'description' => __( 'Dashboard sidebar active/hover menu text color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_sidebar_active_background' => array(
+						'description' => __( 'Dashboard sidebar active menu background color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_sidebar_border' => array(
+						'description' => __( 'Dashboard sidebar border color.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_palette_mode' => array(
+						'description' => __( 'Color palette mode: predefined or custom.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'predefined', 'custom' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_dark_theme' => array(
+						'description' => __( 'Active dark mode theme slug. Only the neutrals change; the light palette supplies the accent colors.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_color_palette_name' => array(
+						'description' => __( 'Active predefined color palette slug.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_attribution_logo_variant' => array(
+						'description' => __( 'Attribution logo variant for the custom palette: dark or light.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'dark', 'light' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_field_title'           => array(
+						'description' => __( 'Enable AI generation for the product title.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_field_description'     => array(
+						'description' => __( 'Enable AI generation for the product long description.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_field_short_description' => array(
+						'description' => __( 'Enable AI generation for the product short description.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_field_featured_image'  => array(
+						'description' => __( 'Enable AI generation for the product featured image.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_field_gallery_image'   => array(
+						'description' => __( 'Enable AI generation for the product gallery images.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_field_bundle'          => array(
+						'description' => __( 'Enable the global "Generate with AI" button that drafts all product copy at once.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_notification_new_order'   => array(
+						'description' => __( 'Record a dashboard notification when a new order is placed.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_notification_new_customer' => array(
+						'description' => __( 'Record a dashboard notification when a new customer registers.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_notification_product_review' => array(
+						'description' => __( 'Record a dashboard notification when a product review is submitted.', 'storesuite' ),
+						'type'        => 'string',
+						'enum'        => array( 'yes', 'no' ),
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_instruction_title'     => array(
+						'description' => __( 'Custom system instruction for the product title. Falls back to the built-in default when empty.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_instruction_description' => array(
+						'description' => __( 'Custom system instruction for the product long description. Falls back to the built-in default when empty.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_instruction_short_description' => array(
+						'description' => __( 'Custom system instruction for the product short description. Falls back to the built-in default when empty.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+					'storesuite_ai_image_instruction'     => array(
+						'description' => __( 'Custom styling guidance appended to product image prompts. Falls back to the built-in default when empty.', 'storesuite' ),
+						'type'        => 'string',
+						'context'     => array( 'view', 'edit' ),
+					),
+				)
 			),
 		);
 	}

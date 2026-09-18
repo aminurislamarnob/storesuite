@@ -140,3 +140,95 @@ test.describe( 'product SEO (Yoast) as an administrator', () => {
 		expect( html ).toMatch( /<meta name=['"]robots['"] content=['"]noindex/ );
 	} );
 } );
+
+/**
+ * AI Generate on the SEO card. Needs Yoast SEO plus a text generator; the
+ * provisioning script's fake generator (E2E_WITH_FAKE_AI=true) is enough.
+ */
+test.describe( 'product SEO (Yoast) AI Generate as a shop manager', () => {
+	test.use( { storageState: MANAGER_STATE } );
+
+	async function openAddFormWithAi( page: Page ) {
+		await openAddForm( page );
+		test.skip(
+			( await card( page ).locator( '.storesuite-ai-generate' ).count() ) === 0,
+			'AI text generation is not available on this site.'
+		);
+		// Only run against the provisioning script's fake generator: a real
+		// provider would spend credits and return unpredictable text.
+		const probe = await page.request.post( '/wp-admin/admin-ajax.php', {
+			form: {
+				action: 'storesuite_generate_product_field',
+				nonce: await page.evaluate( () => ( window as any ).StoreSuite_Product.ai.nonce ),
+				field: 'title',
+				product_title: 'probe',
+			},
+		} );
+		const body = await probe.json();
+		test.skip(
+			! ( body?.data?.content || '' ).startsWith( 'E2E generated' ),
+			'The fake AI generator is not installed (E2E_WITH_FAKE_AI=true).'
+		);
+	}
+
+	test( 'generate, regenerate and insert an SEO title', async ( { page } ) => {
+		await openAddFormWithAi( page );
+		await page.locator( '#product_title' ).fill( 'AI Widget' );
+		await page.locator( '#storesuite_yoast_focuskw' ).fill( 'ai widget' );
+
+		await card( page )
+			.locator( '.storesuite-ai-generate[data-field="yoast_title"]' )
+			.click();
+
+		const modal = page.locator( '#storesuite-ai-modal' );
+		await expect( modal ).toBeVisible();
+		await expect( modal.locator( '#storesuite-ai-modal-title' ) ).toHaveText( 'SEO title suggestion' );
+		await expect( modal.locator( '#storesuite-ai-modal-text' ) ).toHaveValue( 'E2E generated title #1' );
+
+		// The counter shows the field's target and updates as the text is edited.
+		const counter = modal.locator( '.storesuite-ai-modal-counter' );
+		await expect( counter ).toHaveText( '22 / 60' );
+		await expect( counter ).toHaveAttribute( 'data-state', 'ok' );
+		await modal.locator( '#storesuite-ai-modal-text' ).fill( 'x'.repeat( 61 ) );
+		await expect( counter ).toHaveText( '61 / 60' );
+		await expect( counter ).toHaveAttribute( 'data-state', 'over' );
+
+		await modal.locator( '.storesuite-ai-regenerate' ).click();
+		await expect( modal.locator( '.storesuite-ai-pager-status' ) ).toHaveText( '2/2' );
+		await expect( modal.locator( '#storesuite-ai-modal-text' ) ).toHaveValue( 'E2E generated title #2' );
+
+		await modal.locator( '.storesuite-ai-insert' ).click();
+		await expect( modal ).toBeHidden();
+		await expect( page.locator( '#storesuite_yoast_title' ) ).toHaveValue( 'E2E generated title #2' );
+		// The Google preview and length bar follow the inserted title.
+		await expect( card( page ).locator( '.storesuite-seo-snippet-title' ) ).toHaveText( 'E2E generated title #2' );
+		await expect( card( page ).locator( '[data-seo-field="title"] .storesuite-seo-progress' ) ).toHaveAttribute( 'data-state', 'good' );
+	} );
+
+	test( 'insert a generated social description', async ( { page } ) => {
+		await openAddFormWithAi( page );
+		await page.locator( '#product_title' ).fill( 'AI Widget' );
+		await openTab( page, 'social' );
+
+		await card( page )
+			.locator( '.storesuite-ai-generate[data-field="yoast_opengraph-description"]' )
+			.click();
+
+		const modal = page.locator( '#storesuite-ai-modal' );
+		await expect( modal.locator( '#storesuite-ai-modal-title' ) ).toHaveText( 'Social description suggestion' );
+		await expect( modal.locator( '.storesuite-ai-modal-counter' ) ).toContainText( '/ 200' );
+		await modal.locator( '.storesuite-ai-insert' ).click();
+
+		await expect( page.locator( '#storesuite_yoast_opengraph-description' ) ).toHaveValue( 'E2E generated opengraph description #1' );
+	} );
+
+	test( 'a description needs a product title first', async ( { page } ) => {
+		await openAddFormWithAi( page );
+
+		await card( page )
+			.locator( '.storesuite-ai-generate[data-field="yoast_metadesc"]' )
+			.click();
+
+		await expect( page.locator( '.swal2-popup' ) ).toContainText( /add a product title/i );
+	} );
+} );

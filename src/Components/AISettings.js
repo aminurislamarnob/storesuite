@@ -1,4 +1,8 @@
-import { useState, createInterpolateElement } from '@wordpress/element';
+import {
+	useState,
+	createInterpolateElement,
+	Fragment,
+} from '@wordpress/element';
 import { __ } from '@wordpress/i18n';
 import {
 	Button,
@@ -84,6 +88,11 @@ const DEFAULT_IMAGE_INSTRUCTION =
 // page where one can be set up. Default to connected so a missing global never
 // shows a false warning.
 const AI_CONNECTED = window.storeSuiteAdmin?.aiConnected ?? true;
+
+// Extra blocks contributed by integrations (e.g. Yoast SEO): one toggle for the
+// group and one instruction textarea per distinct system instruction. Only
+// present while the integration is active.
+const AI_GROUPS = window.storeSuiteAdmin?.aiSettingsGroups ?? [];
 const CONNECTORS_URL = window.storeSuiteAdmin?.connectorsUrl ?? '';
 
 // Custom system instructions. Each textarea is prefilled with the saved custom
@@ -166,6 +175,35 @@ const AISettings = () => {
 		)
 	);
 
+	// Integration groups: one toggle and one textarea per instruction, keyed by
+	// their settings key so they need no hardcoded knowledge of the integration.
+	const [ groupFields, setGroupFields ] = useState( () =>
+		Object.fromEntries(
+			AI_GROUPS.filter( ( group ) => group.enabled_setting ).map(
+				( group ) => [
+					group.enabled_setting,
+					isEnabled( settings[ group.enabled_setting ] ),
+				]
+			)
+		)
+	);
+
+	const [ groupInstructions, setGroupInstructions ] = useState( () =>
+		Object.fromEntries(
+			AI_GROUPS.flatMap( ( group ) => group.instructions ).map(
+				( instruction ) => {
+					const saved = settings[ instruction.setting ];
+					return [
+						instruction.setting,
+						saved !== undefined && saved !== ''
+							? saved
+							: instruction.default,
+					];
+				}
+			)
+		)
+	);
+
 	const handleSubmit = ( event ) => {
 		event.preventDefault();
 		const data = {};
@@ -174,6 +212,12 @@ const AISettings = () => {
 		} );
 		AI_INSTRUCTIONS.forEach( ( { key, apiKey } ) => {
 			data[ apiKey ] = instructions[ key ];
+		} );
+		Object.entries( groupFields ).forEach( ( [ apiKey, value ] ) => {
+			data[ apiKey ] = value ? 'yes' : 'no';
+		} );
+		Object.entries( groupInstructions ).forEach( ( [ apiKey, value ] ) => {
+			data[ apiKey ] = value;
 		} );
 		saveSettings( data );
 	};
@@ -278,6 +322,78 @@ const AISettings = () => {
 									/>
 								</div>
 							) ) }
+						</CardBody>
+					</Card>
+
+					{ AI_GROUPS.map( ( group ) => (
+						<Fragment key={ group.key }>
+							<Card className="storesuite-form-header-card storesuite-section-gap-top">
+								<CardBody className="storesuite-form-section-header">
+									<h3 className="storesuite-section-title">
+										{ group.label }
+									</h3>
+								</CardBody>
+							</Card>
+							<Card>
+								<CardBody className="storesuite-form-section-body">
+									{ group.enabled_setting && (
+										<div className="storesuite-settings-group">
+											<ToggleControl
+												label={ __(
+													'Offer AI generation for these fields',
+													'storesuite'
+												) }
+												checked={
+													groupFields[
+														group.enabled_setting
+													]
+												}
+												onChange={ ( value ) =>
+													setGroupFields(
+														( prev ) => ( {
+															...prev,
+															[ group.enabled_setting ]:
+																value,
+														} )
+													)
+												}
+											/>
+										</div>
+									) }
+									{ group.instructions.map(
+										( instruction ) => (
+											<div
+												key={ instruction.setting }
+												className="storesuite-settings-group"
+											>
+												<TextareaControl
+													label={ instruction.label }
+													rows={ 4 }
+													value={
+														groupInstructions[
+															instruction.setting
+														]
+													}
+													onChange={ ( value ) =>
+														setGroupInstructions(
+															( prev ) => ( {
+																...prev,
+																[ instruction.setting ]:
+																	value,
+															} )
+														)
+													}
+												/>
+											</div>
+										)
+									) }
+								</CardBody>
+							</Card>
+						</Fragment>
+					) ) }
+
+					<Card className="storesuite-section-gap-top">
+						<CardBody className="storesuite-form-section-body">
 							<Button
 								variant="primary"
 								type="submit"
