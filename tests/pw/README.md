@@ -79,3 +79,18 @@ E2E_WITH_YOAST=true bash tests/pw/bin/e2e-provision.sh
 
 which installs and activates Yoast SEO from WordPress.org. The nightly CI
 lanes set this flag.
+
+## Optional: AI Generate specs
+
+The AI Generate tests on the SEO card need a text generator. Provision with
+`E2E_WITH_FAKE_AI=true` to install a deterministic test-only generator as a
+must-use plugin (`bin/storesuite-e2e-fake-ai.php`); the tests then run
+without any AI provider or API key. Without it they skip themselves — and
+they also skip when a real provider is connected instead, so the suite never
+spends credits (the check itself is one short generation). Both flags together:
+
+```bash
+E2E_WITH_YOAST=true E2E_WITH_FAKE_AI=true bash tests/pw/bin/e2e-provision.sh
+```
+
+The nightly CI lanes set both.

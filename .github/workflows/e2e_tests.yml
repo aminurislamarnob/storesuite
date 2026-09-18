@@ -105,6 +105,8 @@ jobs:
               env:
                   # Installs Yoast SEO so the product SEO specs run instead of skipping.
                   E2E_WITH_YOAST: 'true'
+                  # Deterministic AI generator so the AI Generate specs run instead of skipping.
+                  E2E_WITH_FAKE_AI: 'true'
               run: |
                   WP_CLI="wp --path=$WP_DIR" bash tests/pw/bin/e2e-provision.sh | tee /tmp/provision.log
                   {

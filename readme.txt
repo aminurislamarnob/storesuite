@@ -156,6 +156,8 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 * Add **Yoast SEO support** to the product add/edit form. When Yoast SEO is active, a new **SEO (Yoast)** card lets shop managers set the focus keyphrase, SEO title, meta description and cornerstone flag, with Yoast-style **Insert variable** suggestions and a live mobile/desktop **Google preview** with length indicators.
 * The card's **Social** tab sets the social media and X image, title and description — with Insert variable — following the networks enabled in Yoast.
 * The card's **Advanced** tab sets search visibility, link following, meta robots advanced (no image index / no archive / no snippet), the breadcrumbs title and the canonical URL. It follows Yoast's own permission rules, so shop managers only get it when the site owner allows it; developers can adjust this with the `storesuite_yoast_can_edit_advanced` filter.
+* Add **AI Generate** to the SEO (Yoast) card: a Generate with AI button beside Insert variable on the SEO title, meta description, and social and X titles and descriptions, powered by the same AI provider as the product copy helpers. Suggestions open in the familiar modal with a live length counter, and use the focus keyphrase. A **Yoast SEO** block on the AI settings page holds one on/off switch and the two editable system instructions.
+* Developers: AI text generation is now extensible — register fields with `storesuite_ai_text_fields`, and supply your own generator (or a test double) with `storesuite_ai_text_generator`. The settings endpoint accepts the toggle and instruction keys of registered fields.
 * Developers: new `storesuite_product_form_after_main_cards` action for adding cards to the product form.
 
 = 1.3.1 =
