@@ -127,6 +127,29 @@ Click **+ Add Product** at the top of the products list (or **Add New Product** 
 
 At the very bottom, the **Others** box holds the finishing touches: **Catalog Visibility** (where the product shows up), **Menu Order** (its sort position), a **Mark this product as featured** toggle, an **Available for POS** toggle, and a **Purchase Note** shown to the customer after they buy.
 
+### Custom fields from ACF
+
+If your site uses the **Advanced Custom Fields** plugin and a field group is assigned to products, that group shows up as its own box right below **Others** — one box per group, titled after the group, with the same labels, instructions and required markers your ACF setup defines. Fill them in like any other field; the values are stored through ACF, so they appear in the ACF box in wp-admin too (and the other way round).
+
+![An ACF field group on the product form](screenshots/screenshot-49.png)
+
+![More field types: editor, image and an unsupported field](screenshots/screenshot-50.png)
+
+**Field types you can edit here:** Text, Text Area, Number, Range, Email, URL, Password, Color Picker, Select (single and multiple), Checkbox, Radio Button, Button Group, True / False, Date Picker, Date Time Picker, Time Picker, WYSIWYG Editor and Image. Message and Separator fields show up as the layout your site owner arranged.
+
+Any other field type — including the ACF Pro types such as Repeater, Gallery or Relationship — shows a short *"can't be edited here"* note instead of an input. Its value is left exactly as it is; edit it in the WordPress admin when you need to.
+
+A few things work a little differently from wp-admin, on purpose:
+
+- **Which groups appear** follows the ACF location rules, checked when the form loads. A group limited to one category shows up on the edit form of a product in that category. On **Add New Product** only the product type is known yet, so category-based groups appear after the first save.
+- **Dates and times** are always shown in ISO style (`2026-12-24`, `18:45`) no matter which display format the group uses. A Date Picker opens the same calendar as the sale-price dates.
+- **Password fields** never show the stored value. Leave one blank to keep what's there; type something to replace it.
+- **Conditional logic** works as in wp-admin: dependent fields appear and disappear as you change the controlling field, and hidden fields keep their stored values.
+- **Required rules and limits** are checked when you save. If something fails, the error dialog lists each field with ACF's own message and nothing is saved until you fix it.
+- **Settings that are ignored:** the "Stylised UI" and AJAX options on Select, the "Toggle all" checkbox option, the "Other" choice on Radio, the on/off text on True / False, image size and dimension limits, and the group's position and style options.
+
+Not seeing the box at all? An administrator can turn the feature on and off under **StoreSuite → Settings → General**.
+
 When everything looks right, click **Add Product** to save. **Back** returns you to the list without saving.
 
 ---
