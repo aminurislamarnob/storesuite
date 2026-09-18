@@ -404,4 +404,163 @@ class ProductAITest extends StoreSuiteAjaxTestCase {
 		$this->assertSame( '', $render( 'short_description' ), 'A field switched off renders no button.' );
 		$this->assertSame( '', $render( 'featured' ), 'Non-text fields render no button.' );
 	}
+
+	/* ----------------------------------------------------------------------
+	 * Field registry: integrations add their own fields
+	 * -------------------------------------------------------------------- */
+
+	/**
+	 * Register a test field through the registry filter.
+	 *
+	 * @param array $overrides Definition keys to override.
+	 *
+	 * @return void
+	 */
+	private function register_tagline_field( array $overrides = array() ): void {
+		$definition = array_merge(
+			array(
+				'label'               => 'Tagline suggestion',
+				'output'              => 'text',
+				'instruction'         => 'Write a tagline.',
+				'instruction_setting' => 'storesuite_ai_instruction_tagline',
+				'enabled_setting'     => 'storesuite_ai_field_tagline',
+				'intro'               => 'Write a tagline for the following item.',
+				'needs_context'       => true,
+				'target'              => '#product_tagline',
+			),
+			$overrides
+		);
+
+		add_filter(
+			'storesuite_ai_text_fields',
+			function ( $fields ) use ( $definition ) {
+				$fields['tagline'] = $definition;
+				return $fields;
+			}
+		);
+	}
+
+	/**
+	 * A registered field is generated through the existing action with its own prompt and instruction.
+	 *
+	 * @return void
+	 */
+	public function test_registered_field_is_generated() {
+		$this->register_tagline_field();
+		$this->reply = ' "Sip in style" ';
+
+		$response = $this->generate( 'tagline', array( 'product_title' => 'Mug' ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertSame( 'tagline', $response['data']['field'] );
+		$this->assertSame( 'Sip in style', $response['data']['content'] );
+		$this->assertStringStartsWith( 'Write a tagline for the following item.', $this->calls[0][0] );
+		$this->assertStringContainsString( 'Product name / keywords: Mug', $this->calls[0][0] );
+		$this->assertSame( 'Write a tagline.', $this->calls[0][1] );
+	}
+
+	/**
+	 * A registered field honours its own on/off setting and custom instruction.
+	 *
+	 * @return void
+	 */
+	public function test_registered_field_honours_its_settings() {
+		$this->register_tagline_field();
+
+		$this->set_settings( array( 'storesuite_ai_instruction_tagline' => 'Taglines, but shouty.' ) );
+		$this->generate( 'tagline', array( 'product_title' => 'Mug' ) );
+		$this->assertSame( 'Taglines, but shouty.', $this->calls[0][1] );
+
+		$this->set_settings( array( 'storesuite_ai_field_tagline' => 'no' ) );
+		$response = $this->generate( 'tagline', array( 'product_title' => 'Mug' ) );
+		$this->assertFalse( $response['success'] );
+		$this->assertStringContainsString( 'disabled', $response['data']['message'] );
+		$this->assertCount( 1, $this->calls );
+	}
+
+	/**
+	 * A registered field can declare whether it needs form context.
+	 *
+	 * @return void
+	 */
+	public function test_registered_field_declares_context_need() {
+		$this->register_tagline_field();
+		$response = $this->generate( 'tagline' );
+		$this->assertSame( 'no_context', $response['data']['reason'] );
+
+		$this->register_tagline_field( array( 'needs_context' => false ) );
+		$response = $this->generate( 'tagline' );
+		$this->assertTrue( $response['success'] );
+	}
+
+	/**
+	 * Fields may add their own prompt lines from the request, e.g. an integration's keyphrase.
+	 *
+	 * @return void
+	 */
+	public function test_registered_field_can_add_prompt_lines_from_request() {
+		$this->register_tagline_field(
+			array(
+				'prompt_lines' => function ( array $context, array $request ) {
+					return array( 'Mood: ' . sanitize_text_field( $request['mood'] ?? 'calm' ) );
+				},
+			)
+		);
+
+		$this->generate(
+			'tagline',
+			array(
+				'product_title' => 'Mug',
+				'mood'          => 'cheerful <b>x</b>',
+			)
+		);
+
+		$this->assertStringContainsString( 'Mood: cheerful x', $this->calls[0][0] );
+	}
+
+	/**
+	 * Registered fields render a Generate button with their target, and can be listed with their metadata.
+	 *
+	 * @return void
+	 */
+	public function test_registered_field_button_and_metadata() {
+		$this->register_tagline_field( array( 'length' => 40 ) );
+		$ai = new ProductAI();
+
+		ob_start();
+		$ai->render_field_button( 'tagline' );
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'data-field="tagline"', $html );
+		$this->assertStringContainsString( 'data-target="#product_tagline"', $html );
+
+		$fields = ProductAI::get_fields();
+		$this->assertSame( array( 'title', 'description', 'short_description', 'tagline' ), array_keys( $fields ) );
+		$this->assertSame( 40, $fields['tagline']['length'] );
+		$this->assertSame( 'Tagline suggestion', $fields['tagline']['label'] );
+		$this->assertSame( '#product_title', $fields['title']['target'], 'Built-in fields declare their targets too.' );
+	}
+
+	/**
+	 * Malformed registrations are ignored rather than breaking the built-in fields.
+	 *
+	 * @return void
+	 */
+	public function test_malformed_registration_is_ignored() {
+		add_filter(
+			'storesuite_ai_text_fields',
+			function ( $fields ) {
+				$fields['broken']    = 'not an array';
+				$fields['no_target'] = array( 'label' => 'x' );
+				$fields['title']     = array( 'label' => 'hijack' );
+				return $fields;
+			}
+		);
+
+		$fields = ProductAI::get_fields();
+
+		$this->assertArrayNotHasKey( 'broken', $fields );
+		$this->assertArrayNotHasKey( 'no_target', $fields );
+		$this->assertSame( '#product_title', $fields['title']['target'], 'Built-in definitions cannot be replaced.' );
+	}
 }

@@ -19,15 +19,142 @@ class ProductAI {
 	use AiRequestTrait;
 
 	/**
-	 * Supported fields and how their generated output is sanitized.
+	 * Definitions of the three built-in fields; see get_fields() for the shape.
 	 *
-	 * @var array<string, string>
+	 * @return array<string, array>
 	 */
-	private const FIELDS = array(
-		'title'             => 'text',
-		'description'       => 'html',
-		'short_description' => 'textarea',
-	);
+	private static function builtin_fields() {
+		$instructions = self::default_system_instructions();
+
+		return array(
+			'title'             => array(
+				'label'               => __( 'Title suggestion', 'storesuite' ),
+				'output'              => 'text',
+				'instruction'         => $instructions['title'],
+				'instruction_setting' => 'storesuite_ai_instruction_title',
+				'enabled_setting'     => 'storesuite_ai_field_title',
+				'intro'               => 'Generate a product title for the following item.',
+				'needs_context'       => false,
+				'target'              => '#product_title',
+				'rows'                => 3,
+			),
+			'description'       => array(
+				'label'               => __( 'Description suggestion', 'storesuite' ),
+				'output'              => 'html',
+				'instruction'         => $instructions['description'],
+				'instruction_setting' => 'storesuite_ai_instruction_description',
+				'enabled_setting'     => 'storesuite_ai_field_description',
+				'intro'               => 'Write a product description for the following item.',
+				'needs_context'       => true,
+				'target'              => '#product_description',
+				'rows'                => 8,
+			),
+			'short_description' => array(
+				'label'               => __( 'Short description suggestion', 'storesuite' ),
+				'output'              => 'textarea',
+				'instruction'         => $instructions['short_description'],
+				'instruction_setting' => 'storesuite_ai_instruction_short_description',
+				'enabled_setting'     => 'storesuite_ai_field_short_description',
+				'intro'               => 'Write a short product summary for the following item.',
+				'needs_context'       => true,
+				'target'              => '#product_short_description',
+				'rows'                => 3,
+			),
+		);
+	}
+
+	/**
+	 * Every field AI can generate text for, keyed by field key.
+	 *
+	 * Each definition holds what the generic machinery needs:
+	 *
+	 * - `label`               Modal title shown for a suggestion.
+	 * - `output`              How the result is sanitized: `text`, `textarea` or `html`.
+	 * - `instruction`         Default system instruction.
+	 * - `instruction_setting` Settings key holding a merchant's custom instruction (optional).
+	 * - `enabled_setting`     Settings key switching the field off when set to "no" (optional).
+	 * - `intro`               First line of the prompt.
+	 * - `needs_context`       Whether a product title or short description must exist first.
+	 * - `target`              CSS selector of the form field the result is inserted into.
+	 * - `rows`                Height of the suggestion textarea (optional, default 3).
+	 * - `length`              Target length in characters, shown as a counter (optional).
+	 * - `prompt_lines`        Callable ( array $context, array $request ): string[] adding
+	 *                         prompt lines from the request (optional).
+	 *
+	 * Integrations add fields with the `storesuite_ai_text_fields` filter. The
+	 * built-in fields cannot be replaced, and definitions without a `target`
+	 * and `label` are ignored.
+	 *
+	 * @return array<string, array>
+	 */
+	public static function get_fields() {
+		$builtin = self::builtin_fields();
+
+		/**
+		 * Filters the fields AI can generate text for on the product form.
+		 *
+		 * @param array<string, array> $fields Field definitions keyed by field key; see ProductAI::get_fields().
+		 */
+		$fields = apply_filters( 'storesuite_ai_text_fields', $builtin );
+
+		$result = $builtin;
+
+		foreach ( (array) $fields as $key => $definition ) {
+			if ( isset( $builtin[ $key ] ) || ! is_array( $definition ) || empty( $definition['target'] ) || empty( $definition['label'] ) ) {
+				continue;
+			}
+
+			$result[ sanitize_key( $key ) ] = array_merge(
+				array(
+					'output'              => 'text',
+					'instruction'         => '',
+					'instruction_setting' => '',
+					'enabled_setting'     => '',
+					'intro'               => 'Write the following item.',
+					'needs_context'       => true,
+					'rows'                => 3,
+				),
+				$definition
+			);
+		}
+
+		return $result;
+	}
+
+	/**
+	 * Definition of one field, or null when unknown.
+	 *
+	 * @param string $field Field key.
+	 * @return array|null
+	 */
+	private static function get_field( $field ) {
+		$fields = self::get_fields();
+
+		return isset( $fields[ $field ] ) ? $fields[ $field ] : null;
+	}
+
+	/**
+	 * Whether a field's toggle on the AI settings page is on.
+	 *
+	 * Built-in fields keep the existing storesuite_is_ai_field_enabled() logic;
+	 * registered fields use their own `enabled_setting`, and are on when they
+	 * have none.
+	 *
+	 * @param string $field      Field key.
+	 * @param array  $definition Field definition.
+	 * @return bool
+	 */
+	private static function is_field_enabled( $field, array $definition ) {
+		if ( isset( self::builtin_fields()[ $field ] ) ) {
+			return storesuite_is_ai_field_enabled( $field );
+		}
+
+		if ( empty( $definition['enabled_setting'] ) ) {
+			return true;
+		}
+
+		return 'no' !== storesuite_get_option_by_key( $definition['enabled_setting'] );
+	}
 
 	/**
 	 * The constructor.
@@ -64,11 +191,13 @@ class ProductAI {
 	 * @param string $field Field key passed by the template.
 	 */
 	public function render_field_button( $field ) {
-		if ( ! isset( self::FIELDS[ $field ] ) || ! self::is_text_supported() || ! storesuite_is_ai_field_enabled( $field ) ) {
+		$definition = self::get_field( $field );
+
+		if ( ! $definition || ! self::is_text_supported() || ! self::is_field_enabled( $field, $definition ) ) {
 			return;
 		}
 		?>
-		<button type="button" class="storesuite-ai-generate" data-field="<?php echo esc_attr( $field ); ?>"><svg class="storesuite-ai-icon" aria-hidden="true" focusable="false"><use href="#storesuite-icon-ai-magic"></use></svg> <span class="storesuite-ai-bundle-prefix"><?php esc_html_e( 'Generate with', 'storesuite' ); ?> </span><?php esc_html_e( 'AI', 'storesuite' ); ?></button>
+		<button type="button" class="storesuite-ai-generate" data-field="<?php echo esc_attr( $field ); ?>" data-target="<?php echo esc_attr( $definition['target'] ); ?>"><svg class="storesuite-ai-icon" aria-hidden="true" focusable="false"><use href="#storesuite-icon-ai-magic"></use></svg> <span class="storesuite-ai-bundle-prefix"><?php esc_html_e( 'Generate with', 'storesuite' ); ?> </span><?php esc_html_e( 'AI', 'storesuite' ); ?></button>
 		<?php
 	}
 
@@ -107,19 +236,20 @@ class ProductAI {
 			__( 'AI generation is not available. Connect an AI provider to use this feature.', 'storesuite' )
 		);
 
-		$field = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : '';
-		if ( ! isset( self::FIELDS[ $field ] ) ) {
+		$field      = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : '';
+		$definition = self::get_field( $field );
+		if ( ! $definition ) {
 			wp_send_json_error( array( 'message' => __( 'Invalid field.', 'storesuite' ) ) );
 		}
 
-		if ( ! storesuite_is_ai_field_enabled( $field ) ) {
+		if ( ! self::is_field_enabled( $field, $definition ) ) {
 			wp_send_json_error( array( 'message' => __( 'AI generation is disabled for this field.', 'storesuite' ) ) );
 		}
 
 		$context = $this->get_context_from_request( $_POST );
 
-		// Descriptions need at least a title or some keywords to work from.
-		if ( 'title' !== $field && '' === $context['title'] && '' === $context['short_description'] ) {
+		// Most fields need at least a title or some keywords to work from.
+		if ( $definition['needs_context'] && '' === $context['title'] && '' === $context['short_description'] ) {
 			wp_send_json_error(
 				array(
 					'reason'  => 'no_context',
@@ -128,7 +258,7 @@ class ProductAI {
 			);
 		}
 
-		$result = $this->generate_one( $field, $context );
+		$result = $this->generate_one( $field, $context, $_POST );
 
 		if ( is_wp_error( $result ) ) {
 			wp_send_json_error( array( 'message' => $result->get_error_message() ) );
@@ -232,10 +362,11 @@ class ProductAI {
 	 *
 	 * @param string $field   Field key.
 	 * @param array  $context Sanitized prompt context.
+	 * @param array  $request Raw request data, for fields that add their own prompt lines.
 	 * @return string|\WP_Error
 	 */
-	private function generate_one( $field, array $context ) {
-		$prompt      = $this->build_prompt( $field, $context );
+	private function generate_one( $field, array $context, array $request = array() ) {
+		$prompt      = $this->build_prompt( $field, $context, $request );
 		$instruction = $this->get_system_instruction( $field );
 		$generator   = self::get_text_generator();
 
@@ -338,16 +469,6 @@ class ProductAI {
 	}
 
 	/**
-	 * Option key holding the custom system instruction for a field.
-	 *
-	 * @param string $field Field key.
-	 * @return string
-	 */
-	private static function instruction_option_key( $field ) {
-		return 'storesuite_ai_instruction_' . $field;
-	}
-
-	/**
 	 * Per-field system instruction.
 	 *
 	 * Returns the merchant's custom instruction when one has been saved on the AI
@@ -357,10 +478,13 @@ class ProductAI {
 	 * @return string
 	 */
 	private function get_system_instruction( $field ) {
-		$defaults = self::default_system_instructions();
-		$default  = isset( $defaults[ $field ] ) ? $defaults[ $field ] : $defaults['short_description'];
+		$definition = self::get_field( $field );
+		$default    = $definition ? (string) $definition['instruction'] : self::default_system_instructions()['short_description'];
+		$custom     = '';
 
-		$custom = trim( (string) storesuite_get_option_by_key( self::instruction_option_key( $field ) ) );
+		if ( $definition && ! empty( $definition['instruction_setting'] ) ) {
+			$custom = trim( (string) storesuite_get_option_by_key( $definition['instruction_setting'] ) );
+		}
 
 		return '' !== $custom ? $custom : $default;
 	}
@@ -372,8 +496,9 @@ class ProductAI {
 	 * @param array  $context Sanitized form context.
 	 * @return string
 	 */
-	private function build_prompt( $field, array $context ) {
-		$parts = array();
+	private function build_prompt( $field, array $context, array $request = array() ) {
+		$definition = self::get_field( $field );
+		$parts      = array();
 
 		if ( '' !== $context['title'] ) {
 			$parts[] = 'Product name / keywords: ' . $context['title'];
@@ -390,13 +515,18 @@ class ProductAI {
 			$parts[] = 'Full description: ' . $context['description'];
 		}
 
-		$intro = array(
-			'title'             => 'Generate a product title for the following item.',
-			'description'       => 'Write a product description for the following item.',
-			'short_description' => 'Write a short product summary for the following item.',
-		);
+		// Fields may contribute their own lines from the request (e.g. an SEO keyphrase).
+		if ( $definition && ! empty( $definition['prompt_lines'] ) && is_callable( $definition['prompt_lines'] ) ) {
+			$extra = call_user_func( $definition['prompt_lines'], $context, $request );
+			foreach ( (array) $extra as $line ) {
+				if ( is_string( $line ) && '' !== trim( $line ) ) {
+					$parts[] = $line;
+				}
+			}
+		}
 
-		$prompt = $intro[ $field ] . "\n\n<context>\n" . implode( "\n", $parts ) . "\n</context>";
+		$intro  = $definition ? $definition['intro'] : 'Write the following item.';
+		$prompt = $intro . "\n\n<context>\n" . implode( "\n", $parts ) . "\n</context>";
 
 		// Encourage variety between requests. Without this, deterministic models
 		// return the same text for an identical prompt every time, which makes
@@ -421,7 +551,9 @@ class ProductAI {
 	private function sanitize_output( $field, $result ) {
 		$result = trim( $result );
 
-		switch ( self::FIELDS[ $field ] ) {
+		$definition = self::get_field( $field );
+
+		switch ( $definition ? $definition['output'] : 'text' ) {
 			case 'html':
 				return wp_kses_post( $result );
 

@@ -719,6 +719,18 @@ class Assets {
 						'prompt_required' => __( 'Please describe the image you want to generate.', 'storesuite' ),
 						'inserting'       => __( 'Inserting…', 'storesuite' ),
 					),
+					// Every generatable field: label, insert target, textarea rows, target length.
+					'fields'        => array_map(
+						static function ( $definition ) {
+							return array(
+								'label'  => $definition['label'],
+								'target' => $definition['target'],
+								'rows'   => isset( $definition['rows'] ) ? (int) $definition['rows'] : 3,
+								'length' => isset( $definition['length'] ) ? (int) $definition['length'] : 0,
+							);
+						},
+						\PluginizeLab\StoreSuite\Product\ProductAI::get_fields()
+					),
 					'i18n'          => array(
 						'generate'        => __( 'Generate with AI', 'storesuite' ),
 						'generating'      => __( 'Generating…', 'storesuite' ),
