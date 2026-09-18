@@ -7,7 +7,8 @@
  *
  * @var array                                                 $field        ACF field array.
  * @var string                                                $type         ACF field type.
- * @var bool                                                  $supported    Whether StoreSuite can edit this type.
+ * @var bool                                                  $supported    Whether StoreSuite can edit and save this type.
+ * @var bool                                                  $layout       Whether the type is layout-only (message, separator).
  * @var string                                                $input_name   Input name attribute (storesuite_acf[<key>]).
  * @var string                                                $input_id     Input id attribute.
  * @var mixed                                                 $value        Value to prefill, null when none.
@@ -49,12 +50,14 @@ $is_required  = ! empty( $field['required'] );
 				'field'        => $field,
 				'type'         => $type,
 				'supported'    => $supported,
+				'layout'       => $layout,
 				'input_name'   => $input_name,
 				'input_id'     => $input_id,
 				'value'        => $value,
 				'is_required'  => $is_required,
 				'product_id'   => $product_id,
 				'is_edit_mode' => $is_edit_mode,
+				'renderer'     => $renderer,
 			)
 		);
 		?>

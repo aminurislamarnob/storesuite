@@ -72,6 +72,7 @@ class FieldRenderer {
 
 		$type      = (string) $field['type'];
 		$supported = AcfIntegration::is_supported_type( $type );
+		$layout    = AcfIntegration::is_layout_type( $type );
 
 		storesuite_get_template_part(
 			'products/acf/field-wrapper',
@@ -80,6 +81,7 @@ class FieldRenderer {
 				'field'        => $field,
 				'type'         => $type,
 				'supported'    => $supported,
+				'layout'       => $layout,
 				'input_name'   => $this->get_input_name( $field ),
 				'input_id'     => $this->get_input_id( $field ),
 				'value'        => $supported ? $this->get_value( $field, $product_id, $is_edit_mode ) : null,
@@ -97,9 +99,64 @@ class FieldRenderer {
 	 * @param array $args Wrapper template args (field, input_name, input_id, value, ...).
 	 */
 	public function render_input( array $args ) {
-		$name = ! empty( $args['supported'] ) ? (string) $args['type'] : 'unsupported';
+		$name = ( ! empty( $args['supported'] ) || ! empty( $args['layout'] ) ) ? (string) $args['type'] : 'unsupported';
 
 		storesuite_get_template_part( 'products/acf/field', $name, $args );
+	}
+
+	/**
+	 * Open an input group when the field has a prepend / append adornment.
+	 *
+	 * Type templates call this before and close_input_group() after the input.
+	 *
+	 * @param array $field ACF field array.
+	 */
+	public function open_input_group( array $field ) {
+		if ( ! $this->has_adornments( $field ) ) {
+			return;
+		}
+
+		echo '<div class="storesuite-acf-input-group">';
+
+		if ( '' !== (string) $field['prepend'] ) {
+			echo '<span class="storesuite-acf-input-addon">' . esc_html( $field['prepend'] ) . '</span>';
+		}
+	}
+
+	/**
+	 * Close the input group opened by open_input_group().
+	 *
+	 * @param array $field ACF field array.
+	 */
+	public function close_input_group( array $field ) {
+		if ( ! $this->has_adornments( $field ) ) {
+			return;
+		}
+
+		if ( '' !== (string) $field['append'] ) {
+			echo '<span class="storesuite-acf-input-addon">' . esc_html( $field['append'] ) . '</span>';
+		}
+
+		echo '</div>';
+	}
+
+	/**
+	 * Whether a field carries a prepend or append adornment.
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return bool
+	 */
+	protected function has_adornments( array $field ): bool {
+		$field = wp_parse_args(
+			$field,
+			array(
+				'prepend' => '',
+				'append'  => '',
+			)
+		);
+
+		return '' !== (string) $field['prepend'] || '' !== (string) $field['append'];
 	}
 
 	/**
@@ -137,6 +194,11 @@ class FieldRenderer {
 	 * @return mixed Raw (unformatted) value, or null when there is none.
 	 */
 	public function get_value( array $field, int $product_id, bool $is_edit_mode ) {
+		// A stored secret is never sent back to the browser; an empty submit keeps it.
+		if ( isset( $field['type'] ) && 'password' === $field['type'] ) {
+			return null;
+		}
+
 		if ( ! $is_edit_mode || $product_id <= 0 ) {
 			return isset( $field['default_value'] ) ? $field['default_value'] : null;
 		}

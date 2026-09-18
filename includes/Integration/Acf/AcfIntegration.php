@@ -24,7 +24,24 @@ class AcfIntegration {
 	 *
 	 * @var string[]
 	 */
-	const SUPPORTED_TYPES = array( 'text' );
+	const SUPPORTED_TYPES = array(
+		'text',
+		'textarea',
+		'number',
+		'range',
+		'email',
+		'url',
+		'password',
+		'color_picker',
+	);
+
+	/**
+	 * Layout-only field types: rendered in place but they carry no value, so
+	 * they have no input and are never saved.
+	 *
+	 * @var string[]
+	 */
+	const LAYOUT_TYPES = array( 'message', 'separator' );
 
 	/**
 	 * Post type whose field groups are surfaced.
@@ -96,6 +113,17 @@ class AcfIntegration {
 	 */
 	public static function is_supported_type( string $type ): bool {
 		return in_array( $type, self::SUPPORTED_TYPES, true );
+	}
+
+	/**
+	 * Whether a field type is layout-only (rendered, never saved).
+	 *
+	 * @param string $type ACF field type.
+	 *
+	 * @return bool
+	 */
+	public static function is_layout_type( string $type ): bool {
+		return in_array( $type, self::LAYOUT_TYPES, true );
 	}
 
 	/**

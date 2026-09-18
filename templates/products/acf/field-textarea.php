@@ -1,6 +1,6 @@
 <?php
 /**
- * StoreSuite product form: ACF `text` field input.
+ * StoreSuite product form: ACF `textarea` field input.
  *
  * @var array  $field       ACF field array.
  * @var string $input_name  Input name attribute.
@@ -16,16 +16,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+$rows      = ! empty( $field['rows'] ) ? absint( $field['rows'] ) : 8;
 $maxlength = ! empty( $field['maxlength'] ) ? absint( $field['maxlength'] ) : 0;
-
-$renderer->open_input_group( $field );
 ?>
-<input
-	type="text"
+<textarea
 	class="storesuite-form-control"
 	id="<?php echo esc_attr( $input_id ); ?>"
 	name="<?php echo esc_attr( $input_name ); ?>"
-	value="<?php echo esc_attr( is_scalar( $value ) ? (string) $value : '' ); ?>"
+	rows="<?php echo esc_attr( $rows ); ?>"
 	<?php if ( ! empty( $field['placeholder'] ) ) : ?>
 		placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"
 	<?php endif; ?>
@@ -33,6 +31,4 @@ $renderer->open_input_group( $field );
 		maxlength="<?php echo esc_attr( $maxlength ); ?>"
 	<?php endif; ?>
 	<?php echo $is_required ? 'required' : ''; ?>
->
-<?php
-$renderer->close_input_group( $field );
+><?php echo esc_textarea( is_scalar( $value ) ? (string) $value : '' ); ?></textarea>
