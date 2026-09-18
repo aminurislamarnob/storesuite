@@ -8071,6 +8071,38 @@ ul.storesuite-notifications-list {
   --storesuite-seo-snippet-site: #e8eaed;
 }
 
+.storesuite-seo-tabs {
+  display: flex;
+  gap: 4px;
+  margin: -4px 0 20px;
+  border-bottom: 1px solid var(--storesuite-border-color);
+}
+.storesuite-seo-tab {
+  padding: 8px 14px;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--storesuite-text-color-light);
+  cursor: pointer;
+}
+.storesuite-seo-tab:hover {
+  color: var(--storesuite-text-black);
+}
+.storesuite-seo-tab.is-active {
+  color: var(--storesuite-text-black);
+  border-bottom-color: var(--storesuite-primary-bg);
+}
+.storesuite-seo-tab:focus-visible {
+  outline: 2px solid var(--storesuite-primary-bg);
+  outline-offset: -2px;
+}
+.storesuite-seo-panel[hidden] {
+  display: none;
+}
+
 .storesuite-seo-preview {
   margin-bottom: 20px;
 }

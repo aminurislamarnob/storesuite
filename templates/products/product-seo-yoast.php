@@ -14,6 +14,8 @@
  * @var string          $title_template      Yoast's site-wide SEO title template for products.
  * @var string          $desc_template       Yoast's site-wide meta description template for products.
  * @var bool            $cornerstone_enabled Whether Yoast's cornerstone content feature is on.
+ * @var bool            $can_edit_advanced   Whether the current user may edit the advanced settings.
+ * @var bool            $noindex_by_default  Whether Yoast keeps products out of search results site-wide.
  *
  * @package StoreSuite
  */
@@ -99,5 +101,53 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<?php endif; ?>
 			</div>
 		</div>
+
+		<?php if ( $can_edit_advanced ) : ?>
+			<div class="storesuite-seo-panel" role="tabpanel" data-seo-panel="advanced" hidden>
+				<div class="row">
+					<div class="col-md-6">
+						<div class="storesuite-form-group">
+							<label for="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>"><?php esc_html_e( 'Allow search engines to show this product in search results?', 'storesuite' ); ?></label>
+							<select class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>" name="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>">
+								<option value="0" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '' ); ?>>
+									<?php
+									echo esc_html(
+										$noindex_by_default
+											? __( 'Default for products (currently: No)', 'storesuite' )
+											: __( 'Default for products (currently: Yes)', 'storesuite' )
+									);
+									?>
+								</option>
+								<option value="2" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '2' ); ?>><?php esc_html_e( 'Yes', 'storesuite' ); ?></option>
+								<option value="1" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '1' ); ?>><?php esc_html_e( 'No', 'storesuite' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="col-md-6">
+						<div class="storesuite-form-group">
+							<label for="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>"><?php esc_html_e( 'Should search engines follow links on this product?', 'storesuite' ); ?></label>
+							<select class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>" name="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>">
+								<option value="0" <?php selected( $seo_values['meta-robots-nofollow'] ?? '', '' ); ?>><?php esc_html_e( 'Yes', 'storesuite' ); ?></option>
+								<option value="1" <?php selected( $seo_values['meta-robots-nofollow'] ?? '', '1' ); ?>><?php esc_html_e( 'No', 'storesuite' ); ?></option>
+							</select>
+						</div>
+					</div>
+					<div class="col-md-12">
+						<div class="storesuite-form-group">
+							<label for="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>"><?php esc_html_e( 'Breadcrumbs title', 'storesuite' ); ?></label>
+							<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>" name="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>" value="<?php echo esc_attr( $seo_values['bctitle'] ?? '' ); ?>">
+							<small class="storesuite-form-text"><?php esc_html_e( 'Title to use for this product in breadcrumb paths. Leave blank to use the product title.', 'storesuite' ); ?></small>
+						</div>
+					</div>
+					<div class="col-md-12">
+						<div class="storesuite-form-group">
+							<label for="<?php echo esc_attr( $field_prefix . 'canonical' ); ?>"><?php esc_html_e( 'Canonical URL', 'storesuite' ); ?></label>
+							<input type="text" inputmode="url" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'canonical' ); ?>" name="<?php echo esc_attr( $field_prefix . 'canonical' ); ?>" value="<?php echo esc_attr( $seo_values['canonical'] ?? '' ); ?>" placeholder="https://">
+							<small class="storesuite-form-text"><?php esc_html_e( 'Only set this when the same product lives at another URL that search engines should treat as the original. Leave blank to use this product’s own permalink.', 'storesuite' ); ?></small>
+						</div>
+					</div>
+				</div>
+			</div>
+		<?php endif; ?>
 	</div>
 </div>

@@ -37,9 +37,35 @@
 			this.$menuField = null;
 			this.menuTrigger = null;
 
+			this.bindTabs();
 			this.bindPreview();
 			this.bindVariableMenu();
 			this.render();
+		},
+
+		/* ---------------------------------------------------------------
+		 * Tabs (only rendered when the card has more than one)
+		 * ------------------------------------------------------------- */
+
+		bindTabs: function () {
+			var self = this;
+
+			this.$card.on( 'click', '.storesuite-seo-tab', function () {
+				var tab = $( this ).attr( 'data-seo-tab' );
+
+				self.closeMenu();
+				self.$card
+					.find( '.storesuite-seo-tab' )
+					.removeClass( 'is-active' )
+					.attr( 'aria-selected', 'false' );
+				$( this ).addClass( 'is-active' ).attr( 'aria-selected', 'true' );
+				self.$card.find( '.storesuite-seo-panel' ).each( function () {
+					var active = $( this ).attr( 'data-seo-panel' ) === tab;
+					$( this )
+						.toggleClass( 'is-active', active )
+						.prop( 'hidden', ! active );
+				} );
+			} );
 		},
 
 		/* ---------------------------------------------------------------

@@ -55,7 +55,14 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 	 * @return YoastSeoIntegration
 	 */
 	private function make_integration( bool $active = true, array $options = array() ): YoastSeoIntegration {
-		$options = wp_parse_args( $options, array( 'enable_cornerstone_content' => true ) );
+		$options = wp_parse_args(
+			$options,
+			array(
+				'enable_cornerstone_content' => true,
+				// Yoast's default: advanced settings are locked down to users with the capability.
+				'disableadvanced_meta'       => true,
+			)
+		);
 
 		return new class( $active, $options ) extends YoastSeoIntegration {
 
@@ -104,6 +111,15 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 			 */
 			protected function get_yoast_option( string $key, $fallback = null ) {
 				return array_key_exists( $key, self::$options ) ? self::$options[ $key ] : $fallback;
+			}
+
+			/**
+			 * Report the faked Yoast advanced-metadata capability.
+			 *
+			 * @return bool
+			 */
+			protected function current_user_has_yoast_advanced_capability(): bool {
+				return ! empty( self::$options['__has_advanced_capability'] );
 			}
 
 			/**
@@ -370,5 +386,152 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 		$this->assertTrue( wp_script_is( 'storesuite_product_seo_script', 'enqueued' ) );
 
 		wp_dequeue_script( 'storesuite_product_seo_script' );
+	}
+
+	/**
+	 * Post every advanced field with valid values.
+	 *
+	 * @return void
+	 */
+	private function post_advanced_fields(): void {
+		$this->post_form(
+			array(
+				'storesuite_yoast_meta-robots-noindex'  => '1',
+				'storesuite_yoast_meta-robots-nofollow' => '1',
+				'storesuite_yoast_bctitle'              => ' Short <i>crumb</i> ',
+				'storesuite_yoast_canonical'            => 'https://example.org/canonical-widget/',
+			)
+		);
+	}
+
+	/**
+	 * Under Yoast's defaults a shop manager's advanced fields are ignored and existing values kept.
+	 *
+	 * @return void
+	 */
+	public function test_advanced_fields_ignored_for_shop_manager_by_default() {
+		update_post_meta( $this->product_id, '_yoast_wpseo_canonical', 'https://example.org/original/' );
+		$this->post_advanced_fields();
+
+		$integration = $this->make_integration();
+		$integration->save( $this->product_id );
+
+		$this->assertFalse( $integration->can_edit_advanced() );
+		$this->assertSame( 'https://example.org/original/', get_post_meta( $this->product_id, '_yoast_wpseo_canonical', true ) );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_meta-robots-noindex' ) );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_meta-robots-nofollow' ) );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_bctitle' ) );
+	}
+
+	/**
+	 * Each way of being allowed saves the advanced fields, sanitized.
+	 *
+	 * @dataProvider provide_advanced_access
+	 *
+	 * @param array $options    Faked Yoast options / capability.
+	 * @param bool  $use_filter Whether to grant access through the StoreSuite filter.
+	 *
+	 * @return void
+	 */
+	public function test_advanced_fields_saved_when_allowed( array $options, bool $use_filter ) {
+		if ( $use_filter ) {
+			add_filter( 'storesuite_yoast_can_edit_advanced', '__return_true' );
+		}
+
+		$this->post_advanced_fields();
+		$integration = $this->make_integration( true, $options );
+		$integration->save( $this->product_id );
+
+		remove_filter( 'storesuite_yoast_can_edit_advanced', '__return_true' );
+
+		$this->assertSame( '1', get_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-noindex', true ) );
+		$this->assertSame( '1', get_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-nofollow', true ) );
+		$this->assertSame( 'Short crumb', get_post_meta( $this->product_id, '_yoast_wpseo_bctitle', true ) );
+		$this->assertSame( 'https://example.org/canonical-widget/', get_post_meta( $this->product_id, '_yoast_wpseo_canonical', true ) );
+	}
+
+	/**
+	 * Ways a user can be allowed to edit advanced settings.
+	 *
+	 * @return array
+	 */
+	public function provide_advanced_access(): array {
+		return array(
+			'yoast capability'           => array( array( '__has_advanced_capability' => true ), false ),
+			'yoast security setting off' => array( array( 'disableadvanced_meta' => false ), false ),
+			'storesuite filter'          => array( array(), true ),
+		);
+	}
+
+	/**
+	 * The filter can also take access away from a user Yoast would allow.
+	 *
+	 * @return void
+	 */
+	public function test_filter_can_revoke_advanced_access() {
+		add_filter( 'storesuite_yoast_can_edit_advanced', '__return_false' );
+		$can = $this->make_integration( true, array( '__has_advanced_capability' => true ) )->can_edit_advanced();
+		remove_filter( 'storesuite_yoast_can_edit_advanced', '__return_false' );
+
+		$this->assertFalse( $can );
+	}
+
+	/**
+	 * Robots values outside Yoast's fixed sets are rejected; defaults remove the meta.
+	 *
+	 * @return void
+	 */
+	public function test_advanced_values_are_validated_and_defaults_delete() {
+		$integration = $this->make_integration( true, array( '__has_advanced_capability' => true ) );
+
+		update_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-noindex', '2' );
+		$this->post_form(
+			array(
+				'storesuite_yoast_meta-robots-noindex'  => '7',
+				'storesuite_yoast_meta-robots-nofollow' => 'yes',
+				'storesuite_yoast_canonical'            => 'javascript:alert(1)',
+			)
+		);
+		$integration->save( $this->product_id );
+
+		$this->assertSame( '2', get_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-noindex', true ), 'An invalid choice must not overwrite the stored value.' );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_meta-robots-nofollow' ) );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_canonical' ) );
+
+		$this->post_form(
+			array(
+				'storesuite_yoast_meta-robots-noindex'  => '0',
+				'storesuite_yoast_meta-robots-nofollow' => '0',
+			)
+		);
+		$integration->save( $this->product_id );
+
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_meta-robots-noindex' ) );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_meta-robots-nofollow' ) );
+	}
+
+	/**
+	 * The Advanced tab and its fields only render for users who may edit them.
+	 *
+	 * @return void
+	 */
+	public function test_advanced_tab_only_renders_when_allowed() {
+		update_post_meta( $this->product_id, '_yoast_wpseo_canonical', 'https://example.org/stored/' );
+		$product = wc_get_product( $this->product_id );
+
+		ob_start();
+		$this->make_integration()->render_card( $product, true );
+		$locked = ob_get_clean();
+
+		$this->assertStringNotContainsString( 'storesuite_yoast_canonical', $locked );
+		$this->assertStringNotContainsString( 'data-seo-tab="advanced"', $locked );
+
+		ob_start();
+		$this->make_integration( true, array( '__has_advanced_capability' => true ) )->render_card( $product, true );
+		$open = ob_get_clean();
+
+		$this->assertStringContainsString( 'data-seo-tab="advanced"', $open );
+		$this->assertStringContainsString( 'name="storesuite_yoast_meta-robots-noindex"', $open );
+		$this->assertStringContainsString( 'value="https://example.org/stored/"', $open );
 	}
 }

@@ -137,6 +137,43 @@ class YoastSeoIntegration {
 	}
 
 	/**
+	 * Whether the current user holds Yoast's capability for advanced metadata.
+	 *
+	 * @return bool
+	 */
+	protected function current_user_has_yoast_advanced_capability(): bool {
+		if ( class_exists( 'WPSEO_Capability_Utils' ) ) {
+			return \WPSEO_Capability_Utils::current_user_can( 'wpseo_edit_advanced_metadata' );
+		}
+
+		return current_user_can( 'wpseo_edit_advanced_metadata' ); // phpcs:ignore WordPress.WP.Capabilities.Unknown -- Registered by Yoast SEO.
+	}
+
+	/**
+	 * Whether the current user may edit a product's advanced SEO settings
+	 * (robots, breadcrumb title, canonical URL).
+	 *
+	 * Mirrors the Yoast metabox: allowed with Yoast's advanced-metadata
+	 * capability, or for everyone once the site owner switches off Yoast's
+	 * "security: advanced settings for authors" option. A wrong noindex or
+	 * canonical can remove a product from search results, so StoreSuite does
+	 * not grant more than wp-admin does unless the filter says so.
+	 *
+	 * @return bool
+	 */
+	public function can_edit_advanced(): bool {
+		$allowed = $this->current_user_has_yoast_advanced_capability()
+			|| false === $this->get_yoast_option( 'disableadvanced_meta', true );
+
+		/**
+		 * Filters whether the current user may edit advanced Yoast SEO settings on the product form.
+		 *
+		 * @param bool $allowed Whether Yoast's own rules allow it.
+		 */
+		return (bool) apply_filters( 'storesuite_yoast_can_edit_advanced', $allowed );
+	}
+
+	/**
 	 * Whether Yoast's cornerstone content feature is switched on.
 	 *
 	 * @return bool
@@ -146,21 +183,40 @@ class YoastSeoIntegration {
 	}
 
 	/**
-	 * The Yoast meta keys this integration may write, mapped to their field type.
+	 * The Yoast meta keys this integration may write, mapped to their definition.
 	 *
-	 * This is the whitelist: a posted field that is not listed here is never saved.
+	 * This is the whitelist: a posted field that is not listed here — including
+	 * one the current user is not allowed to edit — is never saved.
 	 *
-	 * @return array<string, string>
+	 * Types: `text`, `checkbox` (stored as "1"), `url`, and `choice`, which only
+	 * accepts its `choices` and removes the meta for its `default`.
+	 *
+	 * @return array<string, array>
 	 */
 	protected function get_fields(): array {
 		$fields = array(
-			'focuskw'  => 'text',
-			'title'    => 'text',
-			'metadesc' => 'text',
+			'focuskw'  => array( 'type' => 'text' ),
+			'title'    => array( 'type' => 'text' ),
+			'metadesc' => array( 'type' => 'text' ),
 		);
 
 		if ( $this->is_cornerstone_enabled() ) {
-			$fields['is_cornerstone'] = 'checkbox';
+			$fields['is_cornerstone'] = array( 'type' => 'checkbox' );
+		}
+
+		if ( $this->can_edit_advanced() ) {
+			$fields['meta-robots-noindex']  = array(
+				'type'    => 'choice',
+				'choices' => array( '0', '2', '1' ),
+				'default' => '0',
+			);
+			$fields['meta-robots-nofollow'] = array(
+				'type'    => 'choice',
+				'choices' => array( '0', '1' ),
+				'default' => '0',
+			);
+			$fields['bctitle']              = array( 'type' => 'text' );
+			$fields['canonical']            = array( 'type' => 'url' );
 		}
 
 		return $fields;
@@ -172,9 +228,15 @@ class YoastSeoIntegration {
 	 * @return array<string, string>
 	 */
 	protected function get_tabs(): array {
-		return array(
+		$tabs = array(
 			'seo' => __( 'SEO', 'storesuite' ),
 		);
+
+		if ( $this->can_edit_advanced() ) {
+			$tabs['advanced'] = __( 'Advanced', 'storesuite' );
+		}
+
+		return $tabs;
 	}
 
 	/**
@@ -206,6 +268,8 @@ class YoastSeoIntegration {
 				'title_template'      => (string) $this->get_yoast_option( 'title-product', '' ),
 				'desc_template'       => (string) $this->get_yoast_option( 'metadesc-product', '' ),
 				'cornerstone_enabled' => $this->is_cornerstone_enabled(),
+				'can_edit_advanced'   => $this->can_edit_advanced(),
+				'noindex_by_default'  => (bool) $this->get_yoast_option( 'noindex-product', false ),
 			)
 		);
 	}
@@ -228,20 +292,31 @@ class YoastSeoIntegration {
 			return;
 		}
 
-		foreach ( $this->get_fields() as $key => $type ) {
-			$field = self::FIELD_PREFIX . $key;
+		foreach ( $this->get_fields() as $key => $field ) {
+			$name = self::FIELD_PREFIX . $key;
 
-			if ( 'checkbox' === $type ) {
+			if ( 'checkbox' === $field['type'] ) {
 				// Unchecked checkboxes are not posted; the form marker proves the card was shown.
-				$this->set_meta( $key, empty( $_POST[ $field ] ) ? '' : '1', $product_id );
+				$this->set_meta( $key, empty( $_POST[ $name ] ) ? '' : '1', $product_id );
 				continue;
 			}
 
-			if ( ! isset( $_POST[ $field ] ) || ! is_string( $_POST[ $field ] ) ) {
+			if ( ! isset( $_POST[ $name ] ) || ! is_string( $_POST[ $name ] ) ) {
 				continue;
 			}
 
-			$this->set_meta( $key, sanitize_text_field( wp_unslash( $_POST[ $field ] ) ), $product_id );
+			$value = sanitize_text_field( wp_unslash( $_POST[ $name ] ) );
+
+			if ( 'choice' === $field['type'] ) {
+				if ( ! in_array( $value, $field['choices'], true ) ) {
+					continue;
+				}
+				$value = $value === $field['default'] ? '' : $value;
+			} elseif ( 'url' === $field['type'] ) {
+				$value = esc_url_raw( $value, array( 'http', 'https' ) );
+			}
+
+			$this->set_meta( $key, $value, $product_id );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
 	}
