@@ -452,13 +452,15 @@
 						.substring( 0, config.descMaxLength )
 						.replace( /\s+\S*$/, '' ) + ' ...';
 			}
-			$desc
-				.toggleClass( 'is-placeholder', ! shownDesc )
-				.html(
-					shownDesc
-						? this.highlightKeyphrase( shownDesc, context.focuskw )
-						: this.escapeHtml( config.i18n.descFallback )
-				);
+			$desc.toggleClass( 'is-placeholder', ! shownDesc ).html(
+				shownDesc
+					? this.highlightKeyphrase(
+							shownDesc,
+							// Yoast only bolds the keyphrase in its desktop preview.
+							isDesktop ? context.focuskw : ''
+					  )
+					: this.escapeHtml( config.i18n.descFallback )
+			);
 
 			this.$preview
 				.find( '.storesuite-seo-snippet-title' )

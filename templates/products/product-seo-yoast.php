@@ -17,6 +17,7 @@
  * @var array           $social_networks     Enabled social networks: Yoast meta key prefix => label.
  * @var array           $image_previews      Preview image URL per social network, empty when none is set.
  * @var bool            $can_edit_advanced   Whether the current user may edit the advanced settings.
+ * @var array           $robots_adv_choices  "Meta robots advanced" directives: value => label.
  * @var bool            $noindex_by_default  Whether Yoast keeps products out of search results site-wide.
  *
  * @package StoreSuite
@@ -113,12 +114,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 					$storesuite_seo_desc_field  = $field_prefix . $storesuite_seo_network . '-description';
 					$storesuite_seo_image_url   = $image_previews[ $storesuite_seo_network ] ?? '';
 					?>
-					<div class="storesuite-seo-network" role="group" aria-labelledby="<?php echo esc_attr( 'storesuite-seo-network-' . $storesuite_seo_network ); ?>">
-						<h4 class="storesuite-seo-network-title" id="<?php echo esc_attr( 'storesuite-seo-network-' . $storesuite_seo_network ); ?>"><?php echo esc_html( $storesuite_seo_network_label ); ?></h4>
+					<?php
+					$storesuite_seo_is_x     = 'twitter' === $storesuite_seo_network;
+					$storesuite_seo_group_id = 'storesuite-seo-network-' . $storesuite_seo_network;
+					?>
+					<div class="storesuite-seo-network" role="group" aria-labelledby="<?php echo esc_attr( $storesuite_seo_group_id ); ?>">
+						<h4 class="storesuite-seo-network-title" id="<?php echo esc_attr( $storesuite_seo_group_id ); ?>"><?php echo esc_html( $storesuite_seo_network_label ); ?></h4>
+						<?php if ( $storesuite_seo_is_x && isset( $social_networks['opengraph'] ) ) : ?>
+							<p class="storesuite-seo-network-note"><?php esc_html_e( 'Only fill these in to make the product look different on X. Left untouched, the social media appearance settings above are used for X as well.', 'storesuite' ); ?></p>
+						<?php endif; ?>
 						<div class="row">
 							<div class="col-md-4">
 								<div class="storesuite-form-group">
-									<span class="storesuite-seo-image-label"><?php esc_html_e( 'Image', 'storesuite' ); ?></span>
+									<span class="storesuite-seo-image-label"><?php echo esc_html( $storesuite_seo_is_x ? __( 'X image', 'storesuite' ) : __( 'Social image', 'storesuite' ) ); ?></span>
 									<div class="storesuite-seo-image<?php echo $storesuite_seo_image_url ? ' has-image' : ''; ?>">
 										<input type="hidden" name="<?php echo esc_attr( $storesuite_seo_image_field ); ?>" value="<?php echo esc_attr( $seo_values[ $storesuite_seo_network . '-image-id' ] ?? '' ); ?>">
 										<div class="storesuite-seo-image-preview">
@@ -128,21 +136,35 @@ if ( ! defined( 'ABSPATH' ) ) {
 										</div>
 										<div class="storesuite-seo-image-actions">
 											<button type="button" class="my-storesuite-button storesuite-seo-image-select" data-select-label="<?php esc_attr_e( 'Select image', 'storesuite' ); ?>" data-replace-label="<?php esc_attr_e( 'Replace image', 'storesuite' ); ?>"><?php echo esc_html( $storesuite_seo_image_url ? __( 'Replace image', 'storesuite' ) : __( 'Select image', 'storesuite' ) ); ?></button>
-											<button type="button" class="my-storesuite-button storesuite-seo-image-remove"><?php esc_html_e( 'Remove', 'storesuite' ); ?></button>
+											<button type="button" class="my-storesuite-button storesuite-seo-image-remove"><?php esc_html_e( 'Remove image', 'storesuite' ); ?></button>
 										</div>
 									</div>
 									<small class="storesuite-form-text"><?php esc_html_e( 'Leave empty to share the product image.', 'storesuite' ); ?></small>
 								</div>
 							</div>
 							<div class="col-md-8">
-								<div class="storesuite-form-group">
-									<label for="<?php echo esc_attr( $storesuite_seo_title_field ); ?>"><?php esc_html_e( 'Title', 'storesuite' ); ?></label>
+								<div class="storesuite-form-group storesuite-seo-field">
+									<div class="storesuite-seo-field-header">
+										<label for="<?php echo esc_attr( $storesuite_seo_title_field ); ?>"><?php echo esc_html( $storesuite_seo_is_x ? __( 'X title', 'storesuite' ) : __( 'Social title', 'storesuite' ) ); ?></label>
+										<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+									</div>
 									<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $storesuite_seo_title_field ); ?>" name="<?php echo esc_attr( $storesuite_seo_title_field ); ?>" value="<?php echo esc_attr( $seo_values[ $storesuite_seo_network . '-title' ] ?? '' ); ?>" autocomplete="off">
 								</div>
-								<div class="storesuite-form-group">
-									<label for="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>"><?php esc_html_e( 'Description', 'storesuite' ); ?></label>
+								<div class="storesuite-form-group storesuite-seo-field">
+									<div class="storesuite-seo-field-header">
+										<label for="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>"><?php echo esc_html( $storesuite_seo_is_x ? __( 'X description', 'storesuite' ) : __( 'Social description', 'storesuite' ) ); ?></label>
+										<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+									</div>
 									<textarea class="storesuite-form-control" id="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>" name="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>" rows="3"><?php echo esc_textarea( $seo_values[ $storesuite_seo_network . '-description' ] ?? '' ); ?></textarea>
-									<small class="storesuite-form-text"><?php esc_html_e( 'Leave the title and description blank to reuse the SEO title and meta description.', 'storesuite' ); ?></small>
+									<small class="storesuite-form-text">
+										<?php
+										echo esc_html(
+											$storesuite_seo_is_x && isset( $social_networks['opengraph'] )
+												? __( 'Leave the title and description blank to reuse the social title and description above.', 'storesuite' )
+												: __( 'Leave the title and description blank to reuse the SEO title and meta description.', 'storesuite' )
+										);
+										?>
+									</small>
 								</div>
 							</div>
 						</div>
@@ -154,36 +176,48 @@ if ( ! defined( 'ABSPATH' ) ) {
 		<?php if ( $can_edit_advanced ) : ?>
 			<div class="storesuite-seo-panel" role="tabpanel" data-seo-panel="advanced" hidden>
 				<div class="row">
-					<div class="col-md-6">
+					<div class="col-md-12">
 						<div class="storesuite-form-group">
 							<label for="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>"><?php esc_html_e( 'Allow search engines to show this product in search results?', 'storesuite' ); ?></label>
-							<select class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>" name="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>">
+							<select class="storesuite-form-control storesuite-seo-narrow" id="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>" name="<?php echo esc_attr( $field_prefix . 'meta-robots-noindex' ); ?>">
 								<option value="0" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '' ); ?>>
 									<?php
 									echo esc_html(
 										$noindex_by_default
-											? __( 'Default for products (currently: No)', 'storesuite' )
-											: __( 'Default for products (currently: Yes)', 'storesuite' )
+											? __( 'No (current default for Products)', 'storesuite' )
+											: __( 'Yes (current default for Products)', 'storesuite' )
 									);
 									?>
 								</option>
-								<option value="2" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '2' ); ?>><?php esc_html_e( 'Yes', 'storesuite' ); ?></option>
 								<option value="1" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '1' ); ?>><?php esc_html_e( 'No', 'storesuite' ); ?></option>
-							</select>
-						</div>
-					</div>
-					<div class="col-md-6">
-						<div class="storesuite-form-group">
-							<label for="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>"><?php esc_html_e( 'Should search engines follow links on this product?', 'storesuite' ); ?></label>
-							<select class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>" name="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>">
-								<option value="0" <?php selected( $seo_values['meta-robots-nofollow'] ?? '', '' ); ?>><?php esc_html_e( 'Yes', 'storesuite' ); ?></option>
-								<option value="1" <?php selected( $seo_values['meta-robots-nofollow'] ?? '', '1' ); ?>><?php esc_html_e( 'No', 'storesuite' ); ?></option>
+								<option value="2" <?php selected( $seo_values['meta-robots-noindex'] ?? '', '2' ); ?>><?php esc_html_e( 'Yes', 'storesuite' ); ?></option>
 							</select>
 						</div>
 					</div>
 					<div class="col-md-12">
+						<div class="storesuite-form-group" role="radiogroup" aria-labelledby="storesuite-seo-nofollow-label">
+							<span class="storesuite-seo-image-label" id="storesuite-seo-nofollow-label"><?php esc_html_e( 'Should search engines follow links on this product?', 'storesuite' ); ?></span>
+							<div class="storesuite-seo-radios">
+								<label><input type="radio" name="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>" value="0" <?php checked( $seo_values['meta-robots-nofollow'] ?? '', '' ); ?>> <?php esc_html_e( 'Yes', 'storesuite' ); ?></label>
+								<label><input type="radio" name="<?php echo esc_attr( $field_prefix . 'meta-robots-nofollow' ); ?>" value="1" <?php checked( $seo_values['meta-robots-nofollow'] ?? '', '1' ); ?>> <?php esc_html_e( 'No', 'storesuite' ); ?></label>
+							</div>
+						</div>
+					</div>
+					<div class="col-md-12">
 						<div class="storesuite-form-group">
-							<label for="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>"><?php esc_html_e( 'Breadcrumbs title', 'storesuite' ); ?></label>
+							<label for="<?php echo esc_attr( $field_prefix . 'meta-robots-adv' ); ?>"><?php esc_html_e( 'Meta robots advanced', 'storesuite' ); ?></label>
+							<?php $storesuite_seo_robots_adv = array_filter( explode( ',', $seo_values['meta-robots-adv'] ?? '' ) ); ?>
+							<select class="storesuite-form-control storesuite-select2" id="<?php echo esc_attr( $field_prefix . 'meta-robots-adv' ); ?>" name="<?php echo esc_attr( $field_prefix . 'meta-robots-adv' ); ?>[]" data-placeholder="<?php esc_attr_e( 'None', 'storesuite' ); ?>" multiple>
+								<?php foreach ( $robots_adv_choices as $storesuite_seo_directive => $storesuite_seo_directive_label ) : ?>
+									<option value="<?php echo esc_attr( $storesuite_seo_directive ); ?>" <?php selected( in_array( $storesuite_seo_directive, $storesuite_seo_robots_adv, true ) ); ?>><?php echo esc_html( $storesuite_seo_directive_label ); ?></option>
+								<?php endforeach; ?>
+							</select>
+							<small class="storesuite-form-text"><?php esc_html_e( 'Extra instructions for search engines: keep this product’s images out of image search, stop cached copies, or hide the text snippet.', 'storesuite' ); ?></small>
+						</div>
+					</div>
+					<div class="col-md-12">
+						<div class="storesuite-form-group">
+							<label for="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>"><?php esc_html_e( 'Breadcrumbs Title', 'storesuite' ); ?></label>
 							<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>" name="<?php echo esc_attr( $field_prefix . 'bctitle' ); ?>" value="<?php echo esc_attr( $seo_values['bctitle'] ?? '' ); ?>">
 							<small class="storesuite-form-text"><?php esc_html_e( 'Title to use for this product in breadcrumb paths. Leave blank to use the product title.', 'storesuite' ); ?></small>
 						</div>

@@ -183,6 +183,19 @@ class YoastSeoIntegration {
 	}
 
 	/**
+	 * Yoast's "Meta robots advanced" directives, in the order Yoast stores them.
+	 *
+	 * @return array<string, string> Directive => label.
+	 */
+	protected function get_robots_advanced_choices(): array {
+		return array(
+			'noimageindex' => __( 'No Image Index', 'storesuite' ),
+			'noarchive'    => __( 'No Archive', 'storesuite' ),
+			'nosnippet'    => __( 'No Snippet', 'storesuite' ),
+		);
+	}
+
+	/**
 	 * Social networks whose Yoast feature is switched on, keyed by Yoast's meta key prefix.
 	 *
 	 * @return array<string, string> Prefix => label.
@@ -191,11 +204,12 @@ class YoastSeoIntegration {
 		$networks = array();
 
 		if ( $this->get_yoast_option( 'opengraph', false ) ) {
-			$networks['opengraph'] = __( 'Facebook', 'storesuite' );
+			// Yoast's name for the Open Graph block: it feeds Facebook, WhatsApp, LinkedIn and others.
+			$networks['opengraph'] = __( 'Social media appearance', 'storesuite' );
 		}
 
 		if ( $this->get_yoast_option( 'twitter', false ) ) {
-			$networks['twitter'] = __( 'X (Twitter)', 'storesuite' );
+			$networks['twitter'] = __( 'X appearance', 'storesuite' );
 		}
 
 		return $networks;
@@ -208,7 +222,8 @@ class YoastSeoIntegration {
 	 * one the current user is not allowed to edit — is never saved.
 	 *
 	 * Types: `text`, `checkbox` (stored as "1"), `url`, `choice` (only accepts its
-	 * `choices` and removes the meta for its `default`) and `image` (an attachment
+	 * `choices` and removes the meta for its `default`), `multi` (any of its
+	 * `choices`, stored comma separated in that order) and `image` (an attachment
 	 * ID; the image URL is derived server-side and stored under `url_key`).
 	 *
 	 * @return array<string, array>
@@ -243,6 +258,10 @@ class YoastSeoIntegration {
 				'type'    => 'choice',
 				'choices' => array( '0', '1' ),
 				'default' => '0',
+			);
+			$fields['meta-robots-adv']      = array(
+				'type'    => 'multi',
+				'choices' => array_keys( $this->get_robots_advanced_choices() ),
 			);
 			$fields['bctitle']              = array( 'type' => 'text' );
 			$fields['canonical']            = array( 'type' => 'url' );
@@ -311,6 +330,7 @@ class YoastSeoIntegration {
 				'social_networks'     => $this->get_social_networks(),
 				'image_previews'      => $image_previews,
 				'can_edit_advanced'   => $this->can_edit_advanced(),
+				'robots_adv_choices'  => $this->get_robots_advanced_choices(),
 				'noindex_by_default'  => (bool) $this->get_yoast_option( 'noindex-product', false ),
 			)
 		);
@@ -340,6 +360,13 @@ class YoastSeoIntegration {
 			if ( 'checkbox' === $field['type'] ) {
 				// Unchecked checkboxes are not posted; the form marker proves the card was shown.
 				$this->set_meta( $key, empty( $_POST[ $name ] ) ? '' : '1', $product_id );
+				continue;
+			}
+
+			if ( 'multi' === $field['type'] ) {
+				// A multi-select with nothing selected is not posted; the form marker proves the card was shown.
+				$posted = isset( $_POST[ $name ] ) && is_array( $_POST[ $name ] ) ? array_map( 'sanitize_key', wp_unslash( $_POST[ $name ] ) ) : array();
+				$this->set_meta( $key, implode( ',', array_intersect( $field['choices'], $posted ) ), $product_id );
 				continue;
 			}
 

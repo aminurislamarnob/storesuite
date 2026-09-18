@@ -8117,6 +8117,30 @@ ul.storesuite-notifications-list {
   font-weight: 600;
   color: var(--storesuite-text-black);
 }
+.storesuite-seo-network-note {
+  margin: -4px 0 14px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-seo-narrow {
+  max-width: 360px;
+}
+.storesuite-seo-radios {
+  display: flex;
+  gap: 20px;
+}
+.storesuite-seo-radios label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+.storesuite-seo-radios input[type="radio"] {
+  accent-color: var(--storesuite-primary-bg);
+}
 .storesuite-seo-image-label {
   display: block;
   margin-bottom: 6px;
@@ -8220,8 +8244,12 @@ ul.storesuite-notifications-list {
   font-family: Arial, sans-serif;
   overflow: hidden;
 }
+/* Yoast's desktop preview is a bare result, not a card. */
 .storesuite-seo-preview[data-mode="desktop"] .storesuite-seo-snippet {
   max-width: 632px;
+  padding: 4px 0;
+  border-color: transparent;
+  background: transparent;
   box-shadow: none;
 }
 .storesuite-seo-snippet-site {
@@ -8242,6 +8270,10 @@ ul.storesuite-notifications-list {
   display: flex;
   align-items: center;
   justify-content: center;
+}
+/* Globe shown until the site icon loads in, or when the site has none. */
+.storesuite-seo-snippet-icon:empty {
+  background: var(--storesuite-bg-color-muted) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%237b8794' stroke-width='1.6'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3c2.8 3 2.8 15 0 18M12 3c-2.8 3-2.8 15 0 18'/%3E%3C/svg%3E") center / 16px no-repeat;
 }
 .storesuite-seo-snippet-icon img {
   width: 18px;

@@ -693,4 +693,69 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 		$this->assertStringNotContainsString( 'data-seo-tab="social"', $none );
 		$this->assertStringNotContainsString( 'data-seo-panel="social"', $none );
 	}
+
+	/**
+	 * "Meta robots advanced" stores the allowed directives comma separated and drops anything else.
+	 *
+	 * @return void
+	 */
+	public function test_meta_robots_advanced_round_trip() {
+		$integration = $this->make_integration( true, array( '__has_advanced_capability' => true ) );
+
+		$_POST = array(
+			'storesuite_yoast_seo'             => '1',
+			'storesuite_yoast_meta-robots-adv' => array( 'nosnippet', 'noimageindex', 'noindex', '<b>bogus</b>' ),
+		);
+		$integration->save( $this->product_id );
+
+		$this->assertSame( 'noimageindex,nosnippet', get_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-adv', true ) );
+
+		// Nothing selected: a multi-select posts no value at all.
+		$this->post_form( array() );
+		$integration->save( $this->product_id );
+
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_meta-robots-adv' ) );
+	}
+
+	/**
+	 * A user without advanced access can neither set nor clear "Meta robots advanced".
+	 *
+	 * @return void
+	 */
+	public function test_meta_robots_advanced_untouched_without_access() {
+		update_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-adv', 'noarchive' );
+
+		$_POST = array(
+			'storesuite_yoast_seo'             => '1',
+			'storesuite_yoast_meta-robots-adv' => array( 'nosnippet' ),
+		);
+		$this->make_integration()->save( $this->product_id );
+		$this->assertSame( 'noarchive', get_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-adv', true ) );
+
+		$this->post_form( array() );
+		$this->make_integration()->save( $this->product_id );
+		$this->assertSame( 'noarchive', get_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-adv', true ) );
+	}
+
+	/**
+	 * The Advanced and Social panels mirror the Yoast metabox: radios for following links,
+	 * the robots multi-select with stored values selected, and Insert variable on social text.
+	 *
+	 * @return void
+	 */
+	public function test_panels_mirror_the_yoast_metabox() {
+		update_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-adv', 'noarchive,nosnippet' );
+		update_post_meta( $this->product_id, '_yoast_wpseo_meta-robots-nofollow', '1' );
+
+		ob_start();
+		$this->make_integration( true, array( '__has_advanced_capability' => true ) )->render_card( wc_get_product( $this->product_id ), true );
+		$html = ob_get_clean();
+
+		$this->assertStringContainsString( 'name="storesuite_yoast_meta-robots-adv[]"', $html );
+		$this->assertMatchesRegularExpression( '/<option value="noarchive"\s+selected/', $html );
+		$this->assertMatchesRegularExpression( '/<option value="noimageindex"\s*>/', $html );
+		$this->assertMatchesRegularExpression( '/type="radio"[^>]+name="storesuite_yoast_meta-robots-nofollow"[^>]+value="1"[^>]+checked/', $html );
+		$this->assertStringContainsString( 'Yes (current default for Products)', $html );
+		$this->assertSame( 4, substr_count( $html, 'storesuite-seo-insert-variable' ) - 2, 'Social title and description of both networks offer Insert variable.' );
+	}
 }
