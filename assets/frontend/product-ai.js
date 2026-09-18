@@ -140,6 +140,18 @@
 			$( '#product_description' ).val( html );
 		},
 
+		// Extra context posted with every request: any form field an
+		// integration flags with data-ai-context (e.g. the SEO focus keyphrase).
+		getExtraContext() {
+			const extra = {};
+			$( '[data-ai-context]' ).each( function () {
+				if ( this.name ) {
+					extra[ this.name ] = $( this ).val() || '';
+				}
+			} );
+			return extra;
+		},
+
 		getSelectedCategories() {
 			return $( '#product_category option:selected' )
 				.map( function () {
@@ -222,9 +234,24 @@
 				),
 				product_description: this.getDescription(),
 				categories: this.getSelectedCategories(),
+				...this.getExtraContext(),
 			} ).then( function ( data ) {
 				return data.content || '';
 			} );
+		},
+
+		// Show "n / target" under the suggestion and flag it when over length.
+		refreshCounter() {
+			const target = this.fieldDefinition( this.activeField ).length || 0;
+			if ( ! target || ! this.$modalCounter.length ) {
+				this.$modalCounter.prop( 'hidden', true );
+				return;
+			}
+			const length = ( this.$modalText.val() || '' ).trim().length;
+			this.$modalCounter
+				.prop( 'hidden', false )
+				.attr( 'data-state', length > target ? 'over' : 'ok' )
+				.text( length + ' / ' + target );
 		},
 
 		// Persist edits to the visible suggestion so they survive navigation.
@@ -254,6 +281,7 @@
 				suggestionIndex === this.suggestions.length - 1
 			);
 			this.$pager.prop( 'hidden', this.suggestions.length < 2 );
+			this.refreshCounter();
 		},
 
 		// Show a fresh suggestion in the suggestion modal (or insert directly
@@ -322,6 +350,12 @@
 				'.storesuite-ai-pager-status'
 			);
 			this.$modalSkeleton = this.$modal.find( '.storesuite-ai-skeleton' );
+			this.$modalCounter = this.$modal.find(
+				'.storesuite-ai-modal-counter'
+			);
+
+			// Live length counter for fields that declare a target length.
+			this.$modalText.on( 'input', () => this.refreshCounter() );
 
 			// Prompt-input modal.
 			this.$promptModal = $( '#storesuite-ai-prompt-modal' );

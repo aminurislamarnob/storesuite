@@ -122,6 +122,69 @@ class ProductAI {
 	}
 
 	/**
+	 * AI settings groups contributed by registered (non built-in) fields.
+	 *
+	 * Fields that share a `group` key are presented on the AI settings page as
+	 * one block: a single on/off toggle (their shared `enabled_setting`) and one
+	 * textarea per distinct `instruction_setting`, prefilled with the default
+	 * instruction. The block's label comes from the
+	 * `storesuite_ai_settings_group_labels` filter, falling back to the group key.
+	 *
+	 * @return array<int, array{key: string, label: string, enabled_setting: string, instructions: array<int, array{setting: string, label: string, default: string}>}>
+	 */
+	public static function get_settings_groups() {
+		$builtin = self::builtin_fields();
+		$groups  = array();
+
+		foreach ( self::get_fields() as $key => $definition ) {
+			if ( isset( $builtin[ $key ] ) || empty( $definition['group'] ) ) {
+				continue;
+			}
+
+			$group = sanitize_key( $definition['group'] );
+
+			if ( ! isset( $groups[ $group ] ) ) {
+				$groups[ $group ] = array(
+					'key'             => $group,
+					'label'           => $group,
+					'enabled_setting' => '',
+					'instructions'    => array(),
+				);
+			}
+
+			if ( ! empty( $definition['enabled_setting'] ) && '' === $groups[ $group ]['enabled_setting'] ) {
+				$groups[ $group ]['enabled_setting'] = $definition['enabled_setting'];
+			}
+
+			$setting = isset( $definition['instruction_setting'] ) ? $definition['instruction_setting'] : '';
+			if ( '' !== $setting && ! isset( $groups[ $group ]['instructions'][ $setting ] ) ) {
+				$groups[ $group ]['instructions'][ $setting ] = array(
+					'setting' => $setting,
+					'label'   => isset( $definition['instruction_label'] ) ? $definition['instruction_label'] : $definition['label'],
+					'default' => (string) $definition['instruction'],
+				);
+			}
+		}
+
+		/**
+		 * Filters the labels of AI settings groups, keyed by group key.
+		 *
+		 * @param array<string, string> $labels Group labels.
+		 */
+		$labels = apply_filters( 'storesuite_ai_settings_group_labels', array() );
+
+		foreach ( $groups as $group => &$data ) {
+			if ( isset( $labels[ $group ] ) ) {
+				$data['label'] = $labels[ $group ];
+			}
+			$data['instructions'] = array_values( $data['instructions'] );
+		}
+		unset( $data );
+
+		return array_values( $groups );
+	}
+
+	/**
 	 * Definition of one field, or null when unknown.
 	 *
 	 * @param string $field Field key.

@@ -8336,6 +8336,24 @@ ul.storesuite-notifications-list {
 .storesuite-seo-field-header label {
   margin-bottom: 0;
 }
+.storesuite-seo-field-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.storesuite-seo-field-actions .storesuite-ai-generate {
+  margin: 0;
+}
+.storesuite-ai-modal-counter {
+  margin-top: 6px;
+  font-size: 12px;
+  text-align: right;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-ai-modal-counter[data-state="over"] {
+  color: #dc2626;
+  font-weight: 600;
+}
 .storesuite-seo-field-header .storesuite-seo-insert-variable {
   padding: 4px 10px;
   font-size: 12px;
