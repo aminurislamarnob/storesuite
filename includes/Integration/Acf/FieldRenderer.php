@@ -85,12 +85,57 @@ class FieldRenderer {
 				'input_name'   => $this->get_input_name( $field ),
 				'input_id'     => $this->get_input_id( $field ),
 				'value'        => $supported ? $this->get_value( $field, $product_id, $is_edit_mode ) : null,
+				// Placeholders have no input, so conditions that reference them read the stored value.
+				'stored_value' => ( ! $supported && ! $layout ) ? $this->get_value( $field, $product_id, $is_edit_mode ) : null,
+				'conditions'   => $this->get_conditions( $field ),
 				'columns'      => $this->get_columns( $field ),
 				'product_id'   => $product_id,
 				'is_edit_mode' => $is_edit_mode,
 				'renderer'     => $this,
 			)
 		);
+	}
+
+	/**
+	 * A field's conditional logic as ACF stores it: OR-groups of AND-rules,
+	 * each rule being {field, operator, value}. Empty when the field has none.
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return array<int, array<int, array{field:string, operator:string, value:string}>>
+	 */
+	public function get_conditions( array $field ): array {
+		if ( empty( $field['conditional_logic'] ) || ! is_array( $field['conditional_logic'] ) ) {
+			return array();
+		}
+
+		$groups = array();
+
+		foreach ( $field['conditional_logic'] as $group ) {
+			if ( ! is_array( $group ) ) {
+				continue;
+			}
+
+			$rules = array();
+
+			foreach ( $group as $rule ) {
+				if ( empty( $rule['field'] ) || empty( $rule['operator'] ) ) {
+					continue;
+				}
+
+				$rules[] = array(
+					'field'    => (string) $rule['field'],
+					'operator' => (string) $rule['operator'],
+					'value'    => isset( $rule['value'] ) && is_scalar( $rule['value'] ) ? (string) $rule['value'] : '',
+				);
+			}
+
+			if ( ! empty( $rules ) ) {
+				$groups[] = $rules;
+			}
+		}
+
+		return $groups;
 	}
 
 	/**

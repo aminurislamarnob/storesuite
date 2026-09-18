@@ -12,6 +12,8 @@
  * @var string                                                $input_name   Input name attribute (storesuite_acf[<key>]).
  * @var string                                                $input_id     Input id attribute.
  * @var mixed                                                 $value        Value to prefill, null when none.
+ * @var mixed                                                 $stored_value Stored value of an unsupported field (for conditions), else null.
+ * @var array                                                 $conditions   Conditional logic groups, empty when none.
  * @var int                                                   $columns      Grid column span (1–12).
  * @var int                                                   $product_id   Product ID, 0 on the add form.
  * @var bool                                                  $is_edit_mode Whether the edit form is rendered.
@@ -31,10 +33,19 @@ if ( ! empty( $field['wrapper']['class'] ) ) {
 }
 
 $wrapper_id   = ! empty( $field['wrapper']['id'] ) ? (string) $field['wrapper']['id'] : '';
+$data_attrs   = '';
+
+if ( ! empty( $conditions ) ) {
+	$data_attrs .= ' data-conditions="' . esc_attr( wp_json_encode( $conditions ) ) . '"';
+}
+
+if ( null !== $stored_value ) {
+	$data_attrs .= ' data-value="' . esc_attr( wp_json_encode( $stored_value ) ) . '"';
+}
 $instructions = ! empty( $field['instructions'] ) ? (string) $field['instructions'] : '';
 $is_required  = ! empty( $field['required'] );
 ?>
-<div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>"<?php echo '' !== $wrapper_id ? ' id="' . esc_attr( $wrapper_id ) . '"' : ''; ?> data-key="<?php echo esc_attr( $field['key'] ); ?>" data-name="<?php echo esc_attr( isset( $field['name'] ) ? $field['name'] : '' ); ?>" data-type="<?php echo esc_attr( $type ); ?>">
+<div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>"<?php echo '' !== $wrapper_id ? ' id="' . esc_attr( $wrapper_id ) . '"' : ''; ?> data-key="<?php echo esc_attr( $field['key'] ); ?>" data-name="<?php echo esc_attr( isset( $field['name'] ) ? $field['name'] : '' ); ?>" data-type="<?php echo esc_attr( $type ); ?>"<?php echo $data_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above. ?>>
 	<div class="storesuite-form-group">
 		<?php if ( ! empty( $field['label'] ) ) : ?>
 			<label for="<?php echo esc_attr( $input_id ); ?>">

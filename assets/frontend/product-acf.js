@@ -20,6 +20,228 @@
 			this.bindColorPicker( $groups );
 			this.initDatePickers( $groups );
 			this.bindMediaPickers( $groups );
+			this.initConditionalLogic( $groups );
+		},
+
+		/**
+		 * ACF conditional logic. Each field wrapper carries its rules as
+		 * `data-conditions` (OR-groups of AND-rules, {field, operator, value}).
+		 * Rules are evaluated on load and whenever any field changes; hidden
+		 * fields get their inputs disabled so they drop out of the request
+		 * and the server leaves their stored values alone.
+		 */
+		initConditionalLogic: function ( $groups ) {
+			var self = this;
+			var $conditional = $groups.find( '[data-conditions]' );
+
+			if ( ! $conditional.length ) {
+				return;
+			}
+
+			this.$conditionalFields = $conditional;
+			this.$allFields = $groups.find( '.storesuite-acf-field' );
+
+			var evaluate = function () {
+				self.evaluateConditions();
+			};
+
+			$groups.on( 'change input', ':input', evaluate );
+
+			// WYSIWYG controllers write to their textarea only on save; listen
+			// to the editors directly.
+			$( document ).on( 'tinymce-editor-init', function ( event, editor ) {
+				if ( $groups.find( '#' + editor.id ).length ) {
+					editor.on( 'change keyup', evaluate );
+				}
+			} );
+
+			this.evaluateConditions();
+		},
+
+		evaluateConditions: function () {
+			var self = this;
+			var changed = true;
+			var passes = 0;
+
+			// A controller may itself be conditional; loop until nothing flips.
+			while ( changed && passes < 10 ) {
+				changed = false;
+				passes++;
+
+				this.$conditionalFields.each( function () {
+					var $field = $( this );
+					var visible = self.conditionsPass( $field.data( 'conditions' ) );
+					var wasHidden = $field.hasClass( 'storesuite-acf-hidden' );
+
+					if ( visible === wasHidden ) {
+						self.setFieldVisible( $field, visible );
+						changed = true;
+					}
+				} );
+			}
+		},
+
+		setFieldVisible: function ( $field, visible ) {
+			$field
+				.toggleClass( 'storesuite-acf-hidden', ! visible )
+				.attr( 'aria-hidden', visible ? null : 'true' )
+				.find( ':input' )
+				.prop( 'disabled', ! visible );
+		},
+
+		/**
+		 * OR across groups, AND within a group (ACF semantics).
+		 */
+		conditionsPass: function ( groups ) {
+			var self = this;
+
+			if ( ! Array.isArray( groups ) || ! groups.length ) {
+				return true;
+			}
+
+			return groups.some( function ( rules ) {
+				return rules.every( function ( rule ) {
+					return self.rulePasses( rule );
+				} );
+			} );
+		},
+
+		rulePasses: function ( rule ) {
+			var $controller = this.$allFields.filter(
+				'[data-key="' + rule.field + '"]'
+			);
+
+			if ( ! $controller.length ) {
+				return false;
+			}
+
+			// A hidden controller counts as having no value (mirrors ACF).
+			var value = $controller.hasClass( 'storesuite-acf-hidden' )
+				? ''
+				: this.readFieldValue( $controller );
+			var isArray = Array.isArray( value );
+			var text = isArray ? value.join( ',' ) : String( value );
+
+			switch ( rule.operator ) {
+				case '==':
+					return isArray
+						? value.some( function ( v ) {
+								return this.looselyEqual( v, rule.value );
+						  }, this )
+						: this.looselyEqual( value, rule.value );
+				case '!=':
+					return ! this.rulePasses( {
+						field: rule.field,
+						operator: '==',
+						value: rule.value,
+					} );
+				case '==empty':
+					return this.isEmptyValue( value );
+				case '!=empty':
+					return ! this.isEmptyValue( value );
+				case '==contains':
+					return isArray
+						? value.indexOf( rule.value ) !== -1
+						: text.indexOf( rule.value ) !== -1;
+				case '==pattern':
+					try {
+						return new RegExp( rule.value ).test( text );
+					} catch ( e ) {
+						return false;
+					}
+				case '>':
+					return isArray
+						? value.length > parseFloat( rule.value )
+						: parseFloat( value ) > parseFloat( rule.value );
+				case '<':
+					return isArray
+						? value.length < parseFloat( rule.value )
+						: parseFloat( value ) < parseFloat( rule.value );
+			}
+
+			return false;
+		},
+
+		looselyEqual: function ( a, b ) {
+			var na = parseFloat( a );
+			var nb = parseFloat( b );
+
+			if (
+				! isNaN( na ) &&
+				! isNaN( nb ) &&
+				String( a ).trim() !== '' &&
+				String( b ).trim() !== ''
+			) {
+				return na === nb;
+			}
+
+			return String( a ) === String( b );
+		},
+
+		isEmptyValue: function ( value ) {
+			if ( Array.isArray( value ) ) {
+				return ! value.length;
+			}
+
+			return value === '' || value === null || value === undefined;
+		},
+
+		/**
+		 * Current value of a field wrapper, shaped per type: arrays for
+		 * multi-value fields, '1' / '' for the switch, the stored value for
+		 * placeholders (which have no input).
+		 */
+		readFieldValue: function ( $field ) {
+			var type = $field.data( 'type' );
+
+			if ( $field.is( '[data-value]' ) ) {
+				var stored = $field.data( 'value' );
+				return stored === null || stored === undefined ? '' : stored;
+			}
+
+			switch ( type ) {
+				case 'true_false':
+					return $field.find( 'input[type="checkbox"]' ).is( ':checked' )
+						? '1'
+						: '';
+				case 'checkbox':
+					return $field
+						.find( 'input[type="checkbox"]:checked' )
+						.map( function () {
+							return this.value;
+						} )
+						.get();
+				case 'radio':
+				case 'button_group':
+					return $field.find( 'input[type="radio"]:checked' ).val() || '';
+				case 'select':
+					var selected = $field.find( 'select' ).val();
+					if ( Array.isArray( selected ) ) {
+						return selected;
+					}
+					return selected === null || selected === undefined
+						? ''
+						: selected;
+				case 'wysiwyg':
+					var $textarea = $field.find( 'textarea' );
+					if (
+						typeof tinyMCE !== 'undefined' &&
+						tinyMCE.get( $textarea.attr( 'id' ) )
+					) {
+						return tinyMCE.get( $textarea.attr( 'id' ) ).getContent();
+					}
+					return $textarea.val() || '';
+			}
+
+			// Text-like inputs (text, number, email, url, dates, colour, image id, …):
+			// the last named, non-hidden control wins so sentinels are skipped.
+			var $inputs = $field.find( ':input[name]' ).not( '[type="hidden"]' );
+			if ( ! $inputs.length ) {
+				$inputs = $field.find( ':input[name]' );
+			}
+
+			var val = $inputs.last().val();
+			return val === null || val === undefined ? '' : val;
 		},
 
 		/**

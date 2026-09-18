@@ -8258,3 +8258,8 @@ ul.storesuite-notifications-list {
 .swal2-html-container .storesuite-error-list li + li {
   margin-top: 6px;
 }
+
+/* Conditional logic: fields whose rules do not pass. */
+.storesuite-acf-field.storesuite-acf-hidden {
+  display: none;
+}
