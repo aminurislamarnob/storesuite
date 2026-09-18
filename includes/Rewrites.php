@@ -69,6 +69,7 @@ class Rewrites {
 				'edit-coupon'      => get_option( 'storesuite_myshop_edit_coupon_endpoint', 'edit-coupon' ),
 				'edit-account-details' => get_option( 'storesuite_myshop_edit_account_endpoint', 'edit-account-details' ),
 				'notifications'    => get_option( 'storesuite_myshop_notifications_endpoint', 'notifications' ),
+				'edit-history'     => get_option( 'storesuite_myshop_edit_history_endpoint', 'edit-history' ),
 			)
 		);
 	}
@@ -191,6 +192,13 @@ class Rewrites {
 		add_rewrite_rule(
 			$this->store_front_base . '/notifications/page/([^/]+)/?$',
 			'index.php?pagename=' . $this->store_front_base . '&notifications=1&paged=$matches[1]',
+			'top'
+		);
+
+		// Add rewrite rule for edit history list pagination.
+		add_rewrite_rule(
+			$this->store_front_base . '/edit-history/page/([^/]+)/?$',
+			'index.php?pagename=' . $this->store_front_base . '&edit-history=1&paged=$matches[1]',
 			'top'
 		);
 
@@ -328,6 +336,9 @@ class Rewrites {
 				break;
 			case 'notifications':
 				$title = __( 'Notifications', 'storesuite' );
+				break;
+			case 'edit-history':
+				$title = __( 'Edit History', 'storesuite' );
 				break;
 			default:
 				$title = '';

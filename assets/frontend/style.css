@@ -8177,3 +8177,357 @@ tr.storesuite-inline-saved-flash > td {
 .storesuite-filter-price-sep {
   color: var(--storesuite-text-color-light);
 }
+.storesuite-form-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.storesuite-form-range .storesuite-form-control {
+  flex: 1 1 0;
+  min-width: 0;
+}
+.storesuite-form-range-sep {
+  color: var(--storesuite-text-color-light);
+}
+
+/* AI search */
+.storesuite-ai-search {
+  margin: 0 0 16px;
+  max-width: 640px;
+}
+.storesuite-ai-search-input {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: none;
+  padding-right: 5px;
+}
+.storesuite-ai-search-input input[type="text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.storesuite-ai-search-icon {
+  color: var(--storesuite-primary-bg);
+}
+.storesuite-ai-search-icon svg {
+  fill: currentColor;
+}
+.storesuite-ai-search-submit {
+  flex: 0 0 auto;
+  height: 30px;
+  min-width: 56px;
+  padding: 0 14px;
+  font-size: 13px;
+}
+.storesuite-ai-search-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: var(--storesuite-button-text-color);
+  border-radius: 50%;
+  animation: storesuite-ai-search-spin 0.8s linear infinite;
+}
+.storesuite-ai-search-spinner[hidden],
+.storesuite-ai-search-submit-label[hidden] {
+  display: none;
+}
+@keyframes storesuite-ai-search-spin {
+  to { transform: rotate(360deg); }
+}
+.storesuite-ai-search-hint {
+  margin: 6px 0 0 2px;
+  font-size: 13px;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-ai-search-hint.is-error {
+  color: #e74c3c;
+}
+
+/* Column manager */
+.storesuite-orders-toolbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.storesuite-list-table th[data-col][hidden],
+.storesuite-list-table td[data-col][hidden],
+.my-storesuite-tbl th[data-col][hidden],
+.my-storesuite-tbl td[data-col][hidden] {
+  display: none !important;
+}
+.storesuite-column-manager {
+  display: inline-block;
+}
+.storesuite-column-manager-toggle {
+  position: relative;
+}
+.storesuite-column-manager-count {
+  margin-left: 6px;
+}
+.storesuite-column-manager .storesuite-dropdown-menu.storesuite-column-manager-menu {
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 210px;
+  max-width: 280px;
+  padding: 6px 0 4px;
+  text-align: left;
+  cursor: default;
+}
+.storesuite-column-manager-heading {
+  display: block;
+  padding: 6px 15px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-column-manager-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 7px 15px;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.3;
+  color: var(--storesuite-text-color);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.storesuite-column-manager-option:hover {
+  background: var(--storesuite-bg-color-muted);
+}
+.storesuite-column-manager-option.is-locked {
+  cursor: default;
+}
+.storesuite-column-manager-option.is-locked .storesuite-column-manager-label,
+.storesuite-column-manager-option.is-locked .my-storesuite-checkbox {
+  opacity: 0.5;
+}
+.storesuite-column-manager-option .my-storesuite-checkbox {
+  flex: 0 0 auto;
+}
+.storesuite-column-manager-reset {
+  display: block;
+  width: 100%;
+  margin-top: 4px;
+  padding: 10px 15px 8px;
+  border: 0;
+  border-top: 1px solid var(--storesuite-border-color);
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: left;
+  color: var(--storesuite-primary-bg);
+  cursor: pointer;
+}
+.storesuite-column-manager-reset:hover {
+  text-decoration: underline;
+}
+
+/* Edit history */
+.storesuite-text-muted {
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-mb-0 {
+  margin-bottom: 0;
+}
+.storesuite-edit-history-table .storesuite-history-change-col {
+  width: 60%;
+}
+.storesuite-history-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.storesuite-history-title {
+  font-weight: 500;
+  color: var(--storesuite-text-black);
+}
+.storesuite-history-row.is-undone .storesuite-history-title {
+  text-decoration: line-through;
+  color: var(--storesuite-text-color-light);
+  font-weight: 400;
+}
+.storesuite-history-details {
+  margin-top: 6px;
+}
+.storesuite-history-details summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  font-size: 13px;
+  color: var(--storesuite-text-color-light);
+  cursor: pointer;
+}
+.storesuite-history-details summary::-webkit-details-marker {
+  display: none;
+}
+.storesuite-history-details summary svg {
+  fill: currentColor;
+  transition: transform 0.15s ease;
+}
+.storesuite-history-details[open] summary svg {
+  transform: rotate(90deg);
+}
+.storesuite-history-details summary:hover {
+  color: var(--storesuite-primary-bg);
+}
+.storesuite-history-items {
+  list-style: none;
+  margin: 8px 0 2px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.storesuite-history-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  font-size: 13px;
+}
+.storesuite-history-object {
+  color: var(--storesuite-primary-bg);
+}
+.storesuite-history-field {
+  font-weight: 500;
+  color: var(--storesuite-text-black);
+}
+.storesuite-history-field::after {
+  content: ":";
+}
+.storesuite-history-diff {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+.storesuite-history-old {
+  text-decoration: line-through;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-arrow {
+  display: inline-flex;
+  color: var(--storesuite-icon-color);
+}
+.storesuite-history-arrow svg {
+  fill: currentColor;
+}
+.storesuite-history-new {
+  font-weight: 600;
+  color: var(--storesuite-text-black);
+}
+
+/* Edit history: product form card */
+.storesuite-history-entries {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.storesuite-history-entry {
+  padding: 12px 0;
+  border-top: 1px solid var(--storesuite-border-color);
+}
+.storesuite-history-entry:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+.storesuite-history-entry-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  font-size: 14px;
+}
+.storesuite-history-entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-entry.is-undone .storesuite-history-new {
+  text-decoration: line-through;
+  font-weight: 400;
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-history-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--storesuite-primary-bg);
+}
+.storesuite-history-more svg {
+  fill: currentColor;
+}
+
+/* Edit history: bulk feedback undo */
+.storesuite-bulk-edit-feedback.has-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 16px;
+}
+.storesuite-bulk-edit-feedback-actions {
+  order: 99;
+  margin-left: auto;
+}
+.storesuite-bulk-edit-feedback.has-actions .storesuite-bulk-edit-feedback-line {
+  margin: 0;
+}
+
+/* Edit history: undo toast */
+.swal2-container .storesuite-undo-toast {
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid var(--storesuite-border-color);
+  border-radius: 6px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1);
+}
+.swal2-container .storesuite-undo-toast .swal2-icon {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  margin: 0 10px 0 0;
+  border-width: 2px;
+}
+.swal2-container .storesuite-undo-toast .swal2-icon .swal2-icon-content {
+  font-size: 14px;
+}
+.swal2-container .storesuite-undo-toast .swal2-html-container {
+  display: flex !important;
+  align-items: center;
+  gap: 12px;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--storesuite-text-black);
+}
+.storesuite-undo-toast-button {
+  height: 28px;
+  padding: 0 12px;
+  border: 1px solid var(--storesuite-border-color);
+  border-radius: 6px;
+  background: var(--storesuite-surface-elevated);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--storesuite-primary-bg);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.storesuite-undo-toast-button:hover {
+  background: var(--storesuite-primary-bg-hover);
+  border-color: var(--storesuite-primary-bg-hover);
+  color: var(--storesuite-button-text-hover-color);
+}

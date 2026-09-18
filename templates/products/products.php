@@ -143,7 +143,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true" focusable="false">
 										<path d="m19.95,5.536l-3.485-3.485c-1.322-1.322-3.08-2.05-4.95-2.05h-4.515C4.243,0,2,2.243,2,5v14c0,2.757,2.243,5,5,5h10c2.757,0,5-2.243,5-5v-8.515c0-1.87-.728-3.627-2.05-4.95Zm-1.414,1.414c.318.318.587.671.805,1.05h-4.341c-.551,0-1-.449-1-1V2.659c.379.218.733.487,1.05.805l3.485,3.485Zm1.464,12.05c0,1.654-1.346,3-3,3H7c-1.654,0-3-1.346-3-3V5c0-1.654,1.346-3,3-3h4.515c.163,0,.325.008.485.023v4.977c0,1.654,1.346,3,3,3h4.977c.015.16.023.322.023.485v8.515Zm-4.293-4.519c.391.391.391,1.023,0,1.414-.195.195-.451.293-.707.293s-.512-.098-.707-.293l-1.293-1.293v4.398c0,.552-.448,1-1,1s-1-.448-1-1v-4.398l-1.293,1.293c-.391.391-1.023.391-1.414,0s-.391-1.023,0-1.414l1.614-1.614c1.154-1.154,3.032-1.154,4.187,0l1.614,1.614Z"/>
 									</svg>
-									<?php esc_html_e( 'Import', 'storesuite' ); ?>
+									<span class="storesuite-button-label"><?php esc_html_e( 'Import', 'storesuite' ); ?></span>
 								</a>
 							</div>
 							<div class="col-auto storesuite-search-toggle-col">
@@ -152,6 +152,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 										<path d="M23.707,22.293l-5.969-5.969a10.016,10.016,0,1,0-1.414,1.414l5.969,5.969a1,1,0,0,0,1.414-1.414ZM10,18a8,8,0,1,1,8-8A8.009,8.009,0,0,1,10,18Z"/>
 									</svg>
 								</button>
+							</div>
+							<div class="col-auto">
+								<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'products' ) ); ?>
 							</div>
 							<div class="col-auto">
 								<button type="button" class="my-storesuite-button storesuite-export-toggle" id="storesuite-export-toggle">
@@ -188,6 +191,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					</div>
 				</div>
 			</div>
+			<?php if ( \PluginizeLab\StoreSuite\Product\ProductAiSearch::is_available() ) : ?>
+				<?php storesuite_get_template_part( 'products/ai-search' ); ?>
+			<?php endif; ?>
 			<!-- Off-canvas Filter -->
 			<?php storesuite_get_template_part( 'products/product-filters-offcanvas' ); ?>
 			<form id="storesuite-product-bulk-actions" method="post">
@@ -275,14 +281,14 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								);
 								?>
 							</th>
-							<th><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
-							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'title', __( 'Name', 'storesuite' ) ); ?></th>
-							<th><?php esc_html_e( 'Category', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Status', 'storesuite' ); ?></th>
-							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'sku', __( 'SKU', 'storesuite' ) ); ?></th>
-							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'stock', __( 'Stock', 'storesuite' ) ); ?></th>
-							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'price', __( 'Price', 'storesuite' ) ); ?></th>
-							<th><?php esc_html_e( 'Type', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'image' ); ?>><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'name' ); ?> class="storesuite-sortable-col"><?php $storesuite_sort_header( 'title', __( 'Name', 'storesuite' ) ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'category' ); ?>><?php esc_html_e( 'Category', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'status' ); ?>><?php esc_html_e( 'Status', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'sku' ); ?> class="storesuite-sortable-col"><?php $storesuite_sort_header( 'sku', __( 'SKU', 'storesuite' ) ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'stock' ); ?> class="storesuite-sortable-col"><?php $storesuite_sort_header( 'stock', __( 'Stock', 'storesuite' ) ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'price' ); ?> class="storesuite-sortable-col"><?php $storesuite_sort_header( 'price', __( 'Price', 'storesuite' ) ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'products', 'type' ); ?>><?php esc_html_e( 'Type', 'storesuite' ); ?></th>
 							<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>

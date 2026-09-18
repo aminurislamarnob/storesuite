@@ -106,7 +106,6 @@ class CouponManager {
 			do_action( 'storesuite_new_coupon_created', $coupon_id, $data );
 
 			return $coupon_id;
-
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'coupon_error', $e->getMessage() );
 		}
@@ -166,7 +165,6 @@ class CouponManager {
 			do_action( 'storesuite_coupon_updated', $coupon_id, $data );
 
 			return true;
-
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'coupon_error', $e->getMessage() );
 		}
@@ -193,9 +191,90 @@ class CouponManager {
 			do_action( 'storesuite_coupon_deleted', $coupon_id, $force_delete );
 
 			return true;
-
 		} catch ( \Exception $e ) {
 			return new WP_Error( 'coupon_error', $e->getMessage() );
 		}
+	}
+
+	/**
+	 * Duplicate a coupon as a draft copy.
+	 *
+	 * Copies every coupon property except the usage counters, suffixes the
+	 * code with "-copy" (numbered when that code is already taken) and saves
+	 * the copy as a draft so it is inactive until reviewed.
+	 *
+	 * @param int $coupon_id Source coupon ID.
+	 * @return int|WP_Error New coupon ID, or WP_Error when the source is missing.
+	 */
+	public function duplicate_coupon( $coupon_id ) {
+		$source = new WC_Coupon( $coupon_id );
+
+		if ( ! $source->get_id() ) {
+			return new WP_Error( 'invalid_coupon', __( 'Coupon not found', 'storesuite' ) );
+		}
+
+		try {
+			$duplicate = clone $source;
+			$duplicate->set_id( 0 );
+			$duplicate->set_code( $this->generate_unique_coupon_code( $source->get_code() ) );
+			$duplicate->set_usage_count( 0 );
+			$duplicate->set_used_by( array() );
+			$duplicate->set_date_created( null );
+			$duplicate->set_date_modified( null );
+			$duplicate->set_status( 'draft' );
+
+			$new_id = $duplicate->save();
+
+			if ( ! $new_id ) {
+				return new WP_Error( 'storesuite_duplicate_failed', __( 'The coupon could not be duplicated.', 'storesuite' ) );
+			}
+
+			do_action( 'storesuite_coupon_duplicated', $new_id, $coupon_id );
+
+			return $new_id;
+		} catch ( \Exception $e ) {
+			return new WP_Error( 'coupon_error', $e->getMessage() );
+		}
+	}
+
+	/**
+	 * Build a coupon code that is not yet in use, based on a source code.
+	 *
+	 * @param string $code Source coupon code.
+	 * @return string "<code>-copy", or "<code>-copy-N" when the plain suffix is taken.
+	 */
+	private function generate_unique_coupon_code( $code ) {
+		$base      = wc_format_coupon_code( $code . '-copy' );
+		$candidate = $base;
+		$n         = 2;
+
+		while ( $this->coupon_code_exists( $candidate ) ) {
+			$candidate = $base . '-' . $n;
+			++$n;
+		}
+
+		return $candidate;
+	}
+
+	/**
+	 * Whether any coupon (of any status, including drafts) already uses a code.
+	 *
+	 * `wc_get_coupon_id_by_code()` only sees published coupons, which would let
+	 * two draft copies collide on the same code.
+	 *
+	 * @param string $code Normalized coupon code.
+	 * @return bool
+	 */
+	private function coupon_code_exists( $code ) {
+		global $wpdb;
+
+		$id = $wpdb->get_var(
+			$wpdb->prepare(
+				"SELECT ID FROM {$wpdb->posts} WHERE post_type = 'shop_coupon' AND post_status <> 'trash' AND post_title = %s LIMIT 1",
+				$code
+			)
+		);
+
+		return ! empty( $id );
 	}
 }

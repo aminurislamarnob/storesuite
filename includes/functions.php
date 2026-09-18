@@ -452,3 +452,20 @@ function storesuite_redirect_if_not_manager( $redirect = '' ) {
 		exit();
 	}
 }
+
+/**
+ * Attributes that tag a list table header/cell with its column key and hide
+ * it when the current user switched that column off (see ColumnManager).
+ *
+ * Echoes ` data-col="key"` plus ` hidden` for hidden columns. Locked columns
+ * only get the key.
+ *
+ * @param string $table Table key (products, inventory, orders, ...).
+ * @param string $key   Column key.
+ * @return void
+ */
+function storesuite_list_column_attrs( $table, $key ) {
+	$hidden = ! \PluginizeLab\StoreSuite\ListTable\ColumnManager::is_visible( $table, $key );
+
+	echo ' data-col="' . esc_attr( $key ) . '"' . ( $hidden ? ' hidden' : '' );
+}

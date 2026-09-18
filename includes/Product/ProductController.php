@@ -21,6 +21,7 @@ class ProductController {
 		add_action( 'wp_ajax_storesuite_add_product_action', array( $this, 'handle_add_product' ) );
 		add_action( 'wp_ajax_storesuite_edit_product_action', array( $this, 'handle_edit_product' ) );
 		add_action( 'wp_ajax_storesuite_delete_product', array( $this, 'handle_delete_product' ) );
+		add_action( 'wp_ajax_storesuite_duplicate_product', array( $this, 'handle_duplicate_product' ) );
 	}
 	/**
 	 * Load the new product template.
@@ -194,6 +195,39 @@ class ProductController {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Product successfully deleted', 'storesuite' ) ) );
+	}
+
+	/**
+	 * AJAX: duplicate a product as a draft and hand back the edit URL of the copy.
+	 *
+	 * @return void
+	 */
+	public function handle_duplicate_product() {
+		check_ajax_referer( '_storesuite_duplicate_nonce_', 'security' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'error' => __( 'You do not have permission to perform this action.', 'storesuite' ) ), 403 );
+		}
+
+		$product_id = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
+		if ( ! $product_id ) {
+			wp_send_json_error( array( 'error' => __( 'Invalid product ID', 'storesuite' ) ), 400 );
+		}
+
+		$manager = new ProductManager();
+		$new_id  = $manager->duplicate_product( $product_id );
+
+		if ( is_wp_error( $new_id ) ) {
+			wp_send_json_error( array( 'error' => $new_id->get_error_message() ), 400 );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'  => __( 'Product duplicated. Opening the copy…', 'storesuite' ),
+				'id'       => $new_id,
+				'redirect' => storesuite_get_navigation_url( 'edit-product' ) . $new_id,
+			)
+		);
 	}
 
 	/**

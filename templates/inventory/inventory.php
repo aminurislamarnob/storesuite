@@ -56,6 +56,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								</button>
 							</div>
 							<div class="col-auto">
+								<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'inventory' ) ); ?>
+							</div>
+							<div class="col-auto">
 								<?php
 								// Number of active filters, shown as a badge on the toggle.
 								// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filter values.
@@ -122,13 +125,13 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								);
 								?>
 							</th>
-							<th><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Name', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'SKU', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Stock Qty', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Stock Status', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Backorders', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Price', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'image' ); ?>><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'name' ); ?>><?php esc_html_e( 'Name', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'sku' ); ?>><?php esc_html_e( 'SKU', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'stock_qty' ); ?>><?php esc_html_e( 'Stock Qty', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'stock_status' ); ?>><?php esc_html_e( 'Stock Status', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'backorders' ); ?>><?php esc_html_e( 'Backorders', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'inventory', 'price' ); ?>><?php esc_html_e( 'Price', 'storesuite' ); ?></th>
 							<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>

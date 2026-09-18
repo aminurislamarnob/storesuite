@@ -27,7 +27,6 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					<div class="storesuite-card">
 					<?php
 					if ( $tag_id ) {
-
 						$product_tag = get_term( $tag_id, 'product_tag' );
 
 						if ( ! $product_tag || is_wp_error( $product_tag ) ) {

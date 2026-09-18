@@ -106,6 +106,9 @@ final class StoreSuite {
 		if ( ! wp_next_scheduled( Notification\NotificationHooks::CLEANUP_HOOK ) ) {
 			wp_schedule_event( time(), 'daily', Notification\NotificationHooks::CLEANUP_HOOK );
 		}
+
+		// Create the edit history tables and schedule its retention cleanup.
+		EditHistory\EditHistoryInstaller::install();
 	}
 
 	/**
@@ -157,6 +160,7 @@ final class StoreSuite {
 	 */
 	public function deactivate() {
 		wp_clear_scheduled_hook( Notification\NotificationHooks::CLEANUP_HOOK );
+		wp_clear_scheduled_hook( EditHistory\EditHistoryHooks::CLEANUP_HOOK );
 	}
 
 	/**
@@ -269,12 +273,14 @@ final class StoreSuite {
 		$this->container['storesuite_inventory_controller']        = new Inventory\InventoryController();
 		$this->container['storesuite_product_controller']          = new Product\ProductController();
 		$this->container['storesuite_product_ai']                  = new Product\ProductAI();
+		$this->container['storesuite_product_ai_search']           = new Product\ProductAiSearch();
 		$this->container['storesuite_product_image_ai']            = new Product\ProductImageAI();
 		$this->container['storesuite_product_export_controller']   = new Product\ProductExportController();
 		$this->container['storesuite_product_import_controller']   = new Product\ProductImportController();
 		$this->container['storesuite_product_hooks']               = new Product\ProductHooks();
 		$this->container['storesuite_variation_ajax']              = new Product\VariationAjax();
 		$this->container['storesuite_order_controller']            = new Order\OrderController();
+		$this->container['storesuite_order_export_controller']     = new Order\OrderExportController();
 		$this->container['storesuite_create_new_order']            = new Order\CreateNewOrder();
 		$this->container['storesuite_order_manager']               = new Order\OrderManager();
 		$this->container['storesuite_order_hooks']                 = new Order\OrderHooks();
@@ -287,6 +293,9 @@ final class StoreSuite {
 		$this->container['storesuite_notification_manager']        = new Notification\NotificationManager();
 		$this->container['storesuite_notification_hooks']          = new Notification\NotificationHooks();
 		$this->container['storesuite_notification_controller']     = new Notification\NotificationController();
+		$this->container['storesuite_column_manager']              = new ListTable\ColumnManager();
+		$this->container['storesuite_edit_history_hooks']          = new EditHistory\EditHistoryHooks();
+		$this->container['storesuite_edit_history_controller']     = new EditHistory\EditHistoryController();
 		$this->container['storesuite_notifications_rest_controller'] = new REST\NotificationsController();
 
 		// Analytics (uses WooCommerce analytics packages — no SQL filtering needed).

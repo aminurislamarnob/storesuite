@@ -38,6 +38,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							</div>
 						</form>
 					</div>
+					<div class="col-md-auto storesuite-toolbar-columns">
+						<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'tags' ) ); ?>
+					</div>
 					<div class="col-md-auto text-right storesuite-toolbar-add">
 						<?php do_action( 'storesuite_tags_toolbar_add_button' ); ?>
 					</div>
@@ -57,10 +60,10 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							<th class="check-column">
 								<?php storesuite_get_template_part( 'shared/list-bulk-checkbox', '', array( 'is_all' => true ) ); ?>
 							</th>
-							<th width="210"><?php echo esc_html__( 'Name', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Description', 'storesuite' ); ?></th>
-							<th width="210"><?php echo esc_html__( 'Slug', 'storesuite' ); ?></th>
-							<th width="70"><?php echo esc_html__( 'Count', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'tags', 'name' ); ?> width="210"><?php echo esc_html__( 'Name', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'tags', 'description' ); ?>><?php echo esc_html__( 'Description', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'tags', 'slug' ); ?> width="210"><?php echo esc_html__( 'Slug', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'tags', 'count' ); ?> width="70"><?php echo esc_html__( 'Count', 'storesuite' ); ?></th>
 							<th class="text-right"><?php echo esc_html__( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>
@@ -84,10 +87,10 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							<td class="check-column">
 								<?php storesuite_get_template_part( 'shared/list-bulk-checkbox', '', array( 'value' => $product_tag->term_id ) ); ?>
 							</td>
-							<td data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>"><a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-tag' ) . '%s', $product_tag->term_id ) ); ?>"><?php echo esc_html( $product_tag->name ); ?></a></td>
-							<td data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>"><?php echo esc_html( wp_trim_words( $product_tag->description, '9', '...' ) ); ?></td>
-							<td data-title="<?php esc_attr_e( 'Slug', 'storesuite' ); ?>"><?php echo esc_html( $product_tag->slug ); ?></td>
-							<td data-title="<?php esc_attr_e( 'Count', 'storesuite' ); ?>"><?php echo esc_html( $product_tag->count ); ?></td>
+							<td<?php storesuite_list_column_attrs( 'tags', 'name' ); ?> data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>"><a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-tag' ) . '%s', $product_tag->term_id ) ); ?>"><?php echo esc_html( $product_tag->name ); ?></a></td>
+							<td<?php storesuite_list_column_attrs( 'tags', 'description' ); ?> data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>"><?php echo esc_html( wp_trim_words( $product_tag->description, '9', '...' ) ); ?></td>
+							<td<?php storesuite_list_column_attrs( 'tags', 'slug' ); ?> data-title="<?php esc_attr_e( 'Slug', 'storesuite' ); ?>"><?php echo esc_html( $product_tag->slug ); ?></td>
+							<td<?php storesuite_list_column_attrs( 'tags', 'count' ); ?> data-title="<?php esc_attr_e( 'Count', 'storesuite' ); ?>"><?php echo esc_html( $product_tag->count ); ?></td>
 							<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">
 								<div class="storesuite-dropdown">
 									<span class="storesuite-dropdown-icon">

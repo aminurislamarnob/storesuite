@@ -239,6 +239,15 @@ class SettingsController extends WP_REST_Controller {
 			$storesuite_settings['storesuite_dark_theme'] = sanitize_text_field( $request->get_param( 'storesuite_dark_theme' ) );
 		}
 
+		if ( $request->has_param( 'storesuite_edit_history_enabled' ) ) {
+			$storesuite_settings['storesuite_edit_history_enabled'] = 'no' === $request->get_param( 'storesuite_edit_history_enabled' ) ? 'no' : 'yes';
+		}
+
+		if ( $request->has_param( 'storesuite_edit_history_retention_days' ) ) {
+			$days = absint( $request->get_param( 'storesuite_edit_history_retention_days' ) );
+			$storesuite_settings['storesuite_edit_history_retention_days'] = max( 1, min( 3650, $days ? $days : 90 ) );
+		}
+
 		if ( $request->has_param( 'storesuite_attribution_logo_variant' ) ) {
 			$variant = $request->get_param( 'storesuite_attribution_logo_variant' );
 			if ( in_array( $variant, array( 'dark', 'light' ), true ) ) {
@@ -407,6 +416,17 @@ class SettingsController extends WP_REST_Controller {
 					'description' => __( 'Color palette mode: predefined or custom.', 'storesuite' ),
 					'type'        => 'string',
 					'enum'        => array( 'predefined', 'custom' ),
+					'context'     => array( 'view', 'edit' ),
+				),
+				'storesuite_edit_history_enabled'          => array(
+					'description' => __( 'Record before/after values of inline and bulk edits so they can be undone.', 'storesuite' ),
+					'type'        => 'string',
+					'enum'        => array( 'yes', 'no' ),
+					'context'     => array( 'view', 'edit' ),
+				),
+				'storesuite_edit_history_retention_days'   => array(
+					'description' => __( 'Days to keep edit history entries before the daily cleanup removes them.', 'storesuite' ),
+					'type'        => 'integer',
 					'context'     => array( 'view', 'edit' ),
 				),
 				'storesuite_dark_theme' => array(
