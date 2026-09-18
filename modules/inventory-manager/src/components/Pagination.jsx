@@ -26,7 +26,7 @@ function PageButton( { active, disabled, onClick, children } ) {
 				disabled={ disabled }
 				onClick={ onClick }
 				className={ cn(
-					'ss:inline-flex ss:h-8 ss:w-8 ss:items-center ss:justify-center ss:rounded-[5px] ss:border ss:border-border ss:bg-white ss:text-sm ss:text-foreground ss:transition-colors ss:hover:bg-primary ss:hover:text-primary-foreground ss:disabled:opacity-[0.55] ss:disabled:pointer-events-none',
+					'ss:inline-flex ss:h-8 ss:w-8 ss:items-center ss:justify-center ss:rounded-[5px] ss:border ss:border-border ss:bg-background ss:text-sm ss:text-foreground ss:transition-colors ss:hover:bg-primary ss:hover:text-primary-foreground ss:disabled:opacity-[0.55] ss:disabled:pointer-events-none',
 					active && 'ss:bg-primary ss:text-primary-foreground ss:border-primary'
 				) }
 			>

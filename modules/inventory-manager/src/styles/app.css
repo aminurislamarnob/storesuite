@@ -26,13 +26,16 @@
 /* shadcn tokens → StoreSuite variables (fallbacks match style.css :root).
    Scoped to `.ss-ui` (not `:root`) so generic names like `--primary` / `--border`
    never clobber the theme globally. Every mount point and Radix portal carries
-   the `.ss-ui` class, so all our rendered content inherits these. */
+   the `.ss-ui` class, so all our rendered content inherits these.
+   Surfaces follow the dashboard's surface tokens rather than a fixed white so
+   the app tracks the light/dark theme (`:root[data-theme]` in style.css) —
+   the foreground tokens already flip, and light text on white is unreadable. */
 .ss-ui {
-	--background: #ffffff;
+	--background: var( --storesuite-surface-bg, #ffffff );
 	--foreground: var( --storesuite-text-black, #334155 );
-	--card: #ffffff;
+	--card: var( --storesuite-surface-bg, #ffffff );
 	--card-foreground: var( --storesuite-text-black, #334155 );
-	--popover: #ffffff;
+	--popover: var( --storesuite-surface-elevated, #ffffff );
 	--popover-foreground: var( --storesuite-text-color, rgb( 71 85 105 ) );
 	--primary: var( --storesuite-primary-bg, #2d5bdb );
 	--primary-hover: var( --storesuite-primary-bg-hover, #213fd4 );
@@ -74,13 +77,14 @@
 	--radius-md: var( --radius );
 	--radius-lg: 8px;
 
-	/* Status badge palette (StoreSuite badge colors). */
+	/* Status badge palette (StoreSuite badge colors). The tints are mixed into
+	   the current surface so they stay pastel on white and muted on dark. */
 	--color-success: rgb( 16 185 129 );
-	--color-success-bg: rgb( 209 250 229 );
+	--color-success-bg: color-mix( in srgb, rgb( 16 185 129 ) 20%, var( --storesuite-surface-bg, #ffffff ) );
 	--color-warning: rgb( 245 158 11 );
-	--color-warning-bg: rgb( 254 243 199 );
+	--color-warning-bg: color-mix( in srgb, rgb( 245 158 11 ) 22%, var( --storesuite-surface-bg, #ffffff ) );
 	--color-danger: rgb( 244 63 94 );
-	--color-danger-bg: rgb( 255 228 230 );
+	--color-danger-bg: color-mix( in srgb, rgb( 244 63 94 ) 16%, var( --storesuite-surface-bg, #ffffff ) );
 }
 
 /* Minimal reset — replaces the preflight rules our components rely on, scoped

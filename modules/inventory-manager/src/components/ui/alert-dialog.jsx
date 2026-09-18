@@ -34,7 +34,7 @@ function AlertDialogContent( { className, children, ...props } ) {
 			/>
 			<AlertDialogPrimitive.Content
 				className={ cn(
-					'ss-ui ss:fixed ss:left-1/2 ss:top-1/2 ss:z-[100051] ss:w-[calc(100%-3rem)] ss:max-w-[640px] ss:-translate-x-1/2 ss:-translate-y-1/2 ss:rounded-lg ss:border ss:border-border ss:bg-white ss:p-6 ss:shadow-[0_20px_50px_rgba(15,23,42,0.2)]',
+					'ss-ui ss:fixed ss:left-1/2 ss:top-1/2 ss:z-[100051] ss:w-[calc(100%-3rem)] ss:max-w-[640px] ss:-translate-x-1/2 ss:-translate-y-1/2 ss:rounded-lg ss:border ss:border-border ss:bg-background ss:p-6 ss:shadow-[0_20px_50px_rgba(15,23,42,0.2)]',
 					className
 				) }
 				{ ...props }

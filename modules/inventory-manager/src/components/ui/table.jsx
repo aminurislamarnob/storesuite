@@ -8,12 +8,12 @@ function Table( { className, ...props } ) {
 	return (
 		<div
 			data-slot="table-container"
-			className="ss:w-full ss:overflow-x-auto ss:rounded ss:border ss:border-border ss:bg-white"
+			className="ss:w-full ss:overflow-x-auto ss:rounded ss:border ss:border-border ss:bg-background"
 		>
 			<table
 				data-slot="table"
 				className={ cn(
-					'ss:w-full ss:border-collapse ss:bg-white ss:text-sm',
+					'ss:w-full ss:border-collapse ss:bg-background ss:text-sm',
 					className
 				) }
 				{ ...props }
@@ -23,7 +23,7 @@ function Table( { className, ...props } ) {
 }
 
 function TableHeader( { className, ...props } ) {
-	return <thead className={ cn( 'ss:bg-white', className ) } { ...props } />;
+	return <thead className={ cn( 'ss:bg-background', className ) } { ...props } />;
 }
 
 function TableBody( { className, ...props } ) {

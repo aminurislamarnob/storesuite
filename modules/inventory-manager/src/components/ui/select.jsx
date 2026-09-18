@@ -18,7 +18,7 @@ const SelectTrigger = forwardRef( ( { className, children, ...props }, ref ) => 
 		ref={ ref }
 		data-slot="select-trigger"
 		className={ cn(
-			'ss:flex ss:h-10 ss:w-full ss:items-center ss:justify-between ss:gap-2 ss:rounded-md ss:border ss:border-input ss:bg-white ss:px-3 ss:py-2 ss:text-sm ss:text-foreground ss:outline-none ss:cursor-pointer ss:transition-colors ss:focus:border-primary ss:disabled:opacity-[0.55] ss:[&>span]:truncate',
+			'ss:flex ss:h-10 ss:w-full ss:items-center ss:justify-between ss:gap-2 ss:rounded-md ss:border ss:border-input ss:bg-background ss:px-3 ss:py-2 ss:text-sm ss:text-foreground ss:outline-none ss:cursor-pointer ss:transition-colors ss:focus:border-primary ss:disabled:opacity-[0.55] ss:[&>span]:truncate',
 			className
 		) }
 		{ ...props }
