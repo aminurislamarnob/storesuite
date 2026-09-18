@@ -17,8 +17,12 @@ async function openAddForm( page: Page ) {
 }
 
 async function openTab( page: Page, tab: 'seo' | 'social' | 'advanced' ) {
-	await card( page ).locator( `.storesuite-seo-tab[data-seo-tab="${ tab }"]` ).click();
-	await expect( card( page ).locator( `[data-seo-panel="${ tab }"]` ) ).toBeVisible();
+	// Retried: the form's "Unsaved Changes?" bar shifts the page when it first
+	// appears, and a click issued during that shift can miss the tab.
+	await expect( async () => {
+		await card( page ).locator( `.storesuite-seo-tab[data-seo-tab="${ tab }"]` ).click();
+		await expect( card( page ).locator( `[data-seo-panel="${ tab }"]` ) ).toBeVisible( { timeout: 1_000 } );
+	} ).toPass();
 }
 
 async function submitAndExpectSuccess( page: Page ) {
