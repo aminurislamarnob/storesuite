@@ -62,6 +62,7 @@ No feature gates. No trial limits. No upsell.
 
 * [PDF Invoices & Packing Slips for WooCommerce](https://wordpress.org/plugins/woocommerce-pdf-invoices-packing-slips/) – adds Invoice and Packing Slip documents.
 * [WebToffee WooCommerce PDF Invoices, Packing Slips, Delivery Notes & Shipping Labels](https://wordpress.org/plugins/print-invoices-packing-slip-labels-for-woocommerce/) – adds Invoice, Packing Slip, Delivery Note, Shipping Label, and Dispatch Label actions.
+* [Yoast SEO](https://wordpress.org/plugins/wordpress-seo/) – adds an SEO card to the product form: focus keyphrase, SEO title and meta description with a live Google preview, plus social sharing and advanced search settings.
 
 = How It Works =
 
@@ -150,6 +151,12 @@ Integrating Appsero SDK **DOES NOT IMMEDIATELY** start gathering data, **without
 Learn more about how [Appsero collects and uses this data](https://appsero.com/privacy-policy/).
 
 == Changelog ==
+
+= Unreleased =
+* Add **Yoast SEO support** to the product add/edit form. When Yoast SEO is active, a new **SEO (Yoast)** card lets shop managers set the focus keyphrase, SEO title, meta description and cornerstone flag, with Yoast-style **Insert variable** suggestions and a live mobile/desktop **Google preview** with length indicators.
+* The card's **Social** tab sets the social media and X image, title and description — with Insert variable — following the networks enabled in Yoast.
+* The card's **Advanced** tab sets search visibility, link following, meta robots advanced (no image index / no archive / no snippet), the breadcrumbs title and the canonical URL. It follows Yoast's own permission rules, so shop managers only get it when the site owner allows it; developers can adjust this with the `storesuite_yoast_can_edit_advanced` filter.
+* Developers: new `storesuite_product_form_after_main_cards` action for adding cards to the product form.
 
 = 1.3.1 =
 * Fix the login screen redirecting to My Account before anyone had logged in. The redirect fired while the login **form** was rendering, which broke plain `wp-login.php` and hidden login URLs from plugins such as WPS Hide Login. The form now renders normally; the redirect only runs after a successful login.

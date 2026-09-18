@@ -13,6 +13,14 @@ WP_CLI="${WP_CLI:-wp}"
 $WP_CLI plugin activate woocommerce
 $WP_CLI plugin activate storesuite
 
+# Optional: Yoast SEO, for the product SEO specs (they skip themselves without it).
+# Not fatal: current Yoast releases refuse to install on older WordPress versions,
+# and those specs skipping is the right outcome there.
+if [ "${E2E_WITH_YOAST:-false}" = "true" ]; then
+	$WP_CLI plugin install wordpress-seo --activate \
+		|| echo "Yoast SEO could not be installed here; the product SEO specs will skip."
+fi
+
 $WP_CLI rewrite structure '/%postname%/'
 $WP_CLI rewrite flush
 

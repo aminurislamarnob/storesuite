@@ -131,6 +131,66 @@ When everything looks right, click **Add Product** to save. **Back** returns you
 
 ---
 
+## Search Engine Settings (Yoast SEO)
+
+If your store uses the **Yoast SEO** plugin, an **SEO (Yoast)** box appears at the bottom of the product form, right under **Others**. It lets you decide how the product looks in Google and when it's shared on social media — the same settings your site admin sees in the WordPress admin, without leaving your dashboard. If Yoast SEO isn't installed, the box isn't shown and nothing else changes.
+
+Everything here is optional. Leave a field blank and your store's site-wide SEO settings are used instead.
+
+### The SEO tab
+
+![SEO tab with Google preview](screenshots/screenshot-49.png)
+
+- **Focus keyphrase** — the search term you'd like this product to be found for, like "blue widget". In the **Desktop** preview its words are shown in bold, the way Google highlights what someone searched for.
+- **Google preview** — a live picture of your product as a search result. It updates as you type, and it follows the product's title, permalink, and short description too. Flip the **Mobile / Desktop** switch to see both layouts.
+- **SEO title** — the blue headline in the search result. The greyed-out text in the empty field is your store's default pattern, so you know what you'll get if you leave it alone.
+- **Meta description** — the short text under the headline. If you leave it blank, the preview shows what Google is likely to pick instead.
+- **Mark as cornerstone content** — switch this on for the handful of products that matter most to your store. (You'll only see it if the feature is enabled in Yoast.)
+
+The coloured bar under each field tells you whether the length works. **Green** is good. **Orange** means the description is on the short or long side — aim for roughly 120 to 156 characters. **Red** means the title is too wide to fit, or there's no description at all. Cornerstone products are held to a stricter standard, so a short description shows red instead of orange.
+
+#### Inserting variables
+
+![Insert variable menu](screenshots/screenshot-50.png)
+
+Variables are placeholders that fill themselves in — `%%title%%` becomes the product's name, `%%sitename%%` your store's name, `%%sep%%` the separator your site uses. They save you retyping, and they stay correct if the product is renamed later.
+
+Click **Insert variable** next to the SEO title or meta description and pick from the list, or type **%** in the field and keep typing to narrow it down. The most useful ones — **Site title**, **Title**, and **Separator** — are at the top. The preview shows the finished result straight away.
+
+### The Social tab
+
+![Social tab](screenshots/screenshot-51.png)
+
+This controls how the product looks when someone shares its link. There are two blocks:
+
+- **Social media appearance** — used by Facebook, WhatsApp, LinkedIn, and most other places a link gets shared.
+- **X appearance** — only needed if you want the product to look different on X. Leave it untouched and X uses the social media appearance settings too.
+
+Each block has the same three settings:
+
+- **Image** — click **Select image** to choose one from your media library. **Replace image** swaps it and **Remove image** clears it. Leave it empty to share the product's own image.
+- **Title** and **Description** — leave these blank to reuse your SEO title and meta description. **Insert variable** works here as well.
+
+A block only appears if it's switched on in your site's Yoast settings. If both are off, the tab is hidden.
+
+### The Advanced tab
+
+![Advanced tab](screenshots/screenshot-52.png)
+
+These are the powerful ones, so tread carefully:
+
+- **Allow search engines to show this product in search results?** — choose **No** to keep a product out of Google. The first option follows your store's default for products and tells you what that currently is — for example **Yes (current default for Products)**.
+- **Should search engines follow links on this product?** — almost always **Yes**.
+- **Meta robots advanced** — extra instructions for search engines. **No Image Index** keeps the product's images out of image search, **No Archive** stops search engines offering a saved copy of the page, and **No Snippet** hides the text preview under the result. Most products need none of these.
+- **Breadcrumbs Title** — a shorter name to use in breadcrumb trails. Leave blank to use the product title.
+- **Canonical URL** — only fill this in when the same product lives at another address that search engines should treat as the original. Leave blank to use the product's own link.
+
+> **Tip:** Don't see the **Advanced** tab? That's deliberate. A wrong setting here can make a product vanish from search results, so Yoast reserves it for administrators and editors by default — exactly as it does in the WordPress admin. Your site admin can open it up to shop managers from Yoast's settings if they'd like you to have it.
+
+One thing to know: StoreSuite saves your SEO settings, but it doesn't run Yoast's content analysis. The coloured SEO and readability scores your admin sees in the WordPress admin won't refresh until the product is next opened there. What search engines and social networks see is always up to date.
+
+---
+
 ## Editing an Existing Product
 
 Click a product's name in the list, or choose **Edit** from its **⋯** menu. The edit screen is the same form as Add New Product, pre-filled with the product's current details — change what you need and save. For a Variable product, you'll also see a **Variations** area where you manage each combination (size, color, and so on) with its own price and stock.

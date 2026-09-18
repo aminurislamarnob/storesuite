@@ -102,6 +102,9 @@ jobs:
                       --admin_user=admin --admin_password=password --admin_email=admin@example.com --skip-email
 
             - name: Provision test data
+              env:
+                  # Installs Yoast SEO so the product SEO specs run instead of skipping.
+                  E2E_WITH_YOAST: 'true'
               run: |
                   WP_CLI="wp --path=$WP_DIR" bash tests/pw/bin/e2e-provision.sh | tee /tmp/provision.log
                   {
