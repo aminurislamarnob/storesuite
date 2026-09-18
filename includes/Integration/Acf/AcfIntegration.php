@@ -82,6 +82,15 @@ class AcfIntegration {
 	protected $sanitizer;
 
 	/**
+	 * Posted values the sanitiser refused during this request, keyed by field
+	 * key. They are validated so ACF's own message (e.g. "Value must be a
+	 * number") reaches the user instead of the field silently not saving.
+	 *
+	 * @var array<string, mixed>
+	 */
+	protected $rejected = array();
+
+	/**
 	 * Constructor. Bails unless ACF is active.
 	 */
 	public function __construct() {
@@ -94,6 +103,7 @@ class AcfIntegration {
 
 		add_action( 'storesuite_product_form_after_others', array( $this, 'render_field_groups' ), 10, 2 );
 		add_filter( 'storesuite_sanitize_acf_fields', array( $this, 'sanitize_fields' ), 10, 3 );
+		add_filter( 'storesuite_product_pre_save_validation', array( $this, 'validate_fields' ), 10, 3 );
 		add_action( 'storesuite_new_product_added', array( $this, 'save_fields' ), 10, 2 );
 		add_action( 'storesuite_product_updated', array( $this, 'save_fields' ), 10, 2 );
 
@@ -235,6 +245,8 @@ class AcfIntegration {
 			return $sanitized;
 		}
 
+		$this->rejected = array();
+
 		foreach ( $this->get_writable_fields( absint( $product_id ) ) as $key => $field ) {
 			if ( ! array_key_exists( $key, $raw ) ) {
 				continue;
@@ -243,6 +255,10 @@ class AcfIntegration {
 			$value = $this->sanitizer->sanitize( $field, $raw[ $key ] );
 
 			if ( null === $value ) {
+				// A blank password means "keep the stored value", not a rejection.
+				if ( 'password' !== $field['type'] || '' !== $raw[ $key ] ) {
+					$this->rejected[ $key ] = $raw[ $key ];
+				}
 				continue;
 			}
 
@@ -250,6 +266,76 @@ class AcfIntegration {
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Run ACF's validator over every rendered field before the product is saved.
+	 *
+	 * Uses the sanitised values (or the refused raw value, so ACF can explain
+	 * why). Fields that were not rendered are never validated, so a required
+	 * unsupported field cannot block a frontend save.
+	 *
+	 * @param \WP_Error|null $error      Error collected so far.
+	 * @param array          $data       Sanitised product data.
+	 * @param string         $context    'add' or 'edit'.
+	 *
+	 * @return \WP_Error|null
+	 */
+	public function validate_fields( $error, $data, $context ) {
+		if ( ! function_exists( 'acf_validate_value' ) || ! function_exists( 'acf_get_validation_errors' ) ) {
+			return $error;
+		}
+
+		$values     = isset( $data['storesuite_acf'] ) && is_array( $data['storesuite_acf'] ) ? $data['storesuite_acf'] : array();
+		$product_id = 'edit' === $context && ! empty( $data['product_id'] ) ? absint( $data['product_id'] ) : 0;
+		$messages   = array();
+
+		foreach ( $this->get_writable_fields( $product_id ) as $key => $field ) {
+			if ( array_key_exists( $key, $values ) ) {
+				$value = $values[ $key ];
+			} elseif ( array_key_exists( $key, $this->rejected ) ) {
+				$value = $this->rejected[ $key ];
+			} else {
+				// Not in the request (e.g. blank password): nothing is written, nothing to validate.
+				continue;
+			}
+
+			acf_reset_validation_errors();
+			acf_validate_value( $value, $field, 'storesuite_acf[' . $key . ']' );
+
+			foreach ( (array) acf_get_validation_errors() as $acf_error ) {
+				$message = isset( $acf_error['message'] ) ? wp_strip_all_tags( (string) $acf_error['message'] ) : '';
+
+				if ( '' === $message ) {
+					continue;
+				}
+
+				// ACF's required message already names the field; prefix everything else.
+				/* translators: %s: field label (ACF's own string, reproduced to detect it). */
+				$required_message = sprintf( __( '%s value is required', 'acf' ), $field['label'] ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Must match ACF's string.
+
+				$messages[] = $message === $required_message
+					? $message
+					/* translators: 1: field label, 2: validation message */
+					: sprintf( __( '%1$s: %2$s', 'storesuite' ), $field['label'], $message );
+			}
+		}
+
+		acf_reset_validation_errors();
+
+		if ( empty( $messages ) ) {
+			return $error;
+		}
+
+		if ( ! is_wp_error( $error ) ) {
+			$error = new \WP_Error();
+		}
+
+		foreach ( $messages as $message ) {
+			$error->add( 'storesuite_acf_validation', $message );
+		}
+
+		return $error;
 	}
 
 	/**

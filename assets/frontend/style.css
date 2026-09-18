@@ -8247,3 +8247,14 @@ ul.storesuite-notifications-list {
 .storesuite-acf-image .image-drop-container {
   max-width: 220px;
 }
+
+/* Validation dialog: one line per failing field. */
+.swal2-html-container .storesuite-error-list {
+  margin: 0;
+  padding: 0 0 0 20px;
+  text-align: left;
+  list-style: disc;
+}
+.swal2-html-container .storesuite-error-list li + li {
+  margin-top: 6px;
+}

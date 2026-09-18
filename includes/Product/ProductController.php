@@ -100,6 +100,8 @@ class ProductController {
 		// Build sanitized data array.
 		$data = $this->sanitize_product_data( $_POST );
 
+		$this->abort_if_invalid( $data, 'add' );
+
 		$response = ( new ProductManager() )->storesuite_save_product( $data );
 
 		if ( is_wp_error( $response ) ) {
@@ -139,6 +141,8 @@ class ProductController {
 
 		// Build sanitized data array.
 		$data = $this->sanitize_product_data( $_POST );
+
+		$this->abort_if_invalid( $data, 'edit' );
 
 		$response = ( new ProductManager() )->storesuite_save_product( $data );
 
@@ -194,6 +198,45 @@ class ProductController {
 		}
 
 		wp_send_json_success( array( 'message' => __( 'Product successfully deleted', 'storesuite' ) ) );
+	}
+
+	/**
+	 * Give integrations a chance to refuse the save before anything is written.
+	 *
+	 * Runs after the nonce / capability checks and sanitisation. A WP_Error
+	 * returned by the filter ends the request with every error message listed,
+	 * so the product is neither created nor updated.
+	 *
+	 * @param array  $data    Sanitised product data.
+	 * @param string $context 'add' or 'edit'.
+	 * @return void
+	 */
+	private function abort_if_invalid( array $data, string $context ) {
+		/**
+		 * Filters the pre-save validation result for the product form.
+		 *
+		 * Return a WP_Error to abort the save. Add one message per failing
+		 * field; they are shown as a list in the form's error dialog.
+		 *
+		 * @param \WP_Error|null $error   Null to allow the save.
+		 * @param array          $data    Sanitised product data.
+		 * @param string         $context 'add' or 'edit'.
+		 */
+		$error = apply_filters( 'storesuite_product_pre_save_validation', null, $data, $context );
+
+		if ( ! is_wp_error( $error ) || ! $error->has_errors() ) {
+			return;
+		}
+
+		$messages = $error->get_error_messages();
+
+		wp_send_json_error(
+			array(
+				'error'   => 1 === count( $messages ) ? $messages[0] : __( 'Please fix the following before saving:', 'storesuite' ),
+				'errors'  => $messages,
+				'context' => $context,
+			)
+		);
 	}
 
 	/**

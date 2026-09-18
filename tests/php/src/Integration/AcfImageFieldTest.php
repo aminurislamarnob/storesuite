@@ -173,7 +173,9 @@ class AcfImageFieldTest extends StoreSuiteAjaxTestCase {
 		$this->assertTrue( $edit( array( 'field_ss_img_front' => (string) $second ) )['success'] );
 		$this->assertSame( (string) $second, get_post_meta( $product_id, 'ss_img_front', true ) );
 
-		$this->assertTrue( $edit( array( 'field_ss_img_front' => '999999' ) )['success'] );
+		$bogus = $edit( array( 'field_ss_img_front' => '999999' ) );
+		$this->assertFalse( $bogus['success'], 'A bogus id is refused by ACF validation.' );
+		$this->assertSame( array( 'Front view: File must be a valid image.' ), $bogus['data']['errors'] );
 		$this->assertSame( (string) $second, get_post_meta( $product_id, 'ss_img_front', true ), 'A bogus id leaves the image alone.' );
 
 		$this->assertTrue( $edit( array( 'field_ss_img_front' => '' ) )['success'] );

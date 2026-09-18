@@ -40,7 +40,7 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 			'key'     => 'field_ss_simple_number',
 			'name'    => 'ss_simple_number',
 			'min'     => 0,
-			'max'     => 1000,
+			'max'     => 10000,
 			'step'    => '0.5',
 			'prepend' => '$',
 			'append'  => 'per kg',
@@ -197,7 +197,7 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 		$html = $this->render_acf_cards( 0 );
 
 		$this->assertMatchesRegularExpression( '/<textarea[^>]*name="storesuite_acf\[field_ss_simple_textarea\]"[^>]*rows="3"[^>]*placeholder="Tell a story"[^>]*maxlength="200"/s', $html );
-		$this->assertMatchesRegularExpression( '/<input[^>]*type="number"[^>]*name="storesuite_acf\[field_ss_simple_number\]"[^>]*step="0.5"[^>]*min="0"[^>]*max="1000"/s', $html );
+		$this->assertMatchesRegularExpression( '/<input[^>]*type="number"[^>]*name="storesuite_acf\[field_ss_simple_number\]"[^>]*step="0.5"[^>]*min="0"[^>]*max="10000"/s', $html );
 		$this->assertStringContainsString( '<span class="storesuite-acf-input-addon">$</span>', $html );
 		$this->assertStringContainsString( '<span class="storesuite-acf-input-addon">per kg</span>', $html );
 		$this->assertMatchesRegularExpression( '/<input[^>]*type="range"[^>]*name="storesuite_acf\[field_ss_simple_range\]"[^>]*value="10"[^>]*min="10"[^>]*max="50"[^>]*step="5"/s', $html );
@@ -343,7 +343,7 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 		$this->assertSame( 'replaced', get_post_meta( $product_id, 'ss_simple_password', true ) );
 	}
 
-	public function test_invalid_number_and_colour_do_not_overwrite_stored_values() {
+	public function test_invalid_number_is_refused_and_stored_values_survive() {
 		$this->require_acf();
 		$this->register_simple_group();
 
@@ -356,13 +356,34 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 			array(
 				'field_ss_simple_number' => 'seven',
 				'field_ss_simple_color'  => 'rgba(1,2,3,0.4)',
-				'field_ss_simple_email'  => 'nope',
+			)
+		);
+
+		// The sanitiser refuses both; ACF has a message for the number, the
+		// colour is simply not written.
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( array( 'Number field: Value must be a number' ), $response['data']['errors'] );
+		$this->assertSame( '7', get_post_meta( $product_id, 'ss_simple_number', true ) );
+		$this->assertSame( '#123456', get_post_meta( $product_id, 'ss_simple_color', true ) );
+	}
+
+	public function test_invalid_colour_alone_is_dropped_without_blocking_the_save() {
+		$this->require_acf();
+		$this->register_simple_group();
+
+		$product_id = self::factory()->product->create()->get_id();
+		update_field( 'field_ss_simple_color', '#123456', $product_id );
+
+		$response = $this->edit_with_acf(
+			$product_id,
+			array(
+				'field_ss_simple_color' => 'rgba(1,2,3,0.4)',
+				'field_ss_simple_email' => 'nope',
 			)
 		);
 
 		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
-		$this->assertSame( '7', get_post_meta( $product_id, 'ss_simple_number', true ) );
-		$this->assertSame( '#123456', get_post_meta( $product_id, 'ss_simple_color', true ) );
+		$this->assertSame( '#123456', get_post_meta( $product_id, 'ss_simple_color', true ), 'Opacity values are never stored.' );
 		$this->assertSame( '', get_post_meta( $product_id, 'ss_simple_email', true ), 'An invalid email is stored as empty, as sanitize_email() does.' );
 	}
 }

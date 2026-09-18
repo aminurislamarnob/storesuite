@@ -334,7 +334,8 @@
 								}
 							} else {
 								self.showError(
-									response.data.error || response.data
+									response.data.error || response.data,
+									response.data.errors
 								);
 							}
 						},
@@ -458,13 +459,31 @@
 			}
 		},
 
-		showError: function ( message ) {
-			Swal.fire( {
+		showError: function ( message, errors ) {
+			var options = {
 				icon: 'error',
 				title: storeSuiteFormHandler.i18n.error_title,
-				text: message || storeSuiteFormHandler.i18n.unexpected_error,
 				confirmButtonText: storeSuiteFormHandler.i18n.ok_button,
-			} );
+			};
+
+			// Several messages (e.g. per-field validation) render as a list.
+			if ( Array.isArray( errors ) && errors.length > 1 ) {
+				options.html =
+					'<ul class="storesuite-error-list">' +
+					errors
+						.map( function ( item ) {
+							return (
+								'<li>' + $( '<div>' ).text( item ).html() + '</li>'
+							);
+						} )
+						.join( '' ) +
+					'</ul>';
+			} else {
+				options.text =
+					message || storeSuiteFormHandler.i18n.unexpected_error;
+			}
+
+			Swal.fire( options );
 		},
 		getXhrErrorMessage: function ( xhr ) {
 			if ( ! xhr || ! xhr.responseJSON || ! xhr.responseJSON.data ) {
