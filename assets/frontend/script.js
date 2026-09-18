@@ -17,13 +17,22 @@
 				$container.find( '.storesuite-loader-text' ).text( text );
 			}
 
-			setTimeout( function () {
-				$container
-					.find( '.storesuite-loader-overlay' )
-					.addClass( 'active' );
-			}, 10 );
+			// Activate on the next tick so the fade-in transition runs. Keep the
+			// timer so unblock() can cancel it: browsers throttle timers in
+			// hidden tabs to a second or more, and a late activation landing
+			// after unblock() would leave the overlay stuck on forever.
+			clearTimeout( $container.data( 'storesuiteLoaderTimer' ) );
+			$container.data(
+				'storesuiteLoaderTimer',
+				setTimeout( function () {
+					$container
+						.find( '.storesuite-loader-overlay' )
+						.addClass( 'active' );
+				}, 10 )
+			);
 		},
 		unblock: function ( $container ) {
+			clearTimeout( $container.data( 'storesuiteLoaderTimer' ) );
 			$container
 				.find( '.storesuite-loader-overlay' )
 				.removeClass( 'active' );
