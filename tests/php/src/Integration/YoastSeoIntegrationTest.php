@@ -61,6 +61,8 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 				'enable_cornerstone_content' => true,
 				// Yoast's default: advanced settings are locked down to users with the capability.
 				'disableadvanced_meta'       => true,
+				'opengraph'                  => true,
+				'twitter'                    => true,
 			)
 		);
 
@@ -533,5 +535,162 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 		$this->assertStringContainsString( 'data-seo-tab="advanced"', $open );
 		$this->assertStringContainsString( 'name="storesuite_yoast_meta-robots-noindex"', $open );
 		$this->assertStringContainsString( 'value="https://example.org/stored/"', $open );
+	}
+
+	/**
+	 * Create an attachment of the given mime type.
+	 *
+	 * @param string $mime Mime type.
+	 * @param string $file File path relative to the uploads directory.
+	 *
+	 * @return int
+	 */
+	private function make_attachment( string $mime, string $file ): int {
+		return self::factory()->attachment->create(
+			array(
+				'post_mime_type' => $mime,
+				'file'           => $file,
+			)
+		);
+	}
+
+	/**
+	 * Social titles and descriptions are saved as text and removed when emptied.
+	 *
+	 * @return void
+	 */
+	public function test_social_text_fields_round_trip() {
+		$integration = $this->make_integration();
+
+		$this->post_form(
+			array(
+				'storesuite_yoast_opengraph-title'       => 'Share <b>me</b>',
+				'storesuite_yoast_opengraph-description' => 'On Facebook',
+				'storesuite_yoast_twitter-title'         => '%%title%% on X',
+				'storesuite_yoast_twitter-description'   => 'On X',
+			)
+		);
+		$integration->save( $this->product_id );
+
+		$this->assertSame( 'Share me', get_post_meta( $this->product_id, '_yoast_wpseo_opengraph-title', true ) );
+		$this->assertSame( 'On Facebook', get_post_meta( $this->product_id, '_yoast_wpseo_opengraph-description', true ) );
+		$this->assertSame( '%%title%% on X', get_post_meta( $this->product_id, '_yoast_wpseo_twitter-title', true ) );
+		$this->assertSame( 'On X', get_post_meta( $this->product_id, '_yoast_wpseo_twitter-description', true ) );
+
+		$this->post_form( array( 'storesuite_yoast_opengraph-title' => '' ) );
+		$integration->save( $this->product_id );
+
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_opengraph-title' ) );
+	}
+
+	/**
+	 * A valid image ID stores both the ID and the URL the server derives from it.
+	 *
+	 * @return void
+	 */
+	public function test_social_image_stores_id_and_server_derived_url() {
+		$image_id = $this->make_attachment( 'image/jpeg', '2026/09/share.jpg' );
+
+		$this->post_form(
+			array(
+				'storesuite_yoast_opengraph-image-id' => (string) $image_id,
+				// A client-supplied URL must never be trusted.
+				'storesuite_yoast_opengraph-image'    => 'https://attacker.example/pixel.gif',
+			)
+		);
+		$this->make_integration()->save( $this->product_id );
+
+		$this->assertSame( (string) $image_id, get_post_meta( $this->product_id, '_yoast_wpseo_opengraph-image-id', true ) );
+		$this->assertSame( wp_get_attachment_url( $image_id ), get_post_meta( $this->product_id, '_yoast_wpseo_opengraph-image', true ) );
+	}
+
+	/**
+	 * IDs that are not image attachments are rejected and nothing is changed.
+	 *
+	 * @return void
+	 */
+	public function test_social_image_rejects_non_images() {
+		$existing = $this->make_attachment( 'image/png', '2026/09/existing.png' );
+		update_post_meta( $this->product_id, '_yoast_wpseo_twitter-image-id', (string) $existing );
+		update_post_meta( $this->product_id, '_yoast_wpseo_twitter-image', 'https://example.org/existing.png' );
+
+		$candidates = array(
+			'a pdf attachment' => $this->make_attachment( 'application/pdf', '2026/09/manual.pdf' ),
+			'a product'        => $this->product_id,
+			'a missing post'   => 999999,
+		);
+
+		foreach ( $candidates as $label => $id ) {
+			$this->post_form( array( 'storesuite_yoast_twitter-image-id' => (string) $id ) );
+			$this->make_integration()->save( $this->product_id );
+
+			$this->assertSame( (string) $existing, get_post_meta( $this->product_id, '_yoast_wpseo_twitter-image-id', true ), $label );
+			$this->assertSame( 'https://example.org/existing.png', get_post_meta( $this->product_id, '_yoast_wpseo_twitter-image', true ), $label );
+		}
+	}
+
+	/**
+	 * Removing the image clears both stored values.
+	 *
+	 * @return void
+	 */
+	public function test_removing_social_image_clears_id_and_url() {
+		update_post_meta( $this->product_id, '_yoast_wpseo_opengraph-image-id', '12' );
+		update_post_meta( $this->product_id, '_yoast_wpseo_opengraph-image', 'https://example.org/old.jpg' );
+
+		$this->post_form( array( 'storesuite_yoast_opengraph-image-id' => '' ) );
+		$this->make_integration()->save( $this->product_id );
+
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_opengraph-image-id' ) );
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_opengraph-image' ) );
+	}
+
+	/**
+	 * Fields of a social network whose Yoast feature is off are ignored on save.
+	 *
+	 * @return void
+	 */
+	public function test_social_fields_follow_yoast_feature_toggles_on_save() {
+		$this->post_form(
+			array(
+				'storesuite_yoast_opengraph-title' => 'Facebook title',
+				'storesuite_yoast_twitter-title'   => 'X title',
+			)
+		);
+		$this->make_integration( true, array( 'opengraph' => false ) )->save( $this->product_id );
+
+		$this->assertFalse( metadata_exists( 'post', $this->product_id, '_yoast_wpseo_opengraph-title' ) );
+		$this->assertSame( 'X title', get_post_meta( $this->product_id, '_yoast_wpseo_twitter-title', true ) );
+	}
+
+	/**
+	 * The Social tab shows only the networks Yoast has enabled, and disappears with both off.
+	 *
+	 * @return void
+	 */
+	public function test_social_tab_follows_yoast_feature_toggles_on_render() {
+		$render = function ( array $options ) {
+			ob_start();
+			$this->make_integration( true, $options )->render_card( null, false );
+			return ob_get_clean();
+		};
+
+		$both = $render( array() );
+		$this->assertStringContainsString( 'data-seo-tab="social"', $both );
+		$this->assertStringContainsString( 'name="storesuite_yoast_opengraph-title"', $both );
+		$this->assertStringContainsString( 'name="storesuite_yoast_twitter-image-id"', $both );
+
+		$x_only = $render( array( 'opengraph' => false ) );
+		$this->assertStringNotContainsString( 'storesuite_yoast_opengraph-', $x_only );
+		$this->assertStringContainsString( 'name="storesuite_yoast_twitter-title"', $x_only );
+
+		$none = $render(
+			array(
+				'opengraph' => false,
+				'twitter'   => false,
+			)
+		);
+		$this->assertStringNotContainsString( 'data-seo-tab="social"', $none );
+		$this->assertStringNotContainsString( 'data-seo-panel="social"', $none );
 	}
 }

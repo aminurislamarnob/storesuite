@@ -183,13 +183,33 @@ class YoastSeoIntegration {
 	}
 
 	/**
+	 * Social networks whose Yoast feature is switched on, keyed by Yoast's meta key prefix.
+	 *
+	 * @return array<string, string> Prefix => label.
+	 */
+	protected function get_social_networks(): array {
+		$networks = array();
+
+		if ( $this->get_yoast_option( 'opengraph', false ) ) {
+			$networks['opengraph'] = __( 'Facebook', 'storesuite' );
+		}
+
+		if ( $this->get_yoast_option( 'twitter', false ) ) {
+			$networks['twitter'] = __( 'X (Twitter)', 'storesuite' );
+		}
+
+		return $networks;
+	}
+
+	/**
 	 * The Yoast meta keys this integration may write, mapped to their definition.
 	 *
 	 * This is the whitelist: a posted field that is not listed here — including
 	 * one the current user is not allowed to edit — is never saved.
 	 *
-	 * Types: `text`, `checkbox` (stored as "1"), `url`, and `choice`, which only
-	 * accepts its `choices` and removes the meta for its `default`.
+	 * Types: `text`, `checkbox` (stored as "1"), `url`, `choice` (only accepts its
+	 * `choices` and removes the meta for its `default`) and `image` (an attachment
+	 * ID; the image URL is derived server-side and stored under `url_key`).
 	 *
 	 * @return array<string, array>
 	 */
@@ -202,6 +222,15 @@ class YoastSeoIntegration {
 
 		if ( $this->is_cornerstone_enabled() ) {
 			$fields['is_cornerstone'] = array( 'type' => 'checkbox' );
+		}
+
+		foreach ( array_keys( $this->get_social_networks() ) as $network ) {
+			$fields[ $network . '-title' ]       = array( 'type' => 'text' );
+			$fields[ $network . '-description' ] = array( 'type' => 'text' );
+			$fields[ $network . '-image-id' ]    = array(
+				'type'    => 'image',
+				'url_key' => $network . '-image',
+			);
 		}
 
 		if ( $this->can_edit_advanced() ) {
@@ -232,6 +261,10 @@ class YoastSeoIntegration {
 			'seo' => __( 'SEO', 'storesuite' ),
 		);
 
+		if ( $this->get_social_networks() ) {
+			$tabs['social'] = __( 'Social', 'storesuite' );
+		}
+
 		if ( $this->can_edit_advanced() ) {
 			$tabs['advanced'] = __( 'Advanced', 'storesuite' );
 		}
@@ -255,6 +288,13 @@ class YoastSeoIntegration {
 			$values[ $key ] = $post_id ? $this->get_meta( $key, $post_id ) : '';
 		}
 
+		$image_previews = array();
+
+		foreach ( array_keys( $this->get_social_networks() ) as $network ) {
+			$image_id                   = absint( $values[ $network . '-image-id' ] ?? 0 );
+			$image_previews[ $network ] = $image_id ? (string) wp_get_attachment_image_url( $image_id, 'medium' ) : '';
+		}
+
 		storesuite_get_template_part(
 			'products/product-seo-yoast',
 			'',
@@ -268,6 +308,8 @@ class YoastSeoIntegration {
 				'title_template'      => (string) $this->get_yoast_option( 'title-product', '' ),
 				'desc_template'       => (string) $this->get_yoast_option( 'metadesc-product', '' ),
 				'cornerstone_enabled' => $this->is_cornerstone_enabled(),
+				'social_networks'     => $this->get_social_networks(),
+				'image_previews'      => $image_previews,
 				'can_edit_advanced'   => $this->can_edit_advanced(),
 				'noindex_by_default'  => (bool) $this->get_yoast_option( 'noindex-product', false ),
 			)
@@ -307,6 +349,11 @@ class YoastSeoIntegration {
 
 			$value = sanitize_text_field( wp_unslash( $_POST[ $name ] ) );
 
+			if ( 'image' === $field['type'] ) {
+				$this->save_image( $key, $field['url_key'], $value, $product_id );
+				continue;
+			}
+
 			if ( 'choice' === $field['type'] ) {
 				if ( ! in_array( $value, $field['choices'], true ) ) {
 					continue;
@@ -319,6 +366,38 @@ class YoastSeoIntegration {
 			$this->set_meta( $key, $value, $product_id );
 		}
 		// phpcs:enable WordPress.Security.NonceVerification.Missing
+	}
+
+	/**
+	 * Store a social image from its attachment ID.
+	 *
+	 * Only the ID comes from the browser. It must be a real image attachment, and
+	 * the URL Yoast outputs is looked up here, so an arbitrary external URL can
+	 * never be injected into the share image. An empty ID removes the image.
+	 *
+	 * @param string $id_key     Yoast meta key (without prefix) holding the attachment ID.
+	 * @param string $url_key    Yoast meta key (without prefix) holding the image URL.
+	 * @param string $value      Posted attachment ID.
+	 * @param int    $product_id Product ID.
+	 *
+	 * @return void
+	 */
+	protected function save_image( string $id_key, string $url_key, string $value, int $product_id ): void {
+		if ( '' === $value || '0' === $value ) {
+			$this->set_meta( $id_key, '', $product_id );
+			$this->set_meta( $url_key, '', $product_id );
+			return;
+		}
+
+		$image_id = absint( $value );
+		$url      = $image_id && wp_attachment_is_image( $image_id ) ? wp_get_attachment_url( $image_id ) : false;
+
+		if ( ! $url ) {
+			return;
+		}
+
+		$this->set_meta( $id_key, (string) $image_id, $product_id );
+		$this->set_meta( $url_key, $url, $product_id );
 	}
 
 	/**

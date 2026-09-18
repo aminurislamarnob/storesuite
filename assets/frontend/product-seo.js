@@ -1,4 +1,4 @@
-/* global StoreSuite_ProductSeo, tinymce */
+/* global StoreSuite_ProductSeo, tinymce, wp */
 /**
  * Yoast SEO card on the StoreSuite product form.
  *
@@ -7,6 +7,8 @@
  *   - Google preview: a live mobile/desktop search snippet built from the SEO
  *     fields and the product's title, permalink, descriptions and terms.
  *   - Progress bars using Yoast's limits (title width in px, description length).
+ *   - Social tab image pickers. Only the attachment ID is submitted; the server
+ *     looks the URL up itself.
  *
  * Reads the localized StoreSuite_ProductSeo global enqueued by YoastSeoIntegration.
  */
@@ -38,6 +40,7 @@
 			this.menuTrigger = null;
 
 			this.bindTabs();
+			this.bindImagePickers();
 			this.bindPreview();
 			this.bindVariableMenu();
 			this.render();
@@ -66,6 +69,67 @@
 						.prop( 'hidden', ! active );
 				} );
 			} );
+		},
+
+		/* ---------------------------------------------------------------
+		 * Social image pickers
+		 * ------------------------------------------------------------- */
+
+		bindImagePickers: function () {
+			var self = this;
+
+			this.$card.on( 'click', '.storesuite-seo-image-select', function () {
+				if ( typeof wp === 'undefined' || ! wp.media ) {
+					return;
+				}
+
+				var $picker = $( this ).closest( '.storesuite-seo-image' );
+				var frame = wp.media( {
+					library: { type: 'image' },
+					multiple: false,
+				} );
+
+				frame.on( 'select', function () {
+					var image = frame
+						.state()
+						.get( 'selection' )
+						.first()
+						.toJSON();
+					var preview =
+						( image.sizes &&
+							( image.sizes.medium || image.sizes.full ) ) ||
+						image;
+
+					self.setImage( $picker, image.id, preview.url );
+				} );
+				frame.open();
+			} );
+
+			this.$card.on( 'click', '.storesuite-seo-image-remove', function () {
+				self.setImage(
+					$( this ).closest( '.storesuite-seo-image' ),
+					'',
+					''
+				);
+			} );
+		},
+
+		setImage: function ( $picker, id, url ) {
+			var $select = $picker.find( '.storesuite-seo-image-select' );
+
+			$picker.toggleClass( 'has-image', !! id );
+			$picker
+				.find( '.storesuite-seo-image-preview' )
+				.empty()
+				.append( url ? $( '<img>', { src: url, alt: '' } ) : null );
+			$select.text(
+				$select.attr( id ? 'data-replace-label' : 'data-select-label' )
+			);
+			// Lets the form's unsaved-changes bar react.
+			$picker
+				.find( 'input[type="hidden"]' )
+				.val( id )
+				.trigger( 'change' );
 		},
 
 		/* ---------------------------------------------------------------

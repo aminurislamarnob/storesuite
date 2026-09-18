@@ -8103,6 +8103,57 @@ ul.storesuite-notifications-list {
   display: none;
 }
 
+.storesuite-seo-network {
+  margin-bottom: 8px;
+}
+.storesuite-seo-network + .storesuite-seo-network {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--storesuite-border-color);
+}
+.storesuite-seo-network-title {
+  margin: 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--storesuite-text-black);
+}
+.storesuite-seo-image-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--storesuite-text-black);
+}
+.storesuite-seo-image-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1.91 / 1;
+  margin-bottom: 8px;
+  border: 1px dashed var(--storesuite-border-color);
+  border-radius: 8px;
+  background: var(--storesuite-bg-color-muted);
+  overflow: hidden;
+}
+.storesuite-seo-image-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.storesuite-seo-image-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.storesuite-seo-image-actions .my-storesuite-button {
+  padding: 5px 12px;
+  font-size: 12px;
+  line-height: 1.4;
+}
+.storesuite-seo-image:not(.has-image) .storesuite-seo-image-remove {
+  display: none;
+}
+
 .storesuite-seo-preview {
   margin-bottom: 20px;
 }
