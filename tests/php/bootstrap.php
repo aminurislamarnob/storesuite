@@ -3,8 +3,10 @@
  * PHPUnit bootstrap: boots the WordPress test suite with WooCommerce and StoreSuite loaded.
  *
  * Requires a WordPress core checkout (WP_CORE_DIR, default /tmp/wordpress) and a
- * WooCommerce plugin directory (WC_DIR, default /tmp/woocommerce). See
- * .github/workflows/phpunit.yml for the reference environment.
+ * WooCommerce plugin directory (WC_DIR, default /tmp/woocommerce). An Advanced
+ * Custom Fields directory (ACF_DIR, default /tmp/advanced-custom-fields) is
+ * loaded when present. See .github/workflows/phpunit.yml for the reference
+ * environment.
  *
  * @package StoreSuite\Tests
  */
@@ -31,6 +33,17 @@ tests_add_filter(
 		}
 
 		require rtrim( $wc_dir, '/' ) . '/woocommerce.php';
+
+		// Advanced Custom Fields is optional: the ACF integration tests skip
+		// themselves when it is absent (see StoreSuiteFixtures::require_acf()).
+		$acf_dir = getenv( 'ACF_DIR' );
+		if ( ! $acf_dir ) {
+			$acf_dir = '/tmp/advanced-custom-fields';
+		}
+		if ( file_exists( rtrim( $acf_dir, '/' ) . '/acf.php' ) ) {
+			require rtrim( $acf_dir, '/' ) . '/acf.php';
+		}
+
 		require dirname( __DIR__, 2 ) . '/storesuite.php';
 
 		// Keep the suite hermetic: core update checks phone home to

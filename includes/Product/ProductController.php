@@ -371,6 +371,22 @@ class ProductController {
 			$data['attributes'] = $this->prepare_attributes_from_post( $post_data );
 		}
 
+		// Custom fields rendered by an integration (inputs named storesuite_acf[<field_key>]).
+		// Nothing is accepted unless an integration sanitises it, so with no
+		// integration active the posted values are dropped on the floor.
+		if ( isset( $post_data['storesuite_acf'] ) && is_array( $post_data['storesuite_acf'] ) ) {
+			$raw_acf = wp_unslash( $post_data['storesuite_acf'] ); // phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Sanitised per field type by the filter below.
+
+			/**
+			 * Filters the sanitised ACF values handed to the product manager.
+			 *
+			 * @param array $sanitized  Sanitised values keyed by ACF field key. Empty by default.
+			 * @param array $raw        Raw (unslashed) posted values keyed by ACF field key.
+			 * @param int   $product_id Product being edited, 0 when adding.
+			 */
+			$data['storesuite_acf'] = (array) apply_filters( 'storesuite_sanitize_acf_fields', array(), $raw_acf, isset( $data['product_id'] ) ? $data['product_id'] : 0 );
+		}
+
 		return $data;
 	}
 

@@ -58,10 +58,16 @@ jobs:
                   curl -sL https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip -o /tmp/woocommerce.zip
                   unzip -q /tmp/woocommerce.zip -d /tmp
 
+            - name: Download Advanced Custom Fields
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/advanced-custom-fields.latest-stable.zip -o /tmp/advanced-custom-fields.zip
+                  unzip -q /tmp/advanced-custom-fields.zip -d /tmp
+
             - name: Run PHPUnit
               env:
                   WP_CORE_DIR: /tmp/wordpress
                   WC_DIR: /tmp/woocommerce
+                  ACF_DIR: /tmp/advanced-custom-fields
                   WP_DB_NAME: wordpress_test
                   WP_DB_USER: root
                   WP_DB_PASS: root

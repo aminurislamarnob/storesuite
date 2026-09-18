@@ -1,0 +1,186 @@
+<?php
+
+namespace PluginizeLab\StoreSuite\Integration\Acf;
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+/**
+ * Renders ACF field groups and fields with StoreSuite's theme-overridable templates.
+ *
+ * Templates live under `templates/products/acf/`: one for the group card
+ * (`group.php`), one base wrapper shared by every type
+ * (`field-wrapper.php`) and one per field type (`field-<type>.php`), with
+ * `field-unsupported.php` standing in for types StoreSuite cannot edit.
+ */
+class FieldRenderer {
+
+	/**
+	 * Owning integration (field type support lookup).
+	 *
+	 * @var AcfIntegration
+	 */
+	protected $integration;
+
+	/**
+	 * Constructor.
+	 *
+	 * @param AcfIntegration $integration Owning integration.
+	 */
+	public function __construct( AcfIntegration $integration ) {
+		$this->integration = $integration;
+	}
+
+	/**
+	 * Render a field group card.
+	 *
+	 * @param array $group        ACF field group array.
+	 * @param array $fields       ACF field arrays belonging to the group.
+	 * @param int   $product_id   Product ID, 0 on the add form.
+	 * @param bool  $is_edit_mode Whether the edit form is rendered.
+	 */
+	public function render_group( array $group, array $fields, int $product_id, bool $is_edit_mode ) {
+		if ( empty( $fields ) ) {
+			return;
+		}
+
+		storesuite_get_template_part(
+			'products/acf/group',
+			'',
+			array(
+				'group'        => $group,
+				'fields'       => $fields,
+				'product_id'   => $product_id,
+				'is_edit_mode' => $is_edit_mode,
+				'renderer'     => $this,
+			)
+		);
+	}
+
+	/**
+	 * Render a single field: the shared wrapper around the type template.
+	 *
+	 * @param array $field        ACF field array.
+	 * @param int   $product_id   Product ID, 0 on the add form.
+	 * @param bool  $is_edit_mode Whether the edit form is rendered.
+	 */
+	public function render_field( array $field, int $product_id, bool $is_edit_mode ) {
+		if ( empty( $field['key'] ) || empty( $field['type'] ) ) {
+			return;
+		}
+
+		$type      = (string) $field['type'];
+		$supported = AcfIntegration::is_supported_type( $type );
+
+		storesuite_get_template_part(
+			'products/acf/field-wrapper',
+			'',
+			array(
+				'field'        => $field,
+				'type'         => $type,
+				'supported'    => $supported,
+				'input_name'   => $this->get_input_name( $field ),
+				'input_id'     => $this->get_input_id( $field ),
+				'value'        => $supported ? $this->get_value( $field, $product_id, $is_edit_mode ) : null,
+				'columns'      => $this->get_columns( $field ),
+				'product_id'   => $product_id,
+				'is_edit_mode' => $is_edit_mode,
+				'renderer'     => $this,
+			)
+		);
+	}
+
+	/**
+	 * Render the type-specific input for a field (called from the wrapper template).
+	 *
+	 * @param array $args Wrapper template args (field, input_name, input_id, value, ...).
+	 */
+	public function render_input( array $args ) {
+		$name = ! empty( $args['supported'] ) ? (string) $args['type'] : 'unsupported';
+
+		storesuite_get_template_part( 'products/acf/field', $name, $args );
+	}
+
+	/**
+	 * Name attribute for a field's input.
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return string
+	 */
+	public function get_input_name( array $field ): string {
+		return 'storesuite_acf[' . $field['key'] . ']';
+	}
+
+	/**
+	 * ID attribute for a field's input.
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return string
+	 */
+	public function get_input_id( array $field ): string {
+		return 'storesuite_acf_' . $field['key'];
+	}
+
+	/**
+	 * Value to prefill the input with.
+	 *
+	 * Add mode: the field's `default_value`. Edit mode: the stored value only —
+	 * ACF's default is deliberately not applied to a product that has no value.
+	 *
+	 * @param array $field        ACF field array.
+	 * @param int   $product_id   Product ID, 0 on the add form.
+	 * @param bool  $is_edit_mode Whether the edit form is rendered.
+	 *
+	 * @return mixed Raw (unformatted) value, or null when there is none.
+	 */
+	public function get_value( array $field, int $product_id, bool $is_edit_mode ) {
+		if ( ! $is_edit_mode || $product_id <= 0 ) {
+			return isset( $field['default_value'] ) ? $field['default_value'] : null;
+		}
+
+		if ( ! function_exists( 'acf_get_value' ) ) {
+			return null;
+		}
+
+		// acf_get_value() falls back to default_value when no meta exists; strip
+		// it so an unset field renders empty.
+		unset( $field['default_value'] );
+
+		return acf_get_value( $product_id, $field );
+	}
+
+	/**
+	 * Map ACF's percentage `wrapper.width` onto the 12-column grid.
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return int Column span, 1–12.
+	 */
+	public function get_columns( array $field ): int {
+		$width = isset( $field['wrapper']['width'] ) ? (int) $field['wrapper']['width'] : 0;
+
+		if ( $width <= 0 ) {
+			return 12;
+		}
+		if ( $width <= 25 ) {
+			return 3;
+		}
+		if ( $width <= 33 ) {
+			return 4;
+		}
+		if ( $width <= 50 ) {
+			return 6;
+		}
+		if ( $width <= 66 ) {
+			return 8;
+		}
+		if ( $width <= 75 ) {
+			return 9;
+		}
+
+		return 12;
+	}
+}
