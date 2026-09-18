@@ -41,6 +41,7 @@ class AcfIntegration {
 		'date_picker',
 		'date_time_picker',
 		'time_picker',
+		'wysiwyg',
 	);
 
 	/**

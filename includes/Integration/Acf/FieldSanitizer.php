@@ -58,6 +58,8 @@ class FieldSanitizer {
 			case 'time_picker':
 				// Malformed input clears the value rather than storing garbage.
 				return DateFormats::to_storage( $type, $raw );
+			case 'wysiwyg':
+				return $this->sanitize_html( $raw );
 		}
 
 		return null;
@@ -175,6 +177,17 @@ class FieldSanitizer {
 	 */
 	protected function sanitize_textarea( $raw ): string {
 		return sanitize_textarea_field( $this->to_string( $raw ) );
+	}
+
+	/**
+	 * Sanitise a `wysiwyg` field value with post-safe KSES, like the product description.
+	 *
+	 * @param mixed $raw Raw posted value.
+	 *
+	 * @return string
+	 */
+	protected function sanitize_html( $raw ): string {
+		return wp_kses_post( $this->to_string( $raw ) );
 	}
 
 	/**

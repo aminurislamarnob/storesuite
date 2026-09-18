@@ -8237,3 +8237,8 @@ ul.storesuite-notifications-list {
   min-height: 40px;
   margin-bottom: 0;
 }
+
+/* WYSIWYG: keep the editor chrome inside the card. */
+.storesuite-acf-wysiwyg .wp-editor-wrap {
+  max-width: 100%;
+}

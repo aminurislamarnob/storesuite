@@ -245,12 +245,10 @@
 						return;
 					}
 
-					// Force TinyMCE editor content to update the textarea
+					// Force every TinyMCE editor (description plus any
+					// integration-rendered editors) to update its textarea.
 					if ( typeof tinyMCE !== 'undefined' ) {
-						var editor = tinyMCE.get( 'product_description' );
-						if ( editor ) {
-							editor.save();
-						}
+						tinyMCE.triggerSave();
 					}
 
 					var formData = new FormData( this );
