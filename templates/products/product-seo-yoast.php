@@ -1,0 +1,103 @@
+<?php
+/**
+ * Yoast SEO card for the product add/edit form.
+ *
+ * Rendered by YoastSeoIntegration on `storesuite_product_form_after_main_cards`
+ * and only when Yoast SEO is active.
+ *
+ * @var WC_Product|null $product             Product being edited, null on the add form.
+ * @var bool            $is_edit_mode        Whether this is the edit form.
+ * @var string          $form_marker         Name of the hidden field marking the card as submitted.
+ * @var string          $field_prefix        Prefix of the SEO field names.
+ * @var array           $seo_tabs            Tab labels keyed by tab slug; the tab strip shows only with more than one.
+ * @var array           $seo_values          Stored Yoast values keyed by Yoast meta key (without prefix).
+ * @var string          $title_template      Yoast's site-wide SEO title template for products.
+ * @var string          $desc_template       Yoast's site-wide meta description template for products.
+ * @var bool            $cornerstone_enabled Whether Yoast's cornerstone content feature is on.
+ *
+ * @package StoreSuite
+ */
+
+if ( ! defined( 'ABSPATH' ) ) {
+	exit;
+}
+
+?>
+<div class="storesuite-card storesuite-card-with-header storesuite-mb-24 storesuite-seo-card" id="storesuite-yoast-seo">
+	<h3 class="storesuite-card-title"><?php esc_html_e( 'SEO (Yoast)', 'storesuite' ); ?></h3>
+	<div class="storesuite-card-content">
+		<input type="hidden" name="<?php echo esc_attr( $form_marker ); ?>" value="1">
+
+		<?php if ( count( $seo_tabs ) > 1 ) : ?>
+			<div class="storesuite-seo-tabs" role="tablist">
+				<?php foreach ( $seo_tabs as $storesuite_seo_tab_key => $storesuite_seo_tab_label ) : ?>
+					<button type="button" class="storesuite-seo-tab<?php echo 'seo' === $storesuite_seo_tab_key ? ' is-active' : ''; ?>" role="tab" data-seo-tab="<?php echo esc_attr( $storesuite_seo_tab_key ); ?>" aria-selected="<?php echo 'seo' === $storesuite_seo_tab_key ? 'true' : 'false'; ?>"><?php echo esc_html( $storesuite_seo_tab_label ); ?></button>
+				<?php endforeach; ?>
+			</div>
+		<?php endif; ?>
+
+		<div class="storesuite-seo-panel is-active" role="tabpanel" data-seo-panel="seo">
+			<div class="row">
+				<div class="col-md-12">
+					<div class="storesuite-form-group">
+						<label for="<?php echo esc_attr( $field_prefix . 'focuskw' ); ?>"><?php esc_html_e( 'Focus keyphrase', 'storesuite' ); ?></label>
+						<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'focuskw' ); ?>" name="<?php echo esc_attr( $field_prefix . 'focuskw' ); ?>" value="<?php echo esc_attr( $seo_values['focuskw'] ?? '' ); ?>" placeholder="<?php esc_attr_e( 'The search term you want this product to rank for', 'storesuite' ); ?>">
+					</div>
+				</div>
+				<div class="col-md-12">
+					<div class="storesuite-seo-preview" data-mode="mobile">
+						<div class="storesuite-seo-preview-header">
+							<span class="storesuite-seo-preview-label"><?php esc_html_e( 'Google preview', 'storesuite' ); ?></span>
+							<div class="storesuite-seo-preview-modes">
+								<span class="storesuite-seo-preview-mode-label" data-seo-mode="mobile"><?php esc_html_e( 'Mobile', 'storesuite' ); ?></span>
+								<button type="button" class="storesuite-seo-mode-switch" role="switch" aria-checked="false" aria-label="<?php esc_attr_e( 'Switch to desktop preview', 'storesuite' ); ?>"><span></span></button>
+								<span class="storesuite-seo-preview-mode-label" data-seo-mode="desktop"><?php esc_html_e( 'Desktop', 'storesuite' ); ?></span>
+							</div>
+						</div>
+						<div class="storesuite-seo-snippet" aria-live="polite">
+							<div class="storesuite-seo-snippet-site">
+								<span class="storesuite-seo-snippet-icon" aria-hidden="true"></span>
+								<span class="storesuite-seo-snippet-site-text">
+									<span class="storesuite-seo-snippet-sitename"></span>
+									<span class="storesuite-seo-snippet-url"></span>
+								</span>
+							</div>
+							<div class="storesuite-seo-snippet-title"></div>
+							<div class="storesuite-seo-snippet-desc"></div>
+						</div>
+					</div>
+				</div>
+				<div class="col-md-12">
+					<div class="storesuite-form-group storesuite-seo-field" data-seo-field="title">
+						<div class="storesuite-seo-field-header">
+							<label for="<?php echo esc_attr( $field_prefix . 'title' ); ?>"><?php esc_html_e( 'SEO title', 'storesuite' ); ?></label>
+							<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+						</div>
+						<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'title' ); ?>" name="<?php echo esc_attr( $field_prefix . 'title' ); ?>" value="<?php echo esc_attr( $seo_values['title'] ?? '' ); ?>" placeholder="<?php echo esc_attr( $title_template ); ?>" autocomplete="off">
+						<div class="storesuite-seo-progress" role="progressbar" aria-label="<?php esc_attr_e( 'SEO title width', 'storesuite' ); ?>" aria-valuemin="0"><span></span></div>
+						<small class="storesuite-form-text"><?php esc_html_e( 'Leave blank to use the site-wide SEO title template for products. Type % to insert a variable.', 'storesuite' ); ?></small>
+					</div>
+				</div>
+				<div class="col-md-12">
+					<div class="storesuite-form-group storesuite-seo-field" data-seo-field="metadesc">
+						<div class="storesuite-seo-field-header">
+							<label for="<?php echo esc_attr( $field_prefix . 'metadesc' ); ?>"><?php esc_html_e( 'Meta description', 'storesuite' ); ?></label>
+							<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+						</div>
+						<textarea class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'metadesc' ); ?>" name="<?php echo esc_attr( $field_prefix . 'metadesc' ); ?>" rows="3" placeholder="<?php echo esc_attr( $desc_template ); ?>"><?php echo esc_textarea( $seo_values['metadesc'] ?? '' ); ?></textarea>
+						<div class="storesuite-seo-progress" role="progressbar" aria-label="<?php esc_attr_e( 'Meta description length', 'storesuite' ); ?>" aria-valuemin="0"><span></span></div>
+						<small class="storesuite-form-text"><?php esc_html_e( 'Leave blank to use the site-wide meta description template for products.', 'storesuite' ); ?></small>
+					</div>
+				</div>
+				<?php if ( $cornerstone_enabled ) : ?>
+					<div class="col-md-12">
+						<div class="storesuite-form-group storesuite-form-switch">
+							<input type="checkbox" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'is_cornerstone' ); ?>" name="<?php echo esc_attr( $field_prefix . 'is_cornerstone' ); ?>" value="yes" <?php checked( $seo_values['is_cornerstone'] ?? '', '1' ); ?>>
+							<label for="<?php echo esc_attr( $field_prefix . 'is_cornerstone' ); ?>"><?php esc_html_e( 'Mark as cornerstone content', 'storesuite' ); ?></label>
+						</div>
+					</div>
+				<?php endif; ?>
+			</div>
+		</div>
+	</div>
+</div>
