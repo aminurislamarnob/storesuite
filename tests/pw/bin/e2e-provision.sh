@@ -13,6 +13,11 @@ WP_CLI="${WP_CLI:-wp}"
 $WP_CLI plugin activate woocommerce
 $WP_CLI plugin activate storesuite
 
+# Optional: Yoast SEO, for the product SEO specs (they skip themselves without it).
+if [ "${E2E_WITH_YOAST:-false}" = "true" ]; then
+	$WP_CLI plugin install wordpress-seo --activate
+fi
+
 $WP_CLI rewrite structure '/%postname%/'
 $WP_CLI rewrite flush
 

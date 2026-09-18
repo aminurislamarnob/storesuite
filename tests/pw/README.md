@@ -66,3 +66,16 @@ in `.env` to an existing Chromium binary.
   specs must not delete it. Data a spec creates (e.g. coupons) uses
   run-unique names.
 - The suite runs with one worker until specs own their data.
+
+## Optional: Yoast SEO specs
+
+`tests/e2e/products/productSeo.spec.ts` covers the Yoast SEO card on the
+product form. The card only exists while Yoast SEO is active, so those tests
+skip themselves on a site without it. To run them, provision with:
+
+```bash
+E2E_WITH_YOAST=true bash tests/pw/bin/e2e-provision.sh
+```
+
+which installs and activates Yoast SEO from WordPress.org. The nightly CI
+lanes set this flag.
