@@ -298,9 +298,7 @@ class OrderController {
 					 * @since 1.0.0
 					 */
 					do_action( 'woocommerce_after_resend_order_email', $order, 'customer_invoice' );
-
 				} elseif ( 'send_order_details_admin' === $action ) {
-
 					do_action( 'woocommerce_before_resend_order_emails', $order, 'new_order' );
 
 					WC()->payment_gateways();
@@ -310,13 +308,10 @@ class OrderController {
 					remove_filter( 'woocommerce_new_order_email_allows_resend', '__return_true' );
 
 					do_action( 'woocommerce_after_resend_order_email', $order, 'new_order' );
-
 				} elseif ( 'regenerate_download_permissions' === $action ) {
-
 					$data_store = \WC_Data_Store::load( 'customer-download' );
 					$data_store->delete_by_order_id( $order_id );
 					wc_downloadable_product_permissions( $order_id, true );
-
 				} elseif ( ! did_action( 'woocommerce_order_action_' . sanitize_title( $action ) ) ) {
 					do_action( 'woocommerce_order_action_' . sanitize_title( $action ), $order );
 				}
@@ -418,15 +413,15 @@ class OrderController {
 
 			$response = array(
 				'html'       => $items_html,
-				'notes_html' => $notes_html
+				'notes_html' => $notes_html,
 			);
 
 			if ( isset( $_POST['context'] ) && sanitize_text_field( wp_unslash( $_POST['context'] ) ) === 'add' ) {
 				$response['redirect_url'] = esc_url( storesuite_get_navigation_url( 'edit-order' ) . $order_id );
-				$response['message'] 	  = __( 'Order created successfully!', 'storesuite' );
-				$response['context'] 	  = 'add';
+				$response['message']      = __( 'Order created successfully!', 'storesuite' );
+				$response['context']      = 'add';
 				$response['is_order_editable'] = $order->is_editable();
-			}else{
+			} else {
 				$response['message'] = __( 'Order updated successfully!', 'storesuite' );
 				$response['context'] = 'edit';
 				$response['is_order_editable'] = $order->is_editable();
@@ -478,22 +473,16 @@ class OrderController {
 				continue;
 			}
 
-			switch ( $action ) {
-				case 'mark_processing':
-					$order->update_status( 'processing' );
-					break;
-				case 'mark_on-hold':
-					$order->update_status( 'on-hold' );
-					break;
-				case 'mark_completed':
-					$order->update_status( 'completed' );
-					break;
-				case 'mark_cancelled':
-					$order->update_status( 'cancelled' );
-					break;
-				case 'trash':
-					$order->delete();
-					break;
+			if ( 'trash' === $action ) {
+				$order->delete();
+			} elseif ( 0 === strpos( $action, 'mark_' ) ) {
+				// Generic "mark_{status}" handling: valid for any registered
+				// order status, so custom statuses (e.g. from an order-status
+				// module) work without extending this switch.
+				$status = substr( $action, 5 );
+				if ( array_key_exists( 'wc-' . $status, wc_get_order_statuses() ) ) {
+					$order->update_status( $status );
+				}
 			}
 		}
 

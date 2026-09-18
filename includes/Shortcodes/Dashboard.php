@@ -35,11 +35,20 @@ class Dashboard extends MyStoreSuiteShortcode {
 			);
 		}
 
-		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+		if ( ! storesuite_current_user_can( 'access_dashboard' ) ) {
 			return esc_html__( 'You have no permission to view this page', 'storesuite' );
 		}
 
 		ob_start();
+
+		// Per-endpoint capability gate. Admins/shop managers pass every area
+		// (see storesuite_current_user_can()); granular-permission modules can
+		// restrict individual areas per role.
+		$denied_area = $this->get_denied_area( $wp->query_vars );
+		if ( false !== $denied_area ) {
+			storesuite_get_template_part( 'global/no-permission' );
+			return ob_get_clean();
+		}
 
 		if ( isset( $wp->query_vars['page'] ) ) {
 			storesuite_get_template_part( 'dashboard' );
@@ -204,6 +213,72 @@ class Dashboard extends MyStoreSuiteShortcode {
 		do_action( 'storesuite_load_custom_template', $wp->query_vars );
 
 		return ob_get_clean();
+	}
+
+	/**
+	 * Determine whether the current request targets a dashboard area the user
+	 * is not permitted to view.
+	 *
+	 * Maps the active endpoint/query-var to a StoreSuite permission area and
+	 * checks it via `storesuite_current_user_can()`. Admins and shop managers
+	 * pass every area, so this is a no-op for them; it only bites when a
+	 * granular-permission module has restricted an area for the current role.
+	 *
+	 * @param array $query_vars The current WP query vars.
+	 * @return string|false The denied area identifier, or false if allowed.
+	 */
+	private function get_denied_area( $query_vars ) {
+		// Analytics takes precedence: its filter params can also set product/
+		// order query vars, so mirror the template routing order below and gate
+		// solely on the analytics area when the analytics endpoint is active.
+		if ( storesuite_is_endpoint_url( 'analytics' ) ) {
+			return storesuite_current_user_can( 'analytics' ) ? false : 'analytics';
+		}
+
+		/**
+		 * Filter the map of dashboard endpoint/query-var => permission area.
+		 *
+		 * Modules that add their own gated endpoints can register the area
+		 * their query var maps to here.
+		 *
+		 * @param array $map Query-var => area identifier.
+		 */
+		$map = apply_filters(
+			'storesuite_endpoint_capability_map',
+			array(
+				'products'          => 'products',
+				'add-new-product'   => 'products',
+				'edit-product'      => 'products',
+				'orders'            => 'orders',
+				'add-new-order'     => 'orders',
+				'edit-order'        => 'orders',
+				'order-details'     => 'orders',
+				'categories'        => 'taxonomies',
+				'add-new-category'  => 'taxonomies',
+				'edit-category'     => 'taxonomies',
+				'tags'              => 'taxonomies',
+				'add-new-tag'       => 'taxonomies',
+				'edit-tag'          => 'taxonomies',
+				'brands'            => 'taxonomies',
+				'add-new-brand'     => 'taxonomies',
+				'edit-brand'        => 'taxonomies',
+				'attributes'        => 'taxonomies',
+				'add-new-attribute' => 'taxonomies',
+				'edit-attribute'    => 'taxonomies',
+				'attribute-terms'   => 'taxonomies',
+				'coupons'           => 'coupons',
+				'add-new-coupon'    => 'coupons',
+				'edit-coupon'       => 'coupons',
+			)
+		);
+
+		foreach ( $map as $query_var => $area ) {
+			if ( isset( $query_vars[ $query_var ] ) && ! storesuite_current_user_can( $area ) ) {
+				return $area;
+			}
+		}
+
+		return false;
 	}
 
 	/**

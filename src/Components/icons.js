@@ -8,8 +8,10 @@ export { SparklesIcon } from '@heroicons/react/24/outline';
 export {
 	BellIcon,
 	CheckBadgeIcon,
+	ChevronLeftIcon,
 	ClockIcon,
 	CodeBracketSquareIcon,
 	ExclamationCircleIcon,
+	PuzzlePieceIcon,
 	Squares2X2Icon,
 } from '@heroicons/react/24/outline';

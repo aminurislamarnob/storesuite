@@ -229,6 +229,30 @@ class Assets {
 			);
 
 			wp_enqueue_style( 'wp-components' );
+
+			// Let each active module enqueue its own admin React bundle. Each
+			// bundle declares `storesuite-admin-page` as a dependency so the
+			// core `window.StoreSuite` registry is ready when it runs.
+			$this->enqueue_active_module_assets();
+		}
+	}
+
+	/**
+	 * Walk the active module list and ask each one to enqueue its admin
+	 * assets. The default `Abstracts\Module::enqueue_admin_assets()` looks
+	 * for `modules/<slug>/assets/build/script.js`; modules without an admin
+	 * React surface (i.e. no `src/index.js`) silently no-op.
+	 *
+	 * @return void
+	 */
+	private function enqueue_active_module_assets() {
+		$container = pluginizelab_storesuite();
+		if ( ! isset( $container->modules ) ) {
+			return;
+		}
+
+		foreach ( $container->modules->get_active() as $module ) {
+			$module->enqueue_admin_assets();
 		}
 	}
 

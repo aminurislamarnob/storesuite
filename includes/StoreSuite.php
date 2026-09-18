@@ -87,6 +87,22 @@ final class StoreSuite {
 	}
 
 	/**
+	 * Report whether a container service is set.
+	 *
+	 * Companion to `__get()`: PHP never consults `__get()` for `isset()`, so
+	 * without this method `isset( pluginizelab_storesuite()->foo )` always
+	 * returns false for container services. Backing it here lets callers guard
+	 * on a service before reading it.
+	 *
+	 * @param string $prop Container key.
+	 *
+	 * @return bool
+	 */
+	public function __isset( $prop ) {
+		return array_key_exists( $prop, $this->container );
+	}
+
+	/**
 	 * Placeholder for activation function
 	 *
 	 * Nothing is being called here yet.
@@ -115,6 +131,7 @@ final class StoreSuite {
 	 */
 	public function register_rest_route() {
 		$this->container['storesuite_admin_settings_controller']->register_routes();
+		$this->container['storesuite_modules_controller']->register_routes();
 		$this->container['storesuite_notifications_rest_controller']->register_routes();
 		$this->container['storesuite_admin_changelog_controller']->register_routes();
 	}
@@ -205,6 +222,10 @@ final class StoreSuite {
 		$this->includes();
 		$this->init_hooks();
 
+		// Construct the module manager before `storesuite_loaded` fires so it
+		// can hook in and boot active modules from that action.
+		$this->container['modules'] = new Module\Manager();
+
 		do_action( 'storesuite_loaded' );
 	}
 
@@ -254,6 +275,7 @@ final class StoreSuite {
 		$this->container['storesuite_admin_settings']              = new Admin\Settings();
 		$this->container['storesuite_admin_bar']                   = new Admin\AdminBar();
 		$this->container['storesuite_admin_settings_controller']   = new REST\SettingsController();
+		$this->container['storesuite_modules_controller']          = new REST\ModulesController();
 		$this->container['storesuite_admin_changelog_controller']  = new REST\ChangelogController();
 		$this->container['storesuite_product_categories']          = new ProductCategory\Categories();
 		$this->container['storesuite_product_category_controller'] = new ProductCategory\CategoryController();

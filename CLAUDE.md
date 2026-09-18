@@ -1,122 +1,65 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code working in this repository.
 
-## Project Overview
+## Overview
 
-StoreSuite is a WordPress/WooCommerce plugin that provides a frontend store management dashboard. Shop managers and store owners can manage products, orders, coupons, categories, tags, and brands without accessing the WordPress admin panel. Requires WooCommerce as a dependency. Declares WooCommerce HPOS (High-Performance Order Storage) compatibility.
+StoreSuite is a WordPress/WooCommerce plugin: a frontend dashboard letting shop managers and owners manage products, orders, coupons, categories, tags, and brands without the wp-admin panel. Requires WooCommerce; declares HPOS compatibility.
 
-## Development Commands
+## Commands
 
 ```bash
-# Install dependencies
-composer update
-npm install
-
-# JavaScript/React development
-npm start              # Watch mode (hot reload)
-npm run build          # Production build (wp-scripts)
-
-# PHP code quality
-composer phpcs         # Run PHP CodeSniffer
-composer phpcbf        # Auto-fix PHP code
-composer phpcs:report  # Generate PHPCS report file
-
-# JS/CSS linting
-npm run lint:js        # Lint JavaScript
-npm run lint:css       # Lint CSS/SCSS
-npm run format         # Auto-format with Prettier
-
-# Release build (creates distributable ZIP)
-bash bin/build.sh
+composer update && npm install   # install deps
+npm start                        # JS/React watch (hot reload)
+npm run build                    # JS/React production build (wp-scripts)
+composer phpcs / phpcbf          # PHP lint / auto-fix (WPCS)
+npm run lint:js / lint:css       # JS / CSS lint
+npm run format                   # Prettier
+bash bin/build.sh                # release ZIP
 ```
 
 ## Testing
 
 ```bash
-composer test                    # PHPUnit (needs WP_CORE_DIR, WC_DIR and WP_DB_* env — see tests/php/bootstrap.php)
+composer test                    # PHPUnit — every *Test.php under tests/ (both suites below)
 cd tests/pw && npm test          # Playwright e2e + REST API suites (see tests/pw/README.md for site setup)
 ```
 
-- **PHPUnit** (`tests/php/`): integration tests against a real WP + WooCommerce database. Base classes `StoreSuiteTestCase` / `StoreSuiteAjaxTestCase` provide user fixtures, entity factories (`self::factory()->product->create()`), a `do_ajax()` dispatch helper and `capture_redirect()` for redirect-and-exit paths. Test classes are PSR-4 (`PluginizeLab\StoreSuite\Test\`), discovered by `suffix="Test.php"`.
-- **Playwright** (`tests/pw/`): self-contained npm project — browser e2e specs (co-located page objects per feature folder, storage-state auth for admin/shop manager/customer) plus HTTP-level REST contract specs in `tests/api` using application passwords. `bin/e2e-provision.sh` seeds any wp-cli-reachable site.
-- **CI**: PHPCS + PHPUnit run on every pull request; PHPUnit also runs on pushes to `develop` and `feat/dark-light-mode`. The e2e suite runs nightly in dual lanes (latest WP/WC gates; pinned versions advisory) plus `workflow_dispatch`.
+- **PHPUnit, `tests/` suite** (bootstrap `tests/bootstrap.php`, namespace `PluginizeLab\StoreSuite\Tests\`): loads WooCommerce + StoreSuite into a throwaway WP install backed by a local MySQL database (`storesuite_tests`); connection/ABSPATH defaults live in `tests/wp-tests-config.php` and can be overridden via `WP_TESTS_*` env vars — locally set in the gitignored `phpunit.xml`. Keep `wp-phpunit/wp-phpunit` matched to the WP core version. Module tests inject fixture modules via the `storesuite_register_modules` filter and point `storesuite_modules_dir` away from real modules; note `Manager::discover()` uses `include_once`, so only one test per process may discover `tests/fixtures/modules/` from disk.
+- **PHPUnit, `tests/php/` suite** (merged from develop; namespace `PluginizeLab\StoreSuite\Test\`, PSR-4 via composer `autoload-dev`): base classes `StoreSuiteTestCase` / `StoreSuiteAjaxTestCase` provide user fixtures, entity factories (`self::factory()->product->create()`), a `do_ajax()` dispatch helper and `capture_redirect()` for redirect-and-exit paths. Its own `tests/php/bootstrap.php` (env `WP_CORE_DIR`, `WC_DIR`, `WP_DB_*`) is what CI uses.
+- **Playwright** (`tests/pw/`): self-contained npm project — browser e2e specs (co-located page objects per feature folder, storage-state auth for admin/shop manager/customer) plus HTTP-level REST contract specs in `tests/api` using application passwords. `bin/e2e-provision.sh` seeds any wp-cli-reachable site. An older Playwright suite also lives in `tests/e2e/`.
+- **CI**: PHPCS + PHPUnit run on every pull request; PHPUnit also runs on pushes to `develop`. The e2e suite runs nightly in dual lanes (latest WP/WC gates; pinned versions advisory) plus `workflow_dispatch`.
 
 ## Architecture
 
-### Plugin Bootstrap
+**Bootstrap:** `storesuite.php` → `pluginizelab_storesuite()` boots the singleton `StoreSuite` (`includes/StoreSuite.php`), accessed globally via that function. Services live in a `$container` array exposed by `__get()` (e.g. `pluginizelab_storesuite()->scripts`). Order: `plugins_loaded` (WooCommerce dependency check → `includes()` + `init_hooks()` → construct `Module\Manager` → fire `storesuite_loaded`), `rest_api_init` (REST routes), `init` priority 4 (`init_classes()` builds services), `before_woocommerce_init` (HPOS).
 
-`storesuite.php` is the entry point. It loads Composer autoload, then calls `pluginizelab_storesuite()` which initializes the singleton `StoreSuite` class. Initialization order:
+**PHP (`includes/`):** namespace `PluginizeLab\StoreSuite`, PSR-4 from `includes/`. Everything prefixed `storesuite_`.
+- **Domain dirs** (`Product/`, `Order/`, `Coupon/`, `ProductCategory/`, `ProductTag/`, `ProductBrand/`, `Account/`): Controller (registers `wp_ajax_storesuite_*`, handles forms, loads templates) + Manager (CRUD via WooCommerce APIs); some add a Hooks class for WP/WC integrations.
+- **REST:** `REST/SettingsController.php` — namespace `storesuite/v1`, base `settings`; requires `manage_options` (admin-only).
+- **Core services:** `Assets.php` (enqueues; strips theme/disallowed plugin assets on dashboard, filters `storesuite_allowed_plugin_slugs` / `storesuite_allowed_asset_handles`), `Rewrites.php` (dashboard rewrite endpoints; slugs via `storesuite_myshop_*_endpoint` options; resolves the WC My Account `orders` query-var conflict), `Main.php` (login redirects, admin blocking for shop_manager/customer, admin-bar hiding, CSS var injection), dashboard home KPI widgets (React app in `src/dashboard/`, widget registry filterable via the `storesuite_dashboard_analytics_reports_list` JS hook in `src/dashboard/get-reports.js`), `Cache.php` (transient/object-cache wrapper, `storesuite_` prefix / `storesuite` group), `DashboardMenu.php` (sidebar nav via `storesuite_dashboard_navigation`, permission-gated; final list filterable via `storesuite_dashboard_menus`).
+- **Settings:** single serialized `storesuite_settings` option; read via `storesuite_get_option_by_key($key)`.
+- **Globals (`includes/functions.php`):** `storesuite_get_template_part()`, `storesuite_is_endpoint_url()`, nav URLs, page checks, `storesuite_log()`, access-control redirects.
 
-1. `plugins_loaded` — dependency check (WooCommerce must be active), then `includes()` + `init_hooks()`
-2. `rest_api_init` — registers REST routes via `SettingsController->register_routes()`
-3. `init` (priority 4) — `init_classes()` creates all service instances in `$container`
-4. `before_woocommerce_init` — declares HPOS compatibility
+**Module system (`modules/` + `includes/Module/`):** self-contained, independently activatable features. Modules extend `Abstracts/Module.php` (abstract `get_slug`/`get_name`/`boot`; lifecycle `activate`/`deactivate`). `Module/Manager.php` (`$container['modules']`) lazily discovers `modules/*/module.php` (each must `return` a `Module` instance; filter `storesuite_register_modules` to add more), tracks active slugs in the `storesuite_active_modules` option, and on `storesuite_loaded` boots active modules (firing `storesuite_module_{slug}_loaded`, then `storesuite_modules_loaded`). `docs/sample-module/staff-manager/` is the reference example (kept outside `modules/` so it is not a live, discoverable module; copy it into `modules/` to activate). Layout: `module.php` bootstrap (plugin-style header comment) returns `new ...\Module(__FILE__)`; concrete class under `includes/` in namespace `PluginizeLab\StoreSuite\Modules\<Name>`. **Adding a new module: follow `docs/how-to-add-module.md` — covers DB table, settings, sidebar menu, top-level admin tab, module-owned REST controller, and React screen with full templates.**
 
-### PHP Structure (`includes/`)
+**Templates (`templates/`):** WooCommerce-style overrides — theme `my-storesuite/` first, then plugin. Loaded via `storesuite_get_template_part()`; path filter `storesuite_set_template_path`.
 
-- **Namespace:** `PluginizeLab\StoreSuite` with PSR-4 autoloading from `includes/`
-- **Main orchestrator:** `StoreSuite.php` — singleton accessed globally via `pluginizelab_storesuite()`. Uses a `$container` array with `__get()` magic method for service access (e.g., `pluginizelab_storesuite()->scripts`)
-- **Domain modules:** `Product/`, `Order/`, `Coupon/`, `ProductCategory/`, `ProductTag/`, `ProductBrand/`, `Account/` — each follows a Controller + Manager pattern:
-  - **Controllers** register `wp_ajax_storesuite_*` hooks, handle form submission, load templates via `storesuite_get_template_part()`
-  - **Managers** contain business logic (CRUD operations using WooCommerce APIs)
-  - Some modules also have a Hooks class (e.g., `ProductHooks`, `OrderHooks`) for WordPress/WooCommerce action integrations
-- **REST API:** `REST/SettingsController.php` — namespace `storesuite/v1`, base `settings`, handles admin settings CRUD. Permission checks require the `manage_options` capability (admin-only; shop managers are denied)
-- **Core services:**
-  - `Assets.php` — registers and enqueues scripts/styles; strips theme and disallowed plugin assets on dashboard pages (extensible via `storesuite_allowed_plugin_slugs` and `storesuite_allowed_asset_handles` filters)
-  - `Rewrites.php` — registers custom rewrite endpoints for each dashboard sub-page; endpoint slugs are configurable via `get_option('storesuite_myshop_*_endpoint')` with sensible defaults
-  - `Main.php` — login redirects, admin access blocking for shop_manager/customer roles, admin bar hiding, CSS variable injection
-  - `Dashboard.php` — renders KPI widgets (store performance, top products, top categories, top customers, top coupons) via `storesuite_dashboard_home_widgets` and `storesuite_dashboard_item_solds_widgets` action hooks
-  - `Cache.php` — static wrapper around transients/object cache with `storesuite_` prefix and `storesuite` group
-  - `DashboardMenu.php` — builds the sidebar navigation via `storesuite_dashboard_navigation` hook; menu items are permission-gated
-- **Settings storage:** All plugin settings stored in a single `storesuite_settings` option (serialized array), accessed via `storesuite_get_option_by_key($key)` in `includes/functions.php`
-- **Abstract base:** `Abstracts/MyStoreSuiteShortcode.php` for shortcode-based pages
-- **Global functions:** `includes/functions.php` — template loading (`storesuite_get_template_part()`), endpoint detection (`storesuite_is_endpoint_url()`), navigation URLs, page checks, logging via `storesuite_log()`, access control redirects
+**Routing:** dashboard page (activation shortcode `[storesuite_dashboard]`) uses WP rewrite endpoints per sub-page (products, orders, categories, tags, brands, coupons, edit-account-details); pagination via custom rules (`storesuite-dashboard/products/page/2`).
 
-### Two Separate Frontend Stacks
+## Two frontend stacks
 
-1. **Admin Settings Page (React):** Entry point `src/admin.js` builds to `assets/build/admin/script.js`. Uses `@wordpress/components`, `@wordpress/api-fetch`, `@heroicons/react` for icons, React Router DOM (hash routing). Routes:
-   - `/` → `GeneralSettings` — dashboard page selector, sidebar branding, admin access toggle
-   - `/dashboard-settings` → `DashboardSettings` — performance box and widget visibility toggles
-   - `/appearance-settings` → `ColorsSettings` — predefined palettes and custom color pickers
-   - `/pagination-settings` → `PaginationSettings` — items-per-page controls
+1. **Admin settings (React):** `src/admin.js` → `assets/build/admin/script.js`. `@wordpress/components` + `api-fetch`, `@heroicons/react`, React Router (hash). Routes: `/` GeneralSettings, `/dashboard-settings`, `/appearance-settings` (palettes/color pickers), `/pagination-settings`. Webpack extends `@wordpress/scripts`. Header `SettingsHeader` (title/subtitle + `actions` slot); nav tabs in `Layout.js`. **Add heroicons to `src/Components/icons.js` (24/outline) before importing elsewhere.**
+2. **Frontend dashboard (jQuery + vanilla JS):** `assets/frontend/` — `script.js`, `form-handler.js` (SweetAlert2 CRUD), `order.js` (selectWoo), `product.js`. Server-rendered PHP templates; data via `wp_localize_script()` under `storeSuiteFormHandler`, `StoreSuite_Order`, `StoreSuite_Product`. Note: these files are served raw — not webpack-built or `lint:js`-clean; match the existing var/IIFE style.
 
-   Styled with `@wordpress/components` built-in styles and plain CSS (`LayoutStyles.css`). Webpack config in `webpack.config.js` extends `@wordpress/scripts`.
+## Key constants
 
-   **Header:** `SettingsHeader` renders the top bar with title, subtitle, and an `actions` slot. The header currently shows a **Documentation** (secondary) and **Support Me** (primary, links to `https://buymeacoffee.com/aiarnob`) button.
+`STORESUITE_FILE` / `STORESUITE_PLUGIN_FILE` (main file), `STORESUITE_DIR` / `STORESUITE_INC_DIR` / `STORESUITE_TEMPLATE_DIR`, `STORESUITE_PLUGIN_URL` / `STORESUITE_PLUGIN_ASSET`, `STORESUITE_PLUGIN_VERSION`, `STORESUITE_LOAD_STYLE` / `STORESUITE_LOAD_SCRIPTS` (set `false` to disable default asset loading).
 
-   **Nav tabs:** Defined in `Layout.js` as hash-router `<Link>` elements with heroicons — `GearIcon` (General), `Squares2X2Icon` (Dashboard), `PaletteIcon` (Appearance), `CodeBracketSquareIcon` (Pagination).
+## Standards
 
-   **Icons:** All heroicons are re-exported from `src/Components/icons.js` (24/outline). Add new icons there before importing elsewhere.
-
-2. **Frontend Dashboard (jQuery + vanilla JS):** Located in `assets/frontend/`. Scripts include `script.js` (main), `form-handler.js` (CRUD forms with SweetAlert2), `order.js` (order management with selectWoo), `product.js` (product forms). Templates rendered server-side via PHP. Localized data passed via `wp_localize_script()` under `storeSuiteFormHandler`, `StoreSuite_Order`, `StoreSuite_Product` globals.
-
-### Template System (`templates/`)
-
-WooCommerce-style template overrides: checks theme's `my-storesuite/` directory first, falls back to plugin templates. Template loading via `storesuite_get_template_part()` in `includes/functions.php`. Path overridable via `storesuite_set_template_path` filter.
-
-### URL Routing (Frontend Dashboard)
-
-The dashboard page (created on activation with `[storesuite_dashboard]` shortcode) uses WordPress rewrite endpoints. Each sub-page (products, orders, categories, tags, brands, coupons, edit-account-details) is a rewrite endpoint. Pagination uses custom rewrite rules (e.g., `storesuite-dashboard/products/page/2`). The `Rewrites` class resolves conflicts with WooCommerce My Account `orders` query var.
-
-### Key Constants
-
-- `STORESUITE_FILE`, `STORESUITE_PLUGIN_FILE` — main plugin file path
-- `STORESUITE_DIR`, `STORESUITE_INC_DIR`, `STORESUITE_TEMPLATE_DIR` — directory paths
-- `STORESUITE_PLUGIN_URL`, `STORESUITE_PLUGIN_ASSET` — URL paths for assets
-- `STORESUITE_PLUGIN_VERSION` — current version string
-- `STORESUITE_LOAD_STYLE`, `STORESUITE_LOAD_SCRIPTS` — can be set to `false` to disable default asset loading
-
-## Coding Standards
-
-- WordPress Coding Standards enforced via PHPCS (`phpcs.xml`)
-- PHP 7.4+ minimum, text domain: `storesuite`
-- All functions/hooks/options prefixed with `storesuite_`
-- `wc_clean` registered as a custom sanitizing function in PHPCS config
-- Yoda conditions disabled, strict comparisons enforced as errors
-- File naming convention rule disabled (allows PSR-4 class filenames)
-- WordPress `wp-scripts` handles JS/CSS linting
+WordPress Coding Standards (PHPCS, `phpcs.xml`), PHP 7.4+, text domain `storesuite`, everything prefixed `storesuite_`. `wc_clean` is a registered sanitizer; Yoda off; strict comparisons enforced; PSR-4 class filenames allowed.
 
 ## CI/CD
 
-GitHub Actions (`.github/workflows/deploy.yml`) triggers on git tag push: installs with `--no-dev`, builds assets, creates ZIP via rsync + `.distignore`, uploads as GitHub release artifact, and deploys to WordPress.org via SVN.
+`.github/workflows/deploy.yml` on git tag: installs `--no-dev`, builds, ZIPs (rsync + `.distignore`), uploads a GitHub release, deploys to WordPress.org via SVN.

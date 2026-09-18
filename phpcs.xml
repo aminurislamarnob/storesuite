@@ -157,6 +157,7 @@
                 <element value="manage_product_terms"/>
                 <element value="download_file"/>
                 <element value="customer"/>
+                <element value="storesuite_access_dashboard"/>
             </property>
         </properties>
     </rule>

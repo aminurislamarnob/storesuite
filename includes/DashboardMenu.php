@@ -47,7 +47,9 @@ class DashboardMenu {
 		$menus          = $this->get_dashboard_menus();
 		$active_menu    = $this->get_active_menu();
 		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
-		$current_report   = isset( $_GET['report'] ) ? sanitize_key( $_GET['report'] ) : 'overview';
+		$current_report = isset( $_GET['report'] ) ? sanitize_key( $_GET['report'] ) : 'overview';
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended
+		$current_view     = isset( $_GET['view'] ) ? sanitize_key( $_GET['view'] ) : '';
 		$current_endpoint = pluginizelab_storesuite()->get_storesuite_query()->get_current_endpoint();
 
 		$chevron = '<svg class="storesuite-menu-arrow arrow-right" xmlns="http://www.w3.org/2000/svg" id="Outline" viewBox="0 0 24 24" width="24" height="24"><path d="M15.4,9.88,10.81,5.29a1,1,0,0,0-1.41,0,1,1,0,0,0,0,1.42L14,11.29a1,1,0,0,1,0,1.42L9.4,17.29a1,1,0,0,0,1.41,1.42l4.59-4.59A3,3,0,0,0,15.4,9.88Z"/></svg><svg class="storesuite-menu-arrow arrow-down" xmlns="http://www.w3.org/2000/svg" id="Outline" viewBox="0 0 24 24" width="24" height="24"><path d="M18.71,8.21a1,1,0,0,0-1.42,0l-4.58,4.58a1,1,0,0,1-1.42,0L6.71,8.21a1,1,0,0,0-1.42,0,1,1,0,0,0,0,1.41l4.59,4.59a3,3,0,0,0,4.24,0l4.59-4.59A1,1,0,0,0,18.71,8.21Z"/></svg>';
@@ -80,7 +82,9 @@ class DashboardMenu {
 
 			echo '<li' . $li_class_attr . '>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped
 
-			echo '<a href="' . esc_url( $menu['url'] ) . '" class="' . ( $is_active ? 'active' : '' ) . '" target="' . esc_attr( $menu['target'] ) . '" data-storesuite-tooltip="' . esc_attr( $menu['title'] ) . '">';
+			$menu_target = ! empty( $menu['target'] ) ? $menu['target'] : '_self';
+
+			echo '<a href="' . esc_url( $menu['url'] ) . '" class="' . ( $is_active ? 'active' : '' ) . '" target="' . esc_attr( $menu_target ) . '" data-storesuite-tooltip="' . esc_attr( $menu['title'] ) . '">';
 			echo wp_kses( $menu['icon'], $this->allowed_icon_tags() );
 			echo '<span>' . esc_html( $menu['title'] ) . '</span>';
 			if ( $has_submenu ) {
@@ -95,7 +99,16 @@ class DashboardMenu {
 						continue;
 					}
 					if ( isset( $submenu['endpoint'] ) ) {
-						$sub_active  = $is_active && ( $current_endpoint === $submenu['endpoint'] );
+						$sub_active = $is_active && ( $current_endpoint === $submenu['endpoint'] );
+						// Some endpoints host several views on the same page,
+						// switched via a `?view=` query arg (e.g. Inventory's
+						// stock list vs. movement log). When a submenu declares a
+						// `view`, only highlight it when that view is active; an
+						// empty query arg means the submenu marked `default`.
+						if ( $sub_active && isset( $submenu['view'] ) ) {
+							$sub_active = ( $current_view === $submenu['view'] )
+								|| ( '' === $current_view && ! empty( $submenu['default'] ) );
+						}
 						$report_attr = '';
 					} else {
 						$sub_active = $is_active && ( $current_report === $subkey );

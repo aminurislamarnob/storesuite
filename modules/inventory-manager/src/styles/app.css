@@ -1,0 +1,129 @@
+/**
+ * Inventory Manager — Tailwind theme + scoped reset.
+ *
+ * This is the ONLY hand-written CSS in the module. Everything else is styled
+ * with prefixed Tailwind utilities in JSX.
+ *
+ * Isolation strategy (the app mounts inside the StoreSuite dashboard shell, so
+ * nothing here may leak out):
+ *   1. Utilities are prefixed with `ss` → classes are `ss:flex`, `ss:bg-primary`.
+ *      A bare `.flex` from the theme/plugin can never collide.
+ *   2. Preflight (Tailwind's global reset) is NOT imported, so we don't touch
+ *      the surrounding page. A tiny reset scoped to `.ss-ui` replaces the few
+ *      preflight rules our components actually need.
+ *   3. shadcn design tokens are mapped to the existing `--storesuite-*` CSS
+ *      variables, which `includes/Main.php` re-declares from the merchant's
+ *      appearance settings — so the app follows those settings for free.
+ */
+
+@layer theme, base, components, utilities;
+@import 'tailwindcss/theme.css' layer(theme) prefix(ss);
+@import 'tailwindcss/utilities.css' layer(utilities) prefix(ss);
+
+/* Only scan this module's source for class names. */
+@source '../';
+
+/* shadcn tokens → StoreSuite variables (fallbacks match style.css :root).
+   Scoped to `.ss-ui` (not `:root`) so generic names like `--primary` / `--border`
+   never clobber the theme globally. Every mount point and Radix portal carries
+   the `.ss-ui` class, so all our rendered content inherits these.
+   Surfaces follow the dashboard's surface tokens rather than a fixed white so
+   the app tracks the light/dark theme (`:root[data-theme]` in style.css) —
+   the foreground tokens already flip, and light text on white is unreadable. */
+.ss-ui {
+	--background: var( --storesuite-surface-bg, #ffffff );
+	--foreground: var( --storesuite-text-black, #334155 );
+	--card: var( --storesuite-surface-bg, #ffffff );
+	--card-foreground: var( --storesuite-text-black, #334155 );
+	--popover: var( --storesuite-surface-elevated, #ffffff );
+	--popover-foreground: var( --storesuite-text-color, rgb( 71 85 105 ) );
+	--primary: var( --storesuite-primary-bg, #2d5bdb );
+	--primary-hover: var( --storesuite-primary-bg-hover, #213fd4 );
+	--primary-foreground: var( --storesuite-button-text-color, #ffffff );
+	--muted: var( --storesuite-bg-color-light, #f7f7f7 );
+	--muted-foreground: var( --storesuite-text-color-light, rgb( 130 130 130 ) );
+	--accent: var( --storesuite-bg-color-muted, #f8f9fa );
+	--accent-foreground: var( --storesuite-text-black, #334155 );
+	--destructive: rgb( 244 63 94 );
+	--destructive-foreground: #ffffff;
+	--border: var( --storesuite-border-color, rgb( 226 232 240 ) );
+	--input: var( --storesuite-border-color, rgb( 226 232 240 ) );
+	--ring: var( --storesuite-primary-bg, #2d5bdb );
+	--radius: 6px;
+}
+
+/* Expose the tokens to Tailwind so `ss:bg-primary`, `ss:rounded-md`, etc. work.
+   `inline` makes utilities emit the referenced value directly. */
+@theme inline {
+	--color-background: var( --background );
+	--color-foreground: var( --foreground );
+	--color-card: var( --card );
+	--color-card-foreground: var( --card-foreground );
+	--color-popover: var( --popover );
+	--color-popover-foreground: var( --popover-foreground );
+	--color-primary: var( --primary );
+	--color-primary-hover: var( --primary-hover );
+	--color-primary-foreground: var( --primary-foreground );
+	--color-muted: var( --muted );
+	--color-muted-foreground: var( --muted-foreground );
+	--color-accent: var( --accent );
+	--color-accent-foreground: var( --accent-foreground );
+	--color-destructive: var( --destructive );
+	--color-destructive-foreground: var( --destructive-foreground );
+	--color-border: var( --border );
+	--color-input: var( --input );
+	--color-ring: var( --ring );
+	--radius-sm: 5px;
+	--radius-md: var( --radius );
+	--radius-lg: 8px;
+
+	/* Status badge palette (StoreSuite badge colors). The tints are mixed into
+	   the current surface so they stay pastel on white and muted on dark. */
+	--color-success: rgb( 16 185 129 );
+	--color-success-bg: color-mix( in srgb, rgb( 16 185 129 ) 20%, var( --storesuite-surface-bg, #ffffff ) );
+	--color-warning: rgb( 245 158 11 );
+	--color-warning-bg: color-mix( in srgb, rgb( 245 158 11 ) 22%, var( --storesuite-surface-bg, #ffffff ) );
+	--color-danger: rgb( 244 63 94 );
+	--color-danger-bg: color-mix( in srgb, rgb( 244 63 94 ) 16%, var( --storesuite-surface-bg, #ffffff ) );
+}
+
+/* Minimal reset — replaces the preflight rules our components rely on, scoped
+   to `.ss-ui`. Applied to the mount div AND every Radix portal (Select /
+   AlertDialog / Toaster) so portaled content, which renders at <body>, is
+   covered too. */
+@layer base {
+	.ss-ui,
+	.ss-ui *,
+	.ss-ui *::before,
+	.ss-ui *::after {
+		box-sizing: border-box;
+		/* width 0 + style solid so `ss:border` shows a 1px border. */
+		border: 0 solid var( --border );
+	}
+
+	.ss-ui h1,
+	.ss-ui h2,
+	.ss-ui h3,
+	.ss-ui h4,
+	.ss-ui p {
+		margin: 0;
+		font-size: inherit;
+		font-weight: inherit;
+	}
+
+	.ss-ui button,
+	.ss-ui input,
+	.ss-ui select {
+		font: inherit;
+		color: inherit;
+	}
+
+	.ss-ui button {
+		background-color: transparent;
+		cursor: pointer;
+	}
+
+	.ss-ui svg {
+		display: block;
+	}
+}

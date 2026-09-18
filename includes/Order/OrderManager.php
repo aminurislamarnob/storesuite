@@ -9,6 +9,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 use WC_Order;
 use Automattic\WooCommerce\Enums\OrderStatus;
 use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
+use Automattic\WooCommerce\Utilities\OrderUtil;
 
 use function Symfony\Component\VarDumper\Dumper\esc;
 
@@ -116,22 +117,39 @@ class OrderManager {
 	public function get_months_filter_options() {
 		global $wpdb;
 
-		$orders_table = esc_sql( OrdersTableDataStore::get_orders_table_name() );
-		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name from WooCommerce core; cannot be a placeholder.
-		$min_max_months = $wpdb->get_row(
-			$wpdb->prepare(
-				"
-					SELECT MIN( t.date_created_gmt ) as min_date_gmt,
-					       MAX( t.date_created_gmt ) as max_date_gmt
-					FROM `{$orders_table}` t
-					WHERE type = %s
-					AND status != %s
-				",
-				'shop_order',
-				OrderStatus::TRASH
-			)
-		);
-		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		if ( OrderUtil::custom_orders_table_usage_is_enabled() ) {
+			$orders_table = esc_sql( OrdersTableDataStore::get_orders_table_name() );
+			// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- Table name from WooCommerce core; cannot be a placeholder.
+			$min_max_months = $wpdb->get_row(
+				$wpdb->prepare(
+					"
+						SELECT MIN( t.date_created_gmt ) as min_date_gmt,
+						       MAX( t.date_created_gmt ) as max_date_gmt
+						FROM `{$orders_table}` t
+						WHERE type = %s
+						AND status != %s
+					",
+					'shop_order',
+					OrderStatus::TRASH
+				)
+			);
+			// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+		} else {
+			// Legacy (CPT) storage: orders live in wp_posts.
+			$min_max_months = $wpdb->get_row(
+				$wpdb->prepare(
+					"
+						SELECT MIN( p.post_date_gmt ) as min_date_gmt,
+						       MAX( p.post_date_gmt ) as max_date_gmt
+						FROM {$wpdb->posts} p
+						WHERE p.post_type = %s
+						AND p.post_status != %s
+					",
+					'shop_order',
+					'trash'
+				)
+			);
+		}
 
 		// Normalize "this month" to first day in site timezone.
 		$this_month = new \WC_DateTime( 'now', new \DateTimeZone( 'UTC' ) );

@@ -9,7 +9,9 @@
 		"format": "wp-scripts format",
 		"lint:css": "wp-scripts lint-style",
 		"lint:js": "wp-scripts lint-js",
-		"packages-update": "wp-scripts packages-update"
+		"packages-update": "wp-scripts packages-update",
+		"test:unit": "wp-scripts test-unit-js",
+		"test:e2e": "playwright test"
 	},
 	"repository": {
 		"type": "git",
@@ -22,15 +24,33 @@
 	"license": "GPL-2.0-or-later",
 	"dependencies": {
 		"@heroicons/react": "^2.2.0",
+		"@radix-ui/react-alert-dialog": "^1.1.19",
+		"@radix-ui/react-checkbox": "^1.3.7",
+		"@radix-ui/react-select": "^2.3.3",
+		"@radix-ui/react-slot": "^1.3.0",
+		"@radix-ui/react-tabs": "^1.1.17",
 		"@wordpress/api-fetch": "^7.0.0",
 		"@wordpress/components": "^33.1.0",
 		"@wordpress/element": "^6.0.0",
 		"@wordpress/i18n": "^6.0.0",
+		"class-variance-authority": "^0.7.1",
+		"clsx": "^2.1.1",
 		"gridicons": "^3.4.2",
-		"react-router-dom": "^6.23.1"
+		"lucide-react": "^1.24.0",
+		"react-router-dom": "^6.23.1",
+		"sonner": "^2.0.7",
+		"tailwind-merge": "^3.6.0"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^32.2.0"
+		"@playwright/test": "^1.61.1",
+		"@tailwindcss/postcss": "^4.3.2",
+		"@testing-library/dom": "^10.4.1",
+		"@testing-library/jest-dom": "^6.9.1",
+		"@testing-library/react": "^16.3.2",
+		"@testing-library/user-event": "^14.6.1",
+		"@wordpress/postcss-plugins-preset": "^5.50.0",
+		"@wordpress/scripts": "^32.2.0",
+		"tailwindcss": "^4.3.2"
 	},
 	"overrides": {
 		"@babel/runtime": "^7.26.10",

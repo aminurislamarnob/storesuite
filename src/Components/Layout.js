@@ -1,4 +1,5 @@
 import { __ } from '@wordpress/i18n';
+import { useState, useEffect, useCallback } from '@wordpress/element';
 import {
 	Button,
 	Spinner,
@@ -6,6 +7,7 @@ import {
 	CardBody,
 	SnackbarList,
 } from '@wordpress/components';
+import apiFetch from '@wordpress/api-fetch';
 import { Link, Outlet, useLocation } from 'react-router-dom';
 import { useSelect, useDispatch } from '@wordpress/data';
 import { store as noticesStore } from '@wordpress/notices';
@@ -17,12 +19,13 @@ import {
 	CodeBracketSquareIcon,
 	GearIcon,
 	PaletteIcon,
+	PuzzlePieceIcon,
 	SparklesIcon,
 	Squares2X2Icon,
 } from './icons';
 import SettingsHeader from './SettingsHeader';
 
-const TABS = [
+const BUILT_IN_TABS = [
 	{ to: '/', icon: GearIcon, label: __( 'General', 'storesuite' ) },
 	{
 		to: '/appearance-settings',
@@ -45,17 +48,25 @@ const TABS = [
 		label: __( 'Notifications', 'storesuite' ),
 	},
 	{
+		to: '/modules',
+		icon: PuzzlePieceIcon,
+		label: __( 'Modules', 'storesuite' ),
+	},
+	{
 		to: '/changelog',
 		icon: ClockIcon,
 		label: __( 'Changelog', 'storesuite' ),
 	},
 ];
 
-const SKELETON_WIDTHS = [ 120, 110, 100 ];
+export const MODULES_CHANGED_EVENT = 'storesuite:modules-changed';
+
+const SKELETON_WIDTHS = [ 120, 110, 100, 90 ];
 
 const Layout = () => {
 	const { isLoading } = useSettings();
 	const { pathname } = useLocation();
+	const [ moduleTabs, setModuleTabs ] = useState( [] );
 
 	const notices = useSelect( ( select ) =>
 		select( noticesStore ).getNotices()
@@ -64,6 +75,55 @@ const Layout = () => {
 	const snackbarNotices = notices.filter(
 		( notice ) => notice.type === 'snackbar'
 	);
+
+	const refreshModuleTabs = useCallback( () => {
+		apiFetch( { path: '/storesuite/v1/modules' } )
+			.then( ( modules ) => {
+				if ( ! Array.isArray( modules ) ) {
+					setModuleTabs( [] );
+					return;
+				}
+				const extras = modules
+					.filter(
+						( module ) =>
+							module.active && Array.isArray( module.admin_tabs )
+					)
+					.flatMap( ( module ) =>
+						module.admin_tabs.map( ( tab ) => ( {
+							to: tab.to,
+							label: tab.label,
+							icon: PuzzlePieceIcon,
+						} ) )
+					);
+				setModuleTabs( extras );
+			} )
+			.catch( () => setModuleTabs( [] ) );
+	}, [] );
+
+	useEffect( () => {
+		refreshModuleTabs();
+
+		const listener = () => refreshModuleTabs();
+		window.addEventListener( MODULES_CHANGED_EVENT, listener );
+
+		return () => {
+			window.removeEventListener( MODULES_CHANGED_EVENT, listener );
+		};
+	}, [ refreshModuleTabs ] );
+
+	// Insert module-injected tabs immediately before the Modules tab so the
+	// Modules entry stays anchored to the right edge of the nav.
+	const modulesIndex = BUILT_IN_TABS.findIndex(
+		( tab ) => tab.to === '/modules'
+	);
+	const tabs =
+		modulesIndex === -1
+			? [ ...BUILT_IN_TABS, ...moduleTabs ]
+			: [
+					...BUILT_IN_TABS.slice( 0, modulesIndex ),
+					...moduleTabs,
+					...BUILT_IN_TABS.slice( modulesIndex ),
+			  ];
 
 	return (
 		<div className="storesuite-admin-app">
@@ -123,7 +183,7 @@ const Layout = () => {
 					) : (
 						<>
 							<div className="storesuite-hash-nav">
-								{ TABS.map( ( { to, icon: Icon, label } ) => (
+								{ tabs.map( ( { to, icon: Icon, label } ) => (
 									<Link
 										key={ to }
 										to={ to }

@@ -56,14 +56,18 @@ jobs:
             - name: Download WooCommerce
               run: |
                   curl -sL https://downloads.wordpress.org/plugin/woocommerce.latest-stable.zip -o /tmp/woocommerce.zip
-                  unzip -q /tmp/woocommerce.zip -d /tmp
+                  unzip -q /tmp/woocommerce.zip -d /tmp/wordpress/wp-content/plugins
+
+            # The suite (and StoreSuite's own URL/path helpers) assume the plugin
+            # lives under wp-content/plugins like a real install, next to WooCommerce.
+            - name: Install the plugin into the WordPress plugins directory
+              run: rsync -a --exclude .git ./ /tmp/wordpress/wp-content/plugins/storesuite/
 
             - name: Run PHPUnit
+              working-directory: /tmp/wordpress/wp-content/plugins/storesuite
               env:
-                  WP_CORE_DIR: /tmp/wordpress
-                  WC_DIR: /tmp/woocommerce
-                  WP_DB_NAME: wordpress_test
-                  WP_DB_USER: root
-                  WP_DB_PASS: root
-                  WP_DB_HOST: 127.0.0.1:3306
+                  WP_TESTS_DB_NAME: wordpress_test
+                  WP_TESTS_DB_USER: root
+                  WP_TESTS_DB_PASSWORD: root
+                  WP_TESTS_DB_HOST: 127.0.0.1:3306
               run: vendor/bin/phpunit

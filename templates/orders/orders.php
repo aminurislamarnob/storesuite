@@ -26,13 +26,32 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 				<div class="row g-2">
 					<div class="col-md-auto storesuite-orders-toolbar-bulk">
 						<div class="storesuite-form-group d-flex align-items-center storesuite-bulk-order-actions mb-0">
+							<?php
+							/**
+							 * Filter the order list bulk actions.
+							 *
+							 * Keys are the submitted action value (e.g. `mark_processing`),
+							 * values the human label. An order-status module appends its
+							 * own `mark_{slug}` entries here.
+							 *
+							 * @param array $bulk_actions Action value => label.
+							 */
+							$storesuite_order_bulk_actions = apply_filters(
+								'storesuite_order_bulk_actions',
+								array(
+									'mark_processing' => __( 'Change status to processing', 'storesuite' ),
+									'mark_on-hold'    => __( 'Change status to on-hold', 'storesuite' ),
+									'mark_completed'  => __( 'Change status to completed', 'storesuite' ),
+									'mark_cancelled'  => __( 'Change status to cancelled', 'storesuite' ),
+									'trash'           => __( 'Move to Trash', 'storesuite' ),
+								)
+							);
+							?>
 							<select name="action" id="bulk-action-selector-top" class="storesuite-form-control" form="storesuite-order-bulk-actions">
 								<option value="-1"><?php esc_html_e( 'Bulk actions', 'storesuite' ); ?></option>
-								<option value="mark_processing"><?php esc_html_e( 'Change status to processing', 'storesuite' ); ?></option>
-								<option value="mark_on-hold"><?php esc_html_e( 'Change status to on-hold', 'storesuite' ); ?></option>
-								<option value="mark_completed"><?php esc_html_e( 'Change status to completed', 'storesuite' ); ?></option>
-								<option value="mark_cancelled"><?php esc_html_e( 'Change status to cancelled', 'storesuite' ); ?></option>
-								<option value="trash"><?php esc_html_e( 'Move to Trash', 'storesuite' ); ?></option>
+								<?php foreach ( $storesuite_order_bulk_actions as $storesuite_action_value => $storesuite_action_label ) : ?>
+									<option value="<?php echo esc_attr( $storesuite_action_value ); ?>"><?php echo esc_html( $storesuite_action_label ); ?></option>
+								<?php endforeach; ?>
 							</select>
 							<button type="submit" id="doaction" class="my-storesuite-button" form="storesuite-order-bulk-actions"><?php esc_html_e( 'Apply', 'storesuite' ); ?></button>
 						</div>

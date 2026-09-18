@@ -390,13 +390,65 @@ function storesuite_log( $message, $level = 'debug' ) {
 }
 
 /**
+ * Check whether the current user may access a StoreSuite dashboard area.
+ *
+ * The dashboard was historically gated on the single `manage_woocommerce`
+ * capability. This helper keeps that behaviour intact: users who can
+ * `manage_woocommerce` (admins and shop managers) pass every area
+ * unconditionally and are never affected by the `storesuite_user_can` filter,
+ * preserving the guarantee that they never lose a dashboard area. For everyone
+ * else it adds a granular escape hatch: a user who holds the area-specific
+ * `storesuite_{$area}` capability passes, and the filter has the final say —
+ * so modules (e.g. a staff/role manager) can grant or restrict individual
+ * areas per custom role.
+ *
+ * Area names are plain identifiers such as `access_dashboard`, `products`,
+ * `orders`, `coupons`, `taxonomies`, `analytics`.
+ *
+ * @param string $area      Dashboard area identifier.
+ * @param int    $object_id Optional object the check applies to (product ID,
+ *                          order ID, ...). Passed to the filter for
+ *                          fine-grained decisions; unused by the default check.
+ * @return bool
+ */
+function storesuite_current_user_can( $area, $object_id = 0 ) {
+	// Managers are all-powerful and always pass, regardless of the filter.
+	if ( current_user_can( 'manage_woocommerce' ) ) {
+		return true;
+	}
+
+	$allowed = current_user_can( 'storesuite_' . $area );
+
+	/**
+	 * Filter the result of a StoreSuite area permission check.
+	 *
+	 * Only runs for non-`manage_woocommerce` users; managers short-circuit
+	 * above and cannot be restricted through this filter.
+	 *
+	 * @param bool   $allowed   Whether the current user may access the area.
+	 * @param string $area      Area identifier (e.g. `products`, `orders`).
+	 * @param int    $user_id   Current user ID.
+	 * @param int    $object_id Optional object ID the check applies to.
+	 */
+	return (bool) apply_filters( 'storesuite_user_can', $allowed, $area, get_current_user_id(), $object_id );
+}
+
+/**
  * Redirect to login page if user not logged in
  *
  * @return void
  */
 function storesuite_redirect_if_not_logged_in() {
 	if ( ! is_user_logged_in() ) {
-		$redirect_url = wc_get_page_permalink( 'myaccount' );
+		/**
+		 * Filter the URL non-logged-in visitors of the dashboard are sent to.
+		 *
+		 * Defaults to the WooCommerce My Account page. A frontend-login module
+		 * can point this at its own login page instead.
+		 *
+		 * @param string $redirect_url Login page URL.
+		 */
+		$redirect_url = apply_filters( 'storesuite_login_redirect_url', wc_get_page_permalink( 'myaccount' ) );
 		wp_safe_redirect( $redirect_url );
 		exit();
 	}
@@ -408,7 +460,7 @@ function storesuite_redirect_if_not_logged_in() {
  * @param string $redirect
  */
 function storesuite_redirect_if_not_manager( $redirect = '' ) {
-	if ( ! current_user_can( 'manage_woocommerce' ) ) {
+	if ( ! storesuite_current_user_can( 'access_dashboard' ) ) {
 		$redirect = empty( $redirect ) ? home_url( '/' ) : $redirect;
 
 		wp_safe_redirect( $redirect );

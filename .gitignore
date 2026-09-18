@@ -8,4 +8,9 @@ debug.log
 vendor
 phpcs-report.txt
 .phpunit.result.cache
+phpunit.xml
 .gitkeep
+# Playwright E2E
+tests/e2e/.auth/
+test-results/
+playwright-report/
