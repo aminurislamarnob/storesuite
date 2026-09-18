@@ -1,4 +1,4 @@
-/* global StoreSuite_ProductSeo, tinymce, wp */
+/* global jQuery, StoreSuite_ProductSeo, tinymce */
 /**
  * Yoast SEO card on the StoreSuite product form.
  *
@@ -11,20 +11,25 @@
  *     looks the URL up itself.
  *
  * Reads the localized StoreSuite_ProductSeo global enqueued by YoastSeoIntegration.
+ *
+ * @param {Function} $ jQuery.
  */
 ( function ( $ ) {
-	var StoreSuiteProductSeo = {
+	const StoreSuiteProductSeo = {
 		VARIABLE_PATTERN: /%%([a-z_]+)%%/g,
 		// A lone % (not part of a finished %%var%%) followed by the partial name being typed.
 		TRIGGER_PATTERN: /(^|[^%])%([a-z_]*)$/,
 		// Yoast measures the SEO title as Google renders it on desktop.
 		TITLE_FONT: '20px Arial, sans-serif',
 
-		init: function () {
+		init() {
+			// The global's name is set by wp_localize_script() and follows the plugin's PHP naming.
+			/* eslint-disable camelcase */
 			this.config =
 				typeof StoreSuite_ProductSeo !== 'undefined'
 					? StoreSuite_ProductSeo
 					: null;
+			/* eslint-enable camelcase */
 			this.$card = $( '#storesuite-yoast-seo' );
 
 			if ( ! this.config || ! this.$card.length ) {
@@ -50,20 +55,22 @@
 		 * Tabs (only rendered when the card has more than one)
 		 * ------------------------------------------------------------- */
 
-		bindTabs: function () {
-			var self = this;
+		bindTabs() {
+			const self = this;
 
 			this.$card.on( 'click', '.storesuite-seo-tab', function () {
-				var tab = $( this ).attr( 'data-seo-tab' );
+				const tab = $( this ).attr( 'data-seo-tab' );
 
 				self.closeMenu();
 				self.$card
 					.find( '.storesuite-seo-tab' )
 					.removeClass( 'is-active' )
 					.attr( 'aria-selected', 'false' );
-				$( this ).addClass( 'is-active' ).attr( 'aria-selected', 'true' );
+				$( this )
+					.addClass( 'is-active' )
+					.attr( 'aria-selected', 'true' );
 				self.$card.find( '.storesuite-seo-panel' ).each( function () {
-					var active = $( this ).attr( 'data-seo-panel' ) === tab;
+					const active = $( this ).attr( 'data-seo-panel' ) === tab;
 					$( this )
 						.toggleClass( 'is-active', active )
 						.prop( 'hidden', ! active );
@@ -75,47 +82,57 @@
 		 * Social image pickers
 		 * ------------------------------------------------------------- */
 
-		bindImagePickers: function () {
-			var self = this;
+		bindImagePickers() {
+			const self = this;
 
-			this.$card.on( 'click', '.storesuite-seo-image-select', function () {
-				if ( typeof wp === 'undefined' || ! wp.media ) {
-					return;
+			this.$card.on(
+				'click',
+				'.storesuite-seo-image-select',
+				function () {
+					if ( typeof wp === 'undefined' || ! wp.media ) {
+						return;
+					}
+
+					const $picker = $( this ).closest(
+						'.storesuite-seo-image'
+					);
+					const frame = wp.media( {
+						library: { type: 'image' },
+						multiple: false,
+					} );
+
+					frame.on( 'select', function () {
+						const image = frame
+							.state()
+							.get( 'selection' )
+							.first()
+							.toJSON();
+						const preview =
+							( image.sizes &&
+								( image.sizes.medium || image.sizes.full ) ) ||
+							image;
+
+						self.setImage( $picker, image.id, preview.url );
+					} );
+					frame.open();
 				}
+			);
 
-				var $picker = $( this ).closest( '.storesuite-seo-image' );
-				var frame = wp.media( {
-					library: { type: 'image' },
-					multiple: false,
-				} );
-
-				frame.on( 'select', function () {
-					var image = frame
-						.state()
-						.get( 'selection' )
-						.first()
-						.toJSON();
-					var preview =
-						( image.sizes &&
-							( image.sizes.medium || image.sizes.full ) ) ||
-						image;
-
-					self.setImage( $picker, image.id, preview.url );
-				} );
-				frame.open();
-			} );
-
-			this.$card.on( 'click', '.storesuite-seo-image-remove', function () {
-				self.setImage(
-					$( this ).closest( '.storesuite-seo-image' ),
-					'',
-					''
-				);
-			} );
+			this.$card.on(
+				'click',
+				'.storesuite-seo-image-remove',
+				function () {
+					self.setImage(
+						$( this ).closest( '.storesuite-seo-image' ),
+						'',
+						''
+					);
+				}
+			);
 		},
 
-		setImage: function ( $picker, id, url ) {
-			var $select = $picker.find( '.storesuite-seo-image-select' );
+		setImage( $picker, id, url ) {
+			const $select = $picker.find( '.storesuite-seo-image-select' );
 
 			$picker.toggleClass( 'has-image', !! id );
 			$picker
@@ -136,25 +153,25 @@
 		 * Live values from the product form
 		 * ------------------------------------------------------------- */
 
-		stripTags: function ( html ) {
-			var el = document.createElement( 'div' );
+		stripTags( html ) {
+			const el = document.createElement( 'div' );
 			el.innerHTML = html;
 			return ( el.textContent || '' ).replace( /\s+/g, ' ' ).trim();
 		},
 
-		getDescriptionText: function () {
-			var editor =
+		getDescriptionText() {
+			const editor =
 				typeof tinymce !== 'undefined'
 					? tinymce.get( 'product_description' )
 					: null;
-			var html =
+			const html =
 				editor && ! editor.isHidden()
 					? editor.getContent()
 					: $( '#product_description' ).val() || '';
 			return this.stripTags( html );
 		},
 
-		getSelectedLabels: function ( selector ) {
+		getSelectedLabels( selector ) {
 			return $( selector )
 				.find( 'option:selected' )
 				.map( function () {
@@ -163,7 +180,7 @@
 				.get();
 		},
 
-		slugify: function ( text ) {
+		slugify( text ) {
 			return text
 				.toLowerCase()
 				.replace( /[^a-z0-9\s-]/g, '' )
@@ -171,13 +188,13 @@
 				.replace( /[\s-]+/g, '-' );
 		},
 
-		getContext: function () {
-			var title = ( $( '#product_title' ).val() || '' ).trim();
-			var shortDesc = this.stripTags(
+		getContext() {
+			const title = ( $( '#product_title' ).val() || '' ).trim();
+			const shortDesc = this.stripTags(
 				$( '#product_short_description' ).val() || ''
 			);
-			var categories = this.getSelectedLabels( '#product_category' );
-			var excerpt = shortDesc || this.getDescriptionText();
+			const categories = this.getSelectedLabels( '#product_category' );
+			let excerpt = shortDesc || this.getDescriptionText();
 
 			if ( excerpt.length > this.config.descMaxLength ) {
 				excerpt = excerpt
@@ -186,8 +203,8 @@
 			}
 
 			return $.extend( {}, this.config.replacements, {
-				title: title,
-				excerpt: excerpt,
+				title,
+				excerpt,
 				excerpt_only: shortDesc,
 				category: categories.join( ', ' ),
 				primary_category: categories[ 0 ] || '',
@@ -200,8 +217,12 @@
 		/**
 		 * Replace the variables the form can resolve. Unknown variables are
 		 * left as typed; Yoast resolves them when the page is rendered.
+		 *
+		 * @param {string} text    Text containing %%variables%%.
+		 * @param {Object} context Variable values keyed by name.
+		 * @return {string} Text with the known variables replaced.
 		 */
-		replaceVariables: function ( text, context ) {
+		replaceVariables( text, context ) {
 			return text
 				.replace( this.VARIABLE_PATTERN, function ( match, name ) {
 					return Object.prototype.hasOwnProperty.call( context, name )
@@ -215,17 +236,24 @@
 		/**
 		 * Yoast drops separators left dangling at either end when a variable
 		 * resolves to nothing, e.g. "%%title%% %%sep%% %%sitename%%" with no title yet.
+		 *
+		 * @param {string} text Resolved title.
+		 * @return {string} Title without leading or trailing separators.
 		 */
-		trimSeparators: function ( text ) {
-			var sep = this.config.replacements.sep;
+		trimSeparators( text ) {
+			const sep = this.config.replacements.sep;
 			if ( ! sep ) {
 				return text;
 			}
-			var escaped = sep.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
+			const escaped = sep.replace( /[.*+?^${}()|[\]\\]/g, '\\$&' );
 			return text
 				.replace(
 					new RegExp(
-						'^(\\s*' + escaped + '\\s*)+|(\\s*' + escaped + '\\s*)+$',
+						'^(\\s*' +
+							escaped +
+							'\\s*)+|(\\s*' +
+							escaped +
+							'\\s*)+$',
 						'g'
 					),
 					''
@@ -237,17 +265,13 @@
 		 * Google preview + progress bars
 		 * ------------------------------------------------------------- */
 
-		bindPreview: function () {
-			var self = this;
-			var render = function () {
+		bindPreview() {
+			const self = this;
+			const render = function () {
 				self.render();
 			};
 
-			this.$card.on(
-				'input change',
-				'input, textarea',
-				render
-			);
+			this.$card.on( 'input change', 'input, textarea', render );
 			$( '#product_title, #product_slug, #product_short_description' ).on(
 				'input change',
 				render
@@ -256,7 +280,7 @@
 
 			// The description editor initialises after this script runs.
 			$( window ).on( 'load', function () {
-				var editor =
+				const editor =
 					typeof tinymce !== 'undefined'
 						? tinymce.get( 'product_description' )
 						: null;
@@ -268,8 +292,11 @@
 			$( '#product_description' ).on( 'input change', render );
 
 			this.$card.on( 'click', '.storesuite-seo-mode-switch', function () {
-				var desktop = self.$preview.attr( 'data-mode' ) !== 'desktop';
-				self.$preview.attr( 'data-mode', desktop ? 'desktop' : 'mobile' );
+				const desktop = self.$preview.attr( 'data-mode' ) !== 'desktop';
+				self.$preview.attr(
+					'data-mode',
+					desktop ? 'desktop' : 'mobile'
+				);
 				$( this )
 					.attr( 'aria-checked', desktop ? 'true' : 'false' )
 					.attr(
@@ -282,7 +309,7 @@
 			} );
 		},
 
-		measureTitleWidth: function ( text ) {
+		measureTitleWidth( text ) {
 			if ( ! this.canvasContext ) {
 				this.canvasContext = document
 					.createElement( 'canvas' )
@@ -292,14 +319,14 @@
 			return Math.round( this.canvasContext.measureText( text ).width );
 		},
 
-		getUrlParts: function () {
-			var base =
+		getUrlParts() {
+			const base =
 				$( '.storesuite-permalink-prefix' ).first().text().trim() ||
 				this.config.homeUrl;
-			var slug =
+			const slug =
 				( $( '#product_slug' ).val() || '' ).trim() ||
 				this.slugify( ( $( '#product_title' ).val() || '' ).trim() );
-			var parts = base
+			const parts = base
 				.replace( /^https?:\/\//, '' )
 				.split( '/' )
 				.filter( Boolean );
@@ -310,17 +337,21 @@
 			return parts;
 		},
 
-		escapeHtml: function ( text ) {
+		escapeHtml( text ) {
 			return $( '<div>' ).text( text ).html();
 		},
 
 		/**
 		 * Bold the focus keyphrase words in the description, as Google does
 		 * for the searcher's query.
+		 *
+		 * @param {string} text      Plain-text description.
+		 * @param {string} keyphrase Focus keyphrase.
+		 * @return {string} Escaped HTML with the keyphrase words wrapped in <strong>.
 		 */
-		highlightKeyphrase: function ( text, keyphrase ) {
-			var self = this;
-			var words = keyphrase
+		highlightKeyphrase( text, keyphrase ) {
+			const self = this;
+			const words = keyphrase
 				.split( /\s+/ )
 				.filter( function ( word ) {
 					return word.length > 1;
@@ -335,7 +366,7 @@
 
 			// Split on the raw text and escape each piece, so a keyphrase can
 			// never match inside an HTML entity.
-			var pattern = new RegExp(
+			const pattern = new RegExp(
 				'(?<![\\p{L}\\p{N}])(' +
 					words.join( '|' ) +
 					')(?![\\p{L}\\p{N}])',
@@ -345,14 +376,14 @@
 			return text
 				.split( pattern )
 				.map( function ( piece, index ) {
-					var html = self.escapeHtml( piece );
+					const html = self.escapeHtml( piece );
 					return index % 2 ? '<strong>' + html + '</strong>' : html;
 				} )
 				.join( '' );
 		},
 
-		setProgress: function ( field, value, max, state ) {
-			var $bar = this.$card.find(
+		setProgress( field, value, max, state ) {
+			const $bar = this.$card.find(
 				'[data-seo-field="' + field + '"] .storesuite-seo-progress'
 			);
 			$bar.attr( {
@@ -366,26 +397,26 @@
 			);
 		},
 
-		render: function () {
-			var config = this.config;
-			var context = this.getContext();
-			var isCornerstone = $( '#storesuite_yoast_is_cornerstone' ).is(
+		render() {
+			const config = this.config;
+			const context = this.getContext();
+			const isCornerstone = $( '#storesuite_yoast_is_cornerstone' ).is(
 				':checked'
 			);
-			var title = this.replaceVariables(
+			let title = this.replaceVariables(
 				( this.$title.val() || '' ).trim() || config.titleTemplate,
 				context
 			);
 			title = this.trimSeparators( title );
-			var desc = this.replaceVariables(
+			const desc = this.replaceVariables(
 				( this.$desc.val() || '' ).trim() || config.descTemplate,
 				context
 			);
-			var urlParts = this.getUrlParts();
-			var isDesktop = this.$preview.attr( 'data-mode' ) === 'desktop';
+			const urlParts = this.getUrlParts();
+			const isDesktop = this.$preview.attr( 'data-mode' ) === 'desktop';
 
 			// Progress bars score what will be output, not the Google fallback below.
-			var titleWidth = this.measureTitleWidth( title );
+			const titleWidth = this.measureTitleWidth( title );
 			this.setProgress(
 				'title',
 				titleWidth,
@@ -395,7 +426,7 @@
 					: 'bad'
 			);
 
-			var descState = 'good';
+			let descState = 'good';
 			if ( ! desc.length ) {
 				descState = 'bad';
 			} else if (
@@ -413,8 +444,8 @@
 			);
 
 			// Without a description Google picks text from the page itself.
-			var shownDesc = desc || context.excerpt;
-			var $desc = this.$preview.find( '.storesuite-seo-snippet-desc' );
+			let shownDesc = desc || context.excerpt;
+			const $desc = this.$preview.find( '.storesuite-seo-snippet-desc' );
 			if ( shownDesc.length > config.descMaxLength ) {
 				shownDesc =
 					shownDesc
@@ -438,13 +469,13 @@
 				.text( config.replacements.sitename );
 			this.$preview
 				.find( '.storesuite-seo-snippet-url' )
-				.text( isDesktop ? urlParts.join( ' › ' ) : urlParts[ 0 ] || '' );
-
-			var $icon = this.$preview.find( '.storesuite-seo-snippet-icon' );
-			if ( config.siteIcon && ! $icon.children().length ) {
-				$icon.append(
-					$( '<img>', { src: config.siteIcon, alt: '' } )
+				.text(
+					isDesktop ? urlParts.join( ' › ' ) : urlParts[ 0 ] || ''
 				);
+
+			const $icon = this.$preview.find( '.storesuite-seo-snippet-icon' );
+			if ( config.siteIcon && ! $icon.children().length ) {
+				$icon.append( $( '<img>', { src: config.siteIcon, alt: '' } ) );
 			}
 		},
 
@@ -452,15 +483,15 @@
 		 * "Insert variable" menu
 		 * ------------------------------------------------------------- */
 
-		bindVariableMenu: function () {
-			var self = this;
+		bindVariableMenu() {
+			const self = this;
 
 			this.$card.on(
 				'click',
 				'.storesuite-seo-insert-variable',
 				function ( event ) {
 					event.preventDefault();
-					var $input = $( this )
+					const $input = $( this )
 						.closest( '.storesuite-seo-field' )
 						.find( 'input[type="text"], textarea' );
 
@@ -469,7 +500,9 @@
 						return;
 					}
 					// A field that wasn't being edited gets the variable at its end.
-					if ( document.activeElement !== $input[ 0 ] ) {
+					if (
+						$input[ 0 ].ownerDocument.activeElement !== $input[ 0 ]
+					) {
 						$input.trigger( 'focus' );
 						$input[ 0 ].setSelectionRange(
 							$input.val().length,
@@ -493,8 +526,11 @@
 				'input',
 				'.storesuite-seo-field input[type="text"], .storesuite-seo-field textarea',
 				function () {
-					var before = this.value.substring( 0, this.selectionStart );
-					var match = before.match( self.TRIGGER_PATTERN );
+					const before = this.value.substring(
+						0,
+						this.selectionStart
+					);
+					const match = before.match( self.TRIGGER_PATTERN );
 
 					if ( match ) {
 						self.openMenu( $( this ), match[ 2 ], {
@@ -514,23 +550,31 @@
 					if ( ! self.$menu ) {
 						return;
 					}
-					var $options = self.$menu.find( '[role="option"]' );
-					var index = $options.index(
-						$options.filter( '.is-active' )
-					);
+					const $options = self.$menu.find( '[role="option"]' );
+					const getActiveIndex = function () {
+						return $options.index(
+							$options.filter( '.is-active' )
+						);
+					};
 
-					if ( event.key === 'ArrowDown' || event.key === 'ArrowUp' ) {
+					if (
+						event.key === 'ArrowDown' ||
+						event.key === 'ArrowUp'
+					) {
 						event.preventDefault();
-						if ( ! $options.length ) {
-							return;
+						if ( $options.length ) {
+							const step = event.key === 'ArrowDown' ? 1 : -1;
+							self.setActiveOption(
+								$options.eq(
+									( getActiveIndex() +
+										step +
+										$options.length ) %
+										$options.length
+								)
+							);
 						}
-						index =
-							( index +
-								( event.key === 'ArrowDown' ? 1 : -1 ) +
-								$options.length ) %
-							$options.length;
-						self.setActiveOption( $options.eq( index ) );
 					} else if ( event.key === 'Enter' || event.key === 'Tab' ) {
+						const index = getActiveIndex();
 						if ( index > -1 ) {
 							event.preventDefault();
 							self.insertVariable(
@@ -568,7 +612,7 @@
 			} );
 		},
 
-		setActiveOption: function ( $option ) {
+		setActiveOption( $option ) {
 			this.$menu
 				.find( '[role="option"]' )
 				.removeClass( 'is-active' )
@@ -581,24 +625,26 @@
 		},
 
 		/**
-		 * @param {jQuery}      $input  Field the variable goes into.
+		 * @param {Object}      $input  jQuery object of the field the variable goes into.
 		 * @param {string}      filter  Partial variable name typed after %.
 		 * @param {Object|null} trigger Range of the typed "%partial" to replace, null when opened from the button.
 		 */
-		openMenu: function ( $input, filter, trigger ) {
-			var self = this;
-			var needle = filter.toLowerCase();
-			var matches = this.config.variables.filter( function ( variable ) {
-				return (
-					! needle ||
-					variable.name.indexOf( needle ) === 0 ||
-					variable.label.toLowerCase().indexOf( needle ) > -1
-				);
-			} );
+		openMenu( $input, filter, trigger ) {
+			const self = this;
+			const needle = filter.toLowerCase();
+			const matches = this.config.variables.filter(
+				function ( variable ) {
+					return (
+						! needle ||
+						variable.name.indexOf( needle ) === 0 ||
+						variable.label.toLowerCase().indexOf( needle ) > -1
+					);
+				}
+			);
 
 			this.closeMenu();
 
-			var $menu = $( '<ul>', {
+			const $menu = $( '<ul>', {
 				class: 'storesuite-seo-variable-menu',
 				role: 'listbox',
 			} );
@@ -647,7 +693,7 @@
 			self.setActiveOption( $menu.find( '[role="option"]' ).first() );
 		},
 
-		closeMenu: function () {
+		closeMenu() {
 			if ( ! this.$menu ) {
 				return;
 			}
@@ -662,14 +708,14 @@
 			this.menuTrigger = null;
 		},
 
-		insertVariable: function ( name ) {
-			var input = this.$menuField[ 0 ];
-			var trigger = this.menuTrigger;
-			var start = trigger ? trigger.start : input.selectionStart;
-			var end = trigger ? trigger.end : input.selectionEnd;
-			var before = input.value.substring( 0, start );
-			var after = input.value.substring( end );
-			var token = '%%' + name + '%%';
+		insertVariable( name ) {
+			const input = this.$menuField[ 0 ];
+			const trigger = this.menuTrigger;
+			const start = trigger ? trigger.start : input.selectionStart;
+			const end = trigger ? trigger.end : input.selectionEnd;
+			const before = input.value.substring( 0, start );
+			const after = input.value.substring( end );
+			let token = '%%' + name + '%%';
 
 			// Keep variables from running into neighbouring words.
 			if ( before && ! /\s$/.test( before ) ) {
@@ -685,7 +731,10 @@
 
 			this.closeMenu();
 			// Lets the preview and the form's unsaved-changes bar react.
-			$( input ).trigger( 'input' ).trigger( 'change' ).trigger( 'focus' );
+			$( input )
+				.trigger( 'input' )
+				.trigger( 'change' )
+				.trigger( 'focus' );
 		},
 	};
 
