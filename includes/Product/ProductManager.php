@@ -71,8 +71,8 @@ class ProductManager {
 			'name'              => sanitize_text_field( $data['product_title'] ),
 			'slug'              => $product_slug,
 			'type'              => ! empty( $data['post_type'] ) ? $data['post_type'] : 'simple',
-			'description'       => wp_kses_post( $data['product_description'] ),
-			'short_description' => wp_kses_post( $data['product_short_description'] ),
+			'description'       => wp_kses_post( $data['product_description'] ?? '' ),
+			'short_description' => wp_kses_post( $data['product_short_description'] ?? '' ),
 			'status'            => $post_status,
 		);
 
