@@ -4,8 +4,8 @@ Donate link: https://www.buymeacoffee.com/aiarnob
 Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce product management, shop manager, woocommerce ai
 Requires at least: 6.9
 Tested up to: 7.1
-Requires PHP: 8.1
-Stable tag: 1.3.0
+Requires PHP: 7.4
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -151,6 +151,17 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 
 == Changelog ==
 
+= 1.4.0 =
+* Lower the minimum PHP version to **7.4** (previously 8.1), matching the WordPress and WooCommerce floors so StoreSuite can be installed on the same hosts they run on. PHP compatibility is now checked in CI on every change.
+* Fix a fatal error when using **AI product text or image generation** on WordPress 6.9. The WordPress AI Client only ships with WordPress 7.0, so on older versions the AI buttons now return a clear message instead of crashing the request.
+* The plugin name shown in the **Plugins** list now matches the WordPress.org listing.
+* The release package no longer includes development-only files.
+
+= 1.3.1 =
+* Fix the login screen redirecting to My Account before anyone had logged in. The redirect fired while the login **form** was rendering, which broke plain `wp-login.php` and hidden login URLs from plugins such as WPS Hide Login. The form now renders normally; the redirect only runs after a successful login.
+* Blocked shop managers who open `wp-admin` now land on the **StoreSuite dashboard** instead of the shop homepage.
+* The **Documentation** button in the settings header is now enabled and links to the StoreSuite docs.
+
 = 1.3.0 =
 * Add **dark mode** to the frontend dashboard: a sun/moon toggle in the header flips between light and dark, the choice is saved per user, and the operating system `prefers-color-scheme` setting is honoured on the first visit. The theme resolves before the first paint, so there is no flash of the wrong theme on load.
 * Dark mode covers the whole dashboard — tables, forms, badges, buttons, pagination, switches, selects, dialogs, the quick-edit modal, the filter off-canvas, the loading skeletons, order details, account and address forms, and the TinyMCE editor content.
@@ -166,6 +177,8 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 * Add `storesuite_notification_poll_interval`, `storesuite_notification_retention_days`, `storesuite_notifications_per_page`, and `storesuite_order_list_row_actions` hooks, plus `storesuite_load_import_products_template` and `storesuite_load_notifications_template` for overriding the new pages.
 * On update, the notifications table is created, the daily cleanup is scheduled, and rewrite rules are flushed automatically — no need to re-save permalinks after upgrading.
 * Fix undefined `--storesuite-title-text-color` references so title text uses the defined colour token.
+* Fix the WordPress login page (`wp-login.php`, or a custom login slug from plugins such as WPS Hide Login) redirecting logged-out visitors to My Account. StoreSuite now only picks a destination after a successful login and leaves the login screen alone otherwise.
+* Shop managers who are blocked from wp-admin now land on the StoreSuite dashboard instead of the shop homepage.
 
 = 1.2.3 =
 * Add optional, opt-in telemetry via the Appsero SDK. No data is collected unless you explicitly allow it from the admin notice.

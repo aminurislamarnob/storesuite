@@ -39,7 +39,7 @@
 
     <!-- Rules: Check PHP version compatibility-->
     <!-- https://github.com/PHPCompatibility/PHPCompatibilityWP -->
-    <!-- <rule ref="PHPCompatibilityWP"/> -->
+    <rule ref="PHPCompatibilityWP"/>
     <rule ref="WordPress"/>
 
     <!-- Rules: WordPress Coding Standards -->

@@ -110,7 +110,7 @@ The dashboard page (created on activation with `[storesuite_dashboard]` shortcod
 ## Coding Standards
 
 - WordPress Coding Standards enforced via PHPCS (`phpcs.xml`)
-- PHP 7.4+ minimum, text domain: `storesuite`
+- PHP 7.4+ minimum, text domain: `storesuite`. The floor is enforced three ways: `PHPCompatibilityWP` in `phpcs.xml` at `testVersion 7.4-`, `config.platform.php` pinned to `7.4.33` in `composer.json` (so `composer update` never locks 8.x-only packages), and a PHP 7.4 leg in the PHPUnit CI matrix. Raising it means bumping `Requires PHP` in both `readme.txt` and the `storesuite.php` header together with all three.
 - All functions/hooks/options prefixed with `storesuite_`
 - `wc_clean` registered as a custom sanitizing function in PHPCS config
 - Yoda conditions disabled, strict comparisons enforced as errors
@@ -120,3 +120,17 @@ The dashboard page (created on activation with `[storesuite_dashboard]` shortcod
 ## CI/CD
 
 GitHub Actions (`.github/workflows/deploy.yml`) triggers on git tag push: installs with `--no-dev`, builds assets, creates ZIP via rsync + `.distignore`, uploads as GitHub release artifact, and deploys to WordPress.org via SVN.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `aminurislamarnob/storesuite` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root (created lazily by `/domain-modeling`). See `docs/agents/domain.md`.
