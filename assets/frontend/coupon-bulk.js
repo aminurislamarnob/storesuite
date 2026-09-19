@@ -6,7 +6,8 @@
 			if ( typeof StoreSuiteCouponBulk === 'undefined' ) {
 				return;
 			}
-			this.bindSelectAll();
+			// Select-all/indeterminate sync is handled globally in script.js
+			// (StoreFrontCommonConfig.handleBulkActionCheckbox).
 			this.bindBulkApply();
 			this.bindBulkEditSubmit();
 			this.initBulkEditModal();
@@ -56,40 +57,6 @@
 			}
 		},
 
-		/**
-		 * Header "select all" toggles every row checkbox in the bulk actions form.
-		 */
-		bindSelectAll: function () {
-			$( document ).on(
-				'change',
-				'#cb-select-all-coupons',
-				function () {
-					var isChecked = $( this ).prop( 'checked' );
-					$( '#storesuite-coupon-bulk-actions' )
-						.find( 'input[name="bulk_coupon_ids[]"]' )
-						.prop( 'checked', isChecked );
-				}
-			);
-
-			// Keep the header checkbox in sync when a row checkbox changes.
-			$( document ).on(
-				'change',
-				'input[name="bulk_coupon_ids[]"]',
-				function () {
-					var $form = $( '#storesuite-coupon-bulk-actions' );
-					var total = $form.find(
-						'input[name="bulk_coupon_ids[]"]'
-					).length;
-					var checked = $form.find(
-						'input[name="bulk_coupon_ids[]"]:checked'
-					).length;
-					$( '#cb-select-all-coupons' ).prop(
-						'checked',
-						total > 0 && total === checked
-					);
-				}
-			);
-		},
 
 		getSelectedIds: function () {
 			return $( '#storesuite-coupon-bulk-actions' )

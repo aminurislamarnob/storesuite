@@ -12,4 +12,5 @@ phpcs-report.txt
 
 # Playwright artefacts (root-level runs)
 test-results/
+playwright-report/
 tests/e2e/.auth/

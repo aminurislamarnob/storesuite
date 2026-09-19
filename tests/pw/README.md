@@ -1,10 +1,12 @@
 # StoreSuite Playwright end-to-end tests
 
-E2e coverage of the frontend dashboard — access control, orders (filters +
-bulk actions), coupons, categories, the account form and the wp-admin
-settings app — plus HTTP-level REST contract tests in `tests/api`.
-(Products/inventory specs and `feature-map.yml` arrive with the Tier 1
-branch, which extends this suite.)
+E2e coverage of the frontend dashboard — access control, products (search,
+sort, bulk selection, inline cell editing, the advanced filter drawer),
+inventory, orders (filters + bulk actions), coupons, categories, the
+account form and the wp-admin settings app — plus HTTP-level REST contract
+tests in `tests/api`.
+
+`feature-map.yml` tracks which surface is covered by which suite.
 
 ## Layout
 

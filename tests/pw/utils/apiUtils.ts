@@ -51,3 +51,107 @@ export async function createOrderViaApi( status = 'processing' ): Promise<number
 
 	return order.id as number;
 }
+
+/**
+ * Product fields accepted when seeding through the WooCommerce REST API.
+ */
+export interface ProductSeed {
+	name: string;
+	sku?: string;
+	regular_price?: string;
+	sale_price?: string;
+	status?: string;
+	manage_stock?: boolean;
+	stock_quantity?: number;
+	date_created?: string;
+}
+
+/**
+ * Create a product through the WooCommerce REST API so a spec owns its own
+ * data instead of mutating the shared seed set.
+ */
+export async function createProductViaApi( product: ProductSeed ): Promise< number > {
+	const api = await apiContext( adminAuth() );
+
+	const response = await api.post( '/wp-json/wc/v3/products', {
+		data: { type: 'simple', ...product },
+	} );
+
+	if ( ! response.ok() ) {
+		throw new Error( `Product creation failed: ${ response.status() } ${ await response.text() }` );
+	}
+
+	const created = await response.json();
+	await api.dispose();
+
+	return created.id as number;
+}
+
+/**
+ * Permanently delete products seeded by a spec. Safe to call with ids that
+ * were already removed, so it can run unconditionally in a cleanup hook.
+ */
+export async function deleteProductsViaApi( ids: number[] ): Promise< void > {
+	if ( ! ids.length ) {
+		return;
+	}
+
+	const api = await apiContext( adminAuth() );
+
+	for ( const id of ids ) {
+		await api.delete( `/wp-json/wc/v3/products/${ id }`, { params: { force: true } } );
+	}
+
+	await api.dispose();
+}
+
+/**
+ * Read a product back through the REST API to assert what was actually
+ * persisted, independent of what the list page renders.
+ */
+export async function getProductViaApi( id: number ): Promise< Record< string, any > > {
+	const api = await apiContext( adminAuth() );
+
+	const response = await api.get( `/wp-json/wc/v3/products/${ id }` );
+
+	if ( ! response.ok() ) {
+		throw new Error( `Product fetch failed: ${ response.status() } ${ await response.text() }` );
+	}
+
+	const product = await response.json();
+	await api.dispose();
+
+	return product;
+}
+
+/**
+ * Read the StoreSuite settings object through the plugin's own REST route.
+ */
+export async function getSettingsViaApi(): Promise< Record< string, any > > {
+	const api = await apiContext( adminAuth() );
+	const response = await api.get( '/wp-json/storesuite/v1/settings' );
+
+	if ( ! response.ok() ) {
+		throw new Error( `Settings fetch failed: ${ response.status() } ${ await response.text() }` );
+	}
+
+	const settings = await response.json();
+	await api.dispose();
+
+	return settings;
+}
+
+/**
+ * Patch StoreSuite settings. Specs that change shared site state this way
+ * must restore the previous value when they finish.
+ */
+export async function updateSettingsViaApi( data: Record< string, string > ): Promise< void > {
+	const api = await apiContext( adminAuth() );
+	const response = await api.post( '/wp-json/storesuite/v1/settings', { data } );
+
+	if ( ! response.ok() ) {
+		throw new Error( `Settings update failed: ${ response.status() } ${ await response.text() }` );
+	}
+
+	await api.dispose();
+}

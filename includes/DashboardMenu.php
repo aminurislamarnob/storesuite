@@ -219,6 +219,12 @@ class DashboardMenu {
 						'permission' => 'manage_woocommerce',
 						'endpoint'   => 'add-new-product',
 					),
+					'inventory'        => array(
+						'title'      => __( 'Inventory', 'storesuite' ),
+						'url'        => storesuite_get_navigation_url( 'inventory' ),
+						'permission' => 'manage_woocommerce',
+						'endpoint'   => 'inventory',
+					),
 					'categories'       => array(
 						'title'      => __( 'Categories', 'storesuite' ),
 						'url'        => storesuite_get_navigation_url( 'categories' ),
@@ -393,6 +399,7 @@ class DashboardMenu {
 		$endpoint = pluginizelab_storesuite()->get_storesuite_query()->get_current_endpoint();
 
 		$endpoint_to_parent = array(
+			'inventory'         => 'products',
 			'add-new-product'   => 'products',
 			'edit-product'      => 'products',
 			'new-product'       => 'products',

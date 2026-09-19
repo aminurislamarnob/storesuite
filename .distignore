@@ -27,6 +27,7 @@ README.md
 CHANGELOG.md
 LICENSE
 phpcs.xml.dist
+phpcs.xml
 phpunit.xml.dist
 phpunit.xml
 .editorconfig
@@ -34,6 +35,7 @@ phpunit.xml
 .php_cs
 .phpunit.result.cache
 .prettierrc.js
+.nvmrc
 appsero.json
 CONTRIBUTING.md
 DEVELOPER.md

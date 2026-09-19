@@ -115,6 +115,10 @@ class SettingsController extends WP_REST_Controller {
 			}
 		}
 
+		if ( $request->has_param( 'storesuite_inventory_per_page' ) ) {
+			$storesuite_settings['storesuite_inventory_per_page'] = sanitize_text_field( $request->get_param( 'storesuite_inventory_per_page' ) );
+		}
+
 		if ( $request->has_param( 'storesuite_product_per_page' ) ) {
 			$storesuite_settings['storesuite_product_per_page'] = sanitize_text_field( $request->get_param( 'storesuite_product_per_page' ) );
 		}
@@ -311,6 +315,11 @@ class SettingsController extends WP_REST_Controller {
 				),
 				'storesuite_product_per_page'              => array(
 					'description' => __( 'Products Per Page.', 'storesuite' ),
+					'type'        => 'string',
+					'context'     => array( 'view', 'edit' ),
+				),
+				'storesuite_inventory_per_page'            => array(
+					'description' => __( 'Inventory Items Per Page.', 'storesuite' ),
 					'type'        => 'string',
 					'context'     => array( 'view', 'edit' ),
 				),

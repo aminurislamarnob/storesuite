@@ -373,19 +373,28 @@
 			} );
 		},
 		handleBulkActionCheckbox: function () {
-			$( '#cb-select-all-orders' ).on( 'click', function () {
+			// One delegated select-all implementation shared by every list
+			// table (products, orders, coupons, taxonomy lists) via the
+			// .storesuite-bulk-select-all / .storesuite-bulk-cb classes from
+			// templates/shared/list-bulk-checkbox.php. Delegation keeps rows
+			// working after an AJAX row swap; scoping is per table.
+			$( document ).on( 'change', '.storesuite-bulk-select-all', function () {
 				var isChecked = $( this ).prop( 'checked' );
-				$( 'input[name="bulk_order_ids[]"]' ).prop(
-					'checked',
-					isChecked
-				);
+				$( this )
+					.closest( 'table' )
+					.find( '.storesuite-bulk-cb' )
+					.prop( 'checked', isChecked );
+				$( this ).prop( 'indeterminate', false );
 			} );
 
-			$( '#cb-select-all-products' ).on( 'change', function () {
-				var checked = $( this ).prop( 'checked' );
-				$( '#storesuite-product-bulk-actions' )
-					.find( 'input[name="bulk_product_ids[]"]' )
-					.prop( 'checked', checked );
+			$( document ).on( 'change', '.storesuite-bulk-cb', function () {
+				var $table = $( this ).closest( 'table' );
+				var total = $table.find( '.storesuite-bulk-cb' ).length;
+				var checked = $table.find( '.storesuite-bulk-cb:checked' ).length;
+				$table
+					.find( '.storesuite-bulk-select-all' )
+					.prop( 'checked', total > 0 && total === checked )
+					.prop( 'indeterminate', checked > 0 && checked < total );
 			} );
 		},
 		uploadProductImage: function () {

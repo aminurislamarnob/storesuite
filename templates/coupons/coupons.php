@@ -77,15 +77,16 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					<thead>
 						<tr>
 							<th class="check-column">
-								<label class="my-storesuite-checkbox">
-									<input type="checkbox" id="cb-select-all-coupons" class="my-storesuite-checkbox-input" aria-label="<?php esc_attr_e( 'Select all', 'storesuite' ); ?>">
-									<span class="my-storesuite-checkbox-back"></span>
-									<span class="my-storesuite-tick">
-										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
-											<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
-										</svg>
-									</span>
-								</label>
+								<?php
+								storesuite_get_template_part(
+									'shared/list-bulk-checkbox',
+									'',
+									array(
+										'is_all' => true,
+										'id'     => 'cb-select-all-coupons',
+									)
+								);
+								?>
 							</th>
 							<th><?php esc_html_e( 'Code', 'storesuite' ); ?></th>
 							<th><?php esc_html_e( 'Type', 'storesuite' ); ?></th>
@@ -106,15 +107,17 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							?>
 							<tr class="single-coupon-item storesuite-list-row">
 								<td class="check-column">
-									<label class="my-storesuite-checkbox">
-										<input type="checkbox" name="bulk_coupon_ids[]" id="cb-select-<?php echo esc_attr( (string) $coupon_id ); ?>" value="<?php echo esc_attr( (string) $coupon_id ); ?>" class="my-storesuite-checkbox-input" aria-label="<?php esc_attr_e( 'Select item', 'storesuite' ); ?>">
-										<span class="my-storesuite-checkbox-back"></span>
-										<span class="my-storesuite-tick">
-											<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
-												<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
-											</svg>
-										</span>
-									</label>
+									<?php
+									storesuite_get_template_part(
+										'shared/list-bulk-checkbox',
+										'',
+										array(
+											'value' => (string) $coupon_id,
+											'name'  => 'bulk_coupon_ids[]',
+											'id'    => 'cb-select-' . $coupon_id,
+										)
+									);
+									?>
 								</td>
 								<td class="tbl-coupon-code" data-title="<?php esc_attr_e( 'Code', 'storesuite' ); ?>">
 									<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-coupon' ) . '%s', $coupon_id ) ); ?>"><?php echo esc_html( $coupon->get_code() ); ?></a>

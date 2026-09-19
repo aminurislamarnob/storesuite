@@ -1,0 +1,115 @@
+# StoreSuite test coverage matrix.
+#
+# One row per surface. Legend per column:
+#   phpunit — covered by tests/php (integration)
+#   e2e     — covered by tests/pw/tests/e2e (browser)
+#   api     — covered by tests/pw/tests/api (HTTP REST)
+# Values: yes | partial | no | n/a
+#
+# Update this file whenever a suite gains or loses coverage of a surface.
+
+features:
+  - name: Access control (login redirects, wp-admin blocking, dashboard gating)
+    phpunit: partial   # non-exiting paths only (MainTest)
+    e2e: yes           # access/access.spec.ts
+    api: n/a
+
+  - name: Dashboard shell (sidebar navigation, header, home widgets)
+    phpunit: no
+    e2e: partial       # dashboard/dashboard.spec.ts — shell + nav; KPI widgets not asserted
+    api: n/a
+
+  - name: Products list (query filters, sorting, search)
+    phpunit: yes       # Product/ProductsQueryTest
+    e2e: yes           # products/products.spec.ts + products/filters.spec.ts
+                       # (price/date/status filters, badge count, reset,
+                       #  filters preserved across sorting)
+    api: n/a
+
+  - name: Product inline edit
+    phpunit: yes       # Product/ProductInlineEditTest
+    e2e: yes           # products/products.spec.ts (price cell round trip)
+                       # products/inlineEdit.spec.ts — sku/stock/status cells,
+                       # sale-price + duplicate-SKU rejection, Esc/click-away
+                       # cancel, non-managed stock cell not editable
+    api: n/a
+
+  - name: Product bulk actions (edit, trash, delete, taxonomy ops)
+    phpunit: yes       # Product/ProductBulkEditTest
+    e2e: partial       # checkbox/select-all UI; destructive actions not run in e2e
+    api: n/a
+
+  - name: Product add/edit forms, AI generation, import/export, variations
+    phpunit: no
+    e2e: no
+    api: n/a
+
+  - name: Inventory view (thresholds, low stock filter)
+    phpunit: yes       # Inventory/InventoryTest
+    e2e: yes           # inventory/inventory.spec.ts
+    api: n/a
+
+  - name: Orders list (filters, pagination)
+    phpunit: yes       # Order/OrderQueryTest
+    e2e: yes           # orders/orders.spec.ts
+    api: n/a
+
+  - name: Order bulk actions
+    phpunit: yes       # Order/OrderBulkActionsTest
+    e2e: yes           # orders/orders.spec.ts (mark completed end to end)
+    api: n/a
+
+  - name: Order notes
+    phpunit: yes       # Order/OrderNotesTest
+    e2e: no
+    api: n/a
+
+  - name: Order create/edit forms, shipping lines, PDF invoices
+    phpunit: no
+    e2e: no
+    api: n/a
+
+  - name: Coupons (CRUD, bulk)
+    phpunit: yes       # Coupon/CouponAjaxTest
+    e2e: yes           # coupons/coupons.spec.ts (list + create)
+    api: n/a
+
+  - name: Product categories (CRUD)
+    phpunit: yes       # ProductCategory/CategoryAjaxTest
+    e2e: yes           # taxonomies/categories.spec.ts
+    api: n/a
+
+  - name: Product tags / brands / attributes (CRUD)
+    phpunit: partial   # TagAjaxTest + BrandAjaxTest; attributes uncovered
+    e2e: no
+    api: n/a
+
+  - name: Account details form
+    phpunit: no
+    e2e: yes           # account/account.spec.ts
+    api: n/a
+
+  - name: Admin settings app (React)
+    phpunit: n/a
+    e2e: partial       # admin-settings/adminSettings.spec.ts — nav + pagination save
+    api: n/a
+
+  - name: Settings REST API (storesuite/v1/settings)
+    phpunit: yes       # REST/SettingsControllerTest
+    e2e: n/a
+    api: yes           # api/settings.spec.ts
+
+  - name: Rewrites / endpoints / pagination rules
+    phpunit: yes       # RewritesTest
+    e2e: partial       # implicitly via every navigation
+    api: n/a
+
+  - name: Notifications (manager, hooks, REST)
+    phpunit: no
+    e2e: no
+    api: no
+
+  - name: Dashboard KPI widgets / analytics
+    phpunit: no
+    e2e: no
+    api: no

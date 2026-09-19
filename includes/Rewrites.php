@@ -43,6 +43,7 @@ class Rewrites {
 			array(
 				'analytics'        => get_option( 'storesuite_myshop_analytics_endpoint', 'analytics' ),
 				'products'         => get_option( 'storesuite_myshop_products_endpoint', 'products' ),
+				'inventory'        => get_option( 'storesuite_myshop_inventory_endpoint', 'inventory' ),
 				'import-products'  => get_option( 'storesuite_myshop_import_product_endpoint', 'import-products' ),
 				'add-new-product'  => get_option( 'storesuite_myshop_new_product_endpoint', 'add-new-product' ),
 				'edit-product'     => get_option( 'storesuite_myshop_edit_product_endpoint', 'edit-product' ),
@@ -127,6 +128,13 @@ class Rewrites {
 		add_rewrite_rule(
 			$this->store_front_base . '/products/page/([^/]+)/?$',
 			'index.php?pagename=' . $this->store_front_base . '&products=1&paged=$matches[1]',
+			'top'
+		);
+
+		// Add rewrite rule for inventory list pagination.
+		add_rewrite_rule(
+			$this->store_front_base . '/inventory/page/([^/]+)/?$',
+			'index.php?pagename=' . $this->store_front_base . '&inventory=1&paged=$matches[1]',
 			'top'
 		);
 
@@ -227,6 +235,9 @@ class Rewrites {
 				break;
 			case 'edit-product':
 				$title = __( 'Edit Product', 'storesuite' );
+				break;
+			case 'inventory':
+				$title = __( 'Inventory', 'storesuite' );
 				break;
 			case 'orders':
 				$title = __( 'Orders', 'storesuite' );
