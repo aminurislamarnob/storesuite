@@ -7,7 +7,7 @@
  * Author: Aminur Islam Arnob
  * Author URI: https://github.com/aminurislamarnob/
  * Text Domain: storesuite
- * Requires at least: 7.0
+ * Requires at least: 6.9
  * WC requires at least: 10.4.3
  * Requires Plugins: woocommerce
  * License: GPL2

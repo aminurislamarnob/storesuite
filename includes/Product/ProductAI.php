@@ -235,6 +235,16 @@ class ProductAI {
 	 * @return string|\WP_Error
 	 */
 	private function generate_one( $field, array $context ) {
+		// The core AI Client ships with WordPress 7.0; callers already gate on
+		// is_text_supported(), but keep the guard inline so the call is never
+		// reached on the 6.9 minimum this plugin still supports.
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			return new \WP_Error(
+				'storesuite_ai_unavailable',
+				__( 'AI text generation requires WordPress 7.0 or newer.', 'storesuite' )
+			);
+		}
+
 		return wp_ai_client_prompt( $this->build_prompt( $field, $context ) )
 			->using_system_instruction( $this->get_system_instruction( $field ) )
 			->generate_text();
