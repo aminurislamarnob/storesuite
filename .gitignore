@@ -9,3 +9,7 @@ vendor
 phpcs-report.txt
 .phpunit.result.cache
 .gitkeep
+
+# Playwright artefacts (root-level runs)
+test-results/
+tests/e2e/.auth/
