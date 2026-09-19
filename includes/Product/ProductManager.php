@@ -508,9 +508,15 @@ class ProductManager {
 			$product->set_category_ids( $args['categories'] );
 		}
 
-		// Product brands.
+		// Product brands. WC_Product::set_brand_ids() arrived in WooCommerce
+		// 10.3; older versions get the terms assigned after the save below.
+		$legacy_brands = null;
 		if ( isset( $args['brands'] ) && is_array( $args['brands'] ) ) {
-			$product->set_brand_ids( $args['brands'] );
+			if ( method_exists( $product, 'set_brand_ids' ) ) {
+				$product->set_brand_ids( $args['brands'] );
+			} else {
+				$legacy_brands = array_map( 'absint', $args['brands'] );
+			}
 		}
 
 		// Product tags.
@@ -612,6 +618,10 @@ class ProductManager {
 		}
 
 		$product_id = $product->save();
+
+		if ( null !== $legacy_brands && $product_id ) {
+			wp_set_object_terms( $product_id, $legacy_brands, 'product_brand' );
+		}
 
 		return wc_get_product( $product_id );
 	}
