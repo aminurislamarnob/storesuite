@@ -4,8 +4,8 @@ Donate link: https://www.buymeacoffee.com/aiarnob
 Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce product management, shop manager, woocommerce ai
 Requires at least: 6.9
 Tested up to: 7.1
-Requires PHP: 8.1
-Stable tag: 1.3.1
+Requires PHP: 7.4
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -157,6 +157,12 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 * **Advanced Custom Fields on the product form.** Field groups located on products now render as cards on the frontend add/edit product form and save through ACF, so wp-admin and `get_field()` stay in sync. Supports text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator fields; honours conditional logic and runs ACF's validation before saving. Other field types show a read-only note. A toggle on Settings → General turns the integration off. Deliberate differences from wp-admin (ISO date display, passwords never prefilled, ignored UI-only settings) are listed in the products documentation.
 * Developers: new `storesuite_product_form_after_others` template action and `storesuite_product_pre_save_validation` filter on the product form.
 * Stopped querying the deprecated `point_of_sale` feature flag on WooCommerce 11.
+
+= 1.4.0 =
+* Lower the minimum PHP version to **7.4** (previously 8.1), matching the WordPress and WooCommerce floors so StoreSuite can be installed on the same hosts they run on. PHP compatibility is now checked in CI on every change.
+* Fix a fatal error when using **AI product text or image generation** on WordPress 6.9. The WordPress AI Client only ships with WordPress 7.0, so on older versions the AI buttons now return a clear message instead of crashing the request.
+* The plugin name shown in the **Plugins** list now matches the WordPress.org listing.
+* The release package no longer includes development-only files.
 
 = 1.3.1 =
 * Fix the login screen redirecting to My Account before anyone had logged in. The redirect fired while the login **form** was rendering, which broke plain `wp-login.php` and hidden login URLs from plugins such as WPS Hide Login. The form now renders normally; the redirect only runs after a successful login.

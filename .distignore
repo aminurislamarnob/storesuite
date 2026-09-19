@@ -4,6 +4,8 @@
 /node_modules
 /src
 /tests
+/test-results
+/storesuite.zip
 /bin
 /docs
 /build
@@ -44,3 +46,5 @@ webpack-entries.js
 base-tailwind.config.js
 CLAUDE.md
 /.claude
+.nvmrc
+phpcs.xml
