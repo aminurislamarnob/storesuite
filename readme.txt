@@ -2,7 +2,7 @@
 Contributors: aminurislam01, pluginizelab
 Donate link: https://www.buymeacoffee.com/aiarnob
 Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce product management, shop manager, woocommerce ai
-Requires at least: 6.9
+Requires at least: 7.0
 Tested up to: 7.1
 Requires PHP: 8.1
 Stable tag: 1.3.1

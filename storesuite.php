@@ -1,12 +1,13 @@
 <?php
 /**
- * Plugin Name: StoreSuite
+ * Plugin Name: StoreSuite – Frontend Shop Manager for WooCommerce with AI – Product, Order, Coupon Management & Analytics Dashboard
  * Plugin URI:  https://wordpress.org/plugins/storesuite/
  * Description: AI-assisted frontend dashboard to manage your WooCommerce store — products, orders, coupons, categories, and analytics in one place.
  * Version: 1.3.1
  * Author: Aminur Islam Arnob
  * Author URI: https://github.com/aminurislamarnob/
  * Text Domain: storesuite
+ * Requires at least: 7.0
  * WC requires at least: 10.4.3
  * Requires Plugins: woocommerce
  * License: GPL2
