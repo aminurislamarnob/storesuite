@@ -16,6 +16,7 @@ class ProductBulkEdit {
 	public function __construct() {
 		add_action( 'wp_ajax_storesuite_bulk_edit_products', array( $this, 'handle_bulk_edit_products_ajax' ) );
 		add_action( 'wp_ajax_storesuite_bulk_trash_products', array( $this, 'handle_bulk_trash_products_ajax' ) );
+		add_action( 'wp_ajax_storesuite_bulk_delete_products', array( $this, 'handle_bulk_delete_products_ajax' ) );
 	}
 
 	/**
@@ -48,6 +49,13 @@ class ProductBulkEdit {
 				)
 			);
 		}
+
+		// Category/tag add/remove operations from the StoreSuite half of the
+		// modal, applied to the products core just updated (they passed the
+		// capability and lock checks inside bulk_edit_posts()).
+		$updated_ids = isset( $result['updated'] ) ? array_map( 'absint', (array) $result['updated'] ) : array();
+		$this->apply_bulk_taxonomy_operation( $updated_ids, 'product_cat', 'storesuite_bulk_cat_op', 'storesuite_bulk_cats' );
+		$this->apply_bulk_taxonomy_operation( $updated_ids, 'product_tag', 'storesuite_bulk_tag_op', 'storesuite_bulk_tags' );
 
 		wp_send_json_success(
 			array(
@@ -114,6 +122,110 @@ class ProductBulkEdit {
 				'locked'  => $locked,
 			)
 		);
+	}
+
+	/**
+	 * AJAX: bulk delete products permanently from list actions.
+	 *
+	 * @return void
+	 */
+	public function handle_bulk_delete_products_ajax() {
+		check_ajax_referer( 'storesuite_bulk_delete_products', 'security' );
+
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- Array sanitized below.
+		$product_ids = isset( $_POST['product_ids'] ) ? (array) wp_unslash( $_POST['product_ids'] ) : array();
+		$product_ids = array_map( 'absint', $product_ids );
+		$product_ids = array_values( array_unique( array_filter( $product_ids ) ) );
+
+		if ( empty( $product_ids ) ) {
+			wp_send_json_error(
+				array(
+					'message' => __( 'No products selected.', 'storesuite' ),
+				),
+				400
+			);
+		}
+
+		if ( ! function_exists( 'wp_check_post_lock' ) ) {
+			require_once ABSPATH . 'wp-admin/includes/post.php';
+		}
+
+		$deleted = 0;
+		$locked  = 0;
+
+		foreach ( $product_ids as $post_id ) {
+			if ( 'product' !== get_post_type( $post_id ) ) {
+				continue;
+			}
+
+			if ( ! current_user_can( 'delete_post', $post_id ) ) {
+				continue;
+			}
+
+			if ( wp_check_post_lock( $post_id ) ) {
+				++$locked;
+				continue;
+			}
+
+			if ( wp_delete_post( $post_id, true ) ) {
+				++$deleted;
+			}
+		}
+
+		wp_send_json_success(
+			array(
+				'message' => $this->format_bulk_delete_result_message( $deleted, $locked ),
+				'deleted' => $deleted,
+				'locked'  => $locked,
+			)
+		);
+	}
+
+	/**
+	 * Add or remove taxonomy terms on a set of products (bulk edit modal operation).
+	 *
+	 * @param int[]  $product_ids Product IDs to modify (already capability/lock checked).
+	 * @param string $taxonomy    Taxonomy slug (product_cat|product_tag).
+	 * @param string $op_key      POST key holding the operation ('' | add | remove).
+	 * @param string $terms_key   POST key holding the selected term IDs.
+	 * @return void
+	 */
+	private function apply_bulk_taxonomy_operation( array $product_ids, $taxonomy, $op_key, $terms_key ) {
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in handle_bulk_edit_products_ajax().
+		$operation = isset( $_POST[ $op_key ] ) ? sanitize_key( wp_unslash( $_POST[ $op_key ] ) ) : '';
+		if ( ! in_array( $operation, array( 'add', 'remove' ), true ) ) {
+			return;
+		}
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified in handle_bulk_edit_products_ajax().
+		$term_ids = isset( $_POST[ $terms_key ] ) ? array_map( 'absint', (array) wp_unslash( $_POST[ $terms_key ] ) ) : array();
+		$term_ids = array_values( array_filter( $term_ids ) );
+
+		if ( empty( $product_ids ) || empty( $term_ids ) ) {
+			return;
+		}
+
+		foreach ( $product_ids as $product_id ) {
+			if ( 'add' === $operation ) {
+				wp_set_object_terms( $product_id, $term_ids, $taxonomy, true );
+			} else {
+				wp_remove_object_terms( $product_id, $term_ids, $taxonomy );
+			}
+
+			if ( function_exists( 'wc_delete_product_transients' ) ) {
+				wc_delete_product_transients( $product_id );
+			}
+		}
+
+		/**
+		 * After a bulk add/remove of taxonomy terms on products.
+		 *
+		 * @param int[]  $product_ids Affected product IDs.
+		 * @param string $taxonomy    Taxonomy slug.
+		 * @param string $operation   'add' or 'remove'.
+		 * @param int[]  $term_ids    Term IDs applied.
+		 */
+		do_action( 'storesuite_bulk_taxonomy_updated', $product_ids, $taxonomy, $operation, $term_ids );
 	}
 
 	/**
@@ -224,6 +336,44 @@ class ProductBulkEdit {
 				_n(
 					'%d product was not moved to trash (another user is editing it).',
 					'%d products were not moved to trash (another user is editing them).',
+					$locked,
+					'storesuite'
+				),
+				$locked
+			);
+		}
+
+		if ( empty( $parts ) ) {
+			return __( 'No changes were applied.', 'storesuite' );
+		}
+
+		return implode( "\n", $parts );
+	}
+
+	/**
+	 * Human-readable summary for bulk permanent-delete counts.
+	 *
+	 * @param int $deleted Number of products deleted permanently.
+	 * @param int $locked  Number of products skipped due to lock.
+	 * @return string
+	 */
+	private function format_bulk_delete_result_message( $deleted, $locked ) {
+		$parts = array();
+
+		if ( $deleted > 0 ) {
+			$parts[] = sprintf(
+				/* translators: %d: number of products deleted permanently */
+				_n( '%d product permanently deleted.', '%d products permanently deleted.', $deleted, 'storesuite' ),
+				$deleted
+			);
+		}
+
+		if ( $locked > 0 ) {
+			$parts[] = sprintf(
+				/* translators: %d: number of products not deleted because another user holds the edit lock */
+				_n(
+					'%d product was not deleted (another user is editing it).',
+					'%d products were not deleted (another user is editing them).',
 					$locked,
 					'storesuite'
 				),

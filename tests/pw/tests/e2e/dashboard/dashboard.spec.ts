@@ -27,5 +27,13 @@ test.describe( 'dashboard home', () => {
 				`Sidebar must link to ${ item }`
 			).toBeVisible();
 		}
+
+		// Inventory lives in the collapsed Products submenu, which role
+		// locators cannot see (display:none drops it from the a11y tree),
+		// so target it by href and expand the parent to reveal it.
+		const inventory = menu.locator( 'a[href*="/inventory"]' ).first();
+		await expect( inventory ).toBeAttached();
+		await menu.getByRole( 'link', { name: 'Products', exact: false } ).first().click();
+		await expect( inventory ).toBeVisible();
 	} );
 } );

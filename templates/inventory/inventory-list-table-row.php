@@ -1,6 +1,6 @@
 <?php
 /**
- * Single product row for the StoreSuite products list (used on first paint and after quick edit save).
+ * Single product row for the StoreSuite inventory list (used on first paint and after inline edit save).
  *
  * @package StoreSuite
  *
@@ -12,19 +12,30 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$storesuite_wfm_thumb = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
-if ( empty( $storesuite_wfm_thumb ) ) {
-	$storesuite_wfm_thumb = wc_placeholder_img_src( 'thumbnail' );
+$storesuite_inv_thumb = get_the_post_thumbnail_url( $product_id, 'thumbnail' );
+if ( empty( $storesuite_inv_thumb ) ) {
+	$storesuite_inv_thumb = wc_placeholder_img_src( 'thumbnail' );
 }
 
 $storesuite_can_inline_edit = current_user_can( 'edit_post', $product_id );
-$storesuite_inline_status   = $storesuite_can_inline_edit && in_array( get_post_status( $product_id ), \PluginizeLab\StoreSuite\Product\ProductInlineEdit::EDITABLE_STATUSES, true );
+$storesuite_manages_stock   = $product->managing_stock() && ! $product->is_type( 'variable' );
 $storesuite_inline_sku      = $storesuite_can_inline_edit;
-$storesuite_inline_stock    = $storesuite_can_inline_edit && $product->managing_stock() && ! $product->is_type( 'variable' );
+$storesuite_inline_stock    = $storesuite_can_inline_edit && $storesuite_manages_stock;
+$storesuite_inline_sstatus  = $storesuite_can_inline_edit && ! $product->managing_stock();
 $storesuite_inline_price    = $storesuite_can_inline_edit && $product->is_type( \PluginizeLab\StoreSuite\Product\ProductInlineEdit::get_price_editable_types() );
 $storesuite_inline_title    = __( 'Click to edit', 'storesuite' );
+
+// Low-stock badge color for the quantity, against the resolved threshold.
+$storesuite_stock_qty   = $product->get_stock_quantity();
+$storesuite_threshold   = function_exists( 'wc_get_low_stock_amount' ) ? absint( wc_get_low_stock_amount( $product ) ) : absint( get_option( 'woocommerce_notify_low_stock_amount', 2 ) );
+$storesuite_qty_variant = 'success';
+if ( null !== $storesuite_stock_qty && $storesuite_stock_qty <= 0 ) {
+	$storesuite_qty_variant = 'danger';
+} elseif ( null !== $storesuite_stock_qty && $storesuite_stock_qty <= $storesuite_threshold ) {
+	$storesuite_qty_variant = 'warning';
+}
 ?>
-<tr class="single-product-item storesuite-list-row" id="product-row-<?php echo esc_attr( (string) $product_id ); ?>">
+<tr class="single-inventory-item storesuite-list-row" id="product-row-<?php echo esc_attr( (string) $product_id ); ?>">
 	<td class="check-column">
 		<?php
 		storesuite_get_template_part(
@@ -39,22 +50,10 @@ $storesuite_inline_title    = __( 'Click to edit', 'storesuite' );
 		?>
 	</td>
 	<td data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
-		<img src="<?php echo esc_url( $storesuite_wfm_thumb ); ?>" class="my-storesuite-thumb" alt="<?php echo esc_attr( get_the_title( $product_id ) ); ?>">
+		<img src="<?php echo esc_url( $storesuite_inv_thumb ); ?>" class="my-storesuite-thumb" alt="<?php echo esc_attr( get_the_title( $product_id ) ); ?>">
 	</td>
 	<td class="tbl-product-name" data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
 		<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-product' ) . '%s', $product_id ) ); ?>"><?php echo esc_html( get_the_title( $product_id ) ); ?></a>
-	</td>
-	<td data-title="<?php esc_attr_e( 'Category', 'storesuite' ); ?>">
-		<?php echo wp_kses_post( wc_get_product_category_list( $product_id, ', ', '', '' ) ); ?>
-	</td>
-	<td data-title="<?php esc_attr_e( 'Status', 'storesuite' ); ?>"
-		<?php if ( $storesuite_inline_status ) : ?>
-		class="storesuite-inline-cell" data-inline-field="status" data-inline-value="<?php echo esc_attr( get_post_status( $product_id ) ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
-		<?php endif; ?>
-	>
-		<span class="storesuite-badge storesuite-badge-<?php echo esc_attr( storesuite_get_post_status_class( get_post_status( $product_id ) ) ); ?>">
-			<?php echo esc_html( storesuite_get_post_status( get_post_status( $product_id ) ) ); ?>
-		</span>
 	</td>
 	<td data-title="<?php esc_attr_e( 'SKU', 'storesuite' ); ?>"
 		<?php if ( $storesuite_inline_sku ) : ?>
@@ -69,24 +68,37 @@ $storesuite_inline_title    = __( 'Click to edit', 'storesuite' );
 		}
 		?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Stock', 'storesuite' ); ?>"
+	<td data-title="<?php esc_attr_e( 'Stock Qty', 'storesuite' ); ?>"
 		<?php if ( $storesuite_inline_stock ) : ?>
-		class="storesuite-inline-cell" data-inline-field="stock_quantity" data-inline-value="<?php echo esc_attr( (string) $product->get_stock_quantity() ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
+		class="storesuite-inline-cell" data-inline-field="stock_quantity" data-inline-value="<?php echo esc_attr( (string) $storesuite_stock_qty ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
+		<?php endif; ?>
+	>
+		<?php if ( $storesuite_manages_stock && null !== $storesuite_stock_qty ) : ?>
+			<span class="storesuite-badge storesuite-badge-<?php echo esc_attr( $storesuite_qty_variant ); ?>"><?php echo esc_html( (string) $storesuite_stock_qty ); ?></span>
+		<?php else : ?>
+			<span class="no-sku">&ndash;</span>
+		<?php endif; ?>
+	</td>
+	<td data-title="<?php esc_attr_e( 'Stock Status', 'storesuite' ); ?>"
+		<?php if ( $storesuite_inline_sstatus ) : ?>
+		class="storesuite-inline-cell" data-inline-field="stock_status" data-inline-value="<?php echo esc_attr( $product->get_stock_status() ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
 		<?php endif; ?>
 	>
 		<?php
-		$stock_count = '';
-		if ( $product->managing_stock() ) {
-			$stock_count = '(' . $product->get_stock_quantity() . ')';
-		}
-
 		if ( $product->is_on_backorder() ) {
 			echo '<span class="storesuite-badge storesuite-badge-warning">' . esc_html__( 'On backorder', 'storesuite' ) . '</span>';
 		} elseif ( $product->is_in_stock() ) {
-			echo '<span class="storesuite-badge storesuite-badge-success">' . esc_html__( 'In stock', 'storesuite' ) . esc_html( $stock_count ) . '</span>';
+			echo '<span class="storesuite-badge storesuite-badge-success">' . esc_html__( 'In stock', 'storesuite' ) . '</span>';
 		} else {
 			echo '<span class="storesuite-badge storesuite-badge-danger">' . esc_html__( 'Out of stock', 'storesuite' ) . '</span>';
 		}
+		?>
+	</td>
+	<td data-title="<?php esc_attr_e( 'Backorders', 'storesuite' ); ?>">
+		<?php
+		$storesuite_backorder_options = wc_get_product_backorder_options();
+		$storesuite_backorders        = $product->get_backorders();
+		echo esc_html( isset( $storesuite_backorder_options[ $storesuite_backorders ] ) ? $storesuite_backorder_options[ $storesuite_backorders ] : $storesuite_backorders );
 		?>
 	</td>
 	<td data-title="<?php esc_attr_e( 'Price', 'storesuite' ); ?>"
@@ -95,9 +107,6 @@ $storesuite_inline_title    = __( 'Click to edit', 'storesuite' );
 		<?php endif; ?>
 	>
 		<?php echo wp_kses_post( $product->get_price_html() ); ?>
-	</td>
-	<td data-title="<?php esc_attr_e( 'Type', 'storesuite' ); ?>">
-		<?php storesuite_get_product_type( $product ); ?>
 	</td>
 	<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">
 		<div class="storesuite-dropdown">
@@ -110,14 +119,6 @@ $storesuite_inline_title    = __( 'Click to edit', 'storesuite' );
 				</li>
 				<li>
 					<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-product' ) . '%s', $product_id ) ); ?>" class="dropdown-link"><?php esc_html_e( 'Edit', 'storesuite' ); ?></a>
-				</li>
-				<?php if ( current_user_can( 'edit_post', $product_id ) ) : ?>
-				<li>
-					<button type="button" class="inline-button dropdown-link storesuite-item-inline-edit" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Quick edit', 'storesuite' ); ?></button>
-				</li>
-				<?php endif; ?>
-				<li>
-					<button type="button" class="inline-button dropdown-link storesuite-delete-product" data-product-id="<?php echo esc_attr( (string) $product_id ); ?>"><?php esc_html_e( 'Delete', 'storesuite' ); ?></button>
 				</li>
 			</ul>
 		</div>

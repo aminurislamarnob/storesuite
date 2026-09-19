@@ -22,10 +22,62 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 		<?php do_action( 'storesuite_dashboard_content_before' ); ?>
 		<main class="my-storesuite-page-content">
 			<?php do_action( 'storesuite_dashboard_before_main_content' ); ?>
+			<?php
+			// Bulk action result notice, set by OrderController::handle_order_bulk_actions().
+			// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only feedback counters on a redirect.
+			$storesuite_bulk_updated = isset( $_GET['updated'] ) ? absint( wp_unslash( $_GET['updated'] ) ) : 0;
+			$storesuite_bulk_trashed = isset( $_GET['trashed'] ) ? absint( wp_unslash( $_GET['trashed'] ) ) : 0;
+			$storesuite_bulk_skipped = isset( $_GET['skipped'] ) ? absint( wp_unslash( $_GET['skipped'] ) ) : 0;
+			// phpcs:enable
+
+			if ( $storesuite_bulk_updated || $storesuite_bulk_trashed || $storesuite_bulk_skipped ) :
+				?>
+				<div class="storesuite-bulk-edit-feedback storesuite-form-group" role="status">
+					<?php if ( $storesuite_bulk_updated ) : ?>
+						<p class="storesuite-bulk-edit-feedback-line storesuite-text-success">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d: number of orders updated. */
+									_n( '%d order updated.', '%d orders updated.', $storesuite_bulk_updated, 'storesuite' ),
+									$storesuite_bulk_updated
+								)
+							);
+							?>
+						</p>
+					<?php endif; ?>
+					<?php if ( $storesuite_bulk_trashed ) : ?>
+						<p class="storesuite-bulk-edit-feedback-line storesuite-text-success">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d: number of orders moved to the trash. */
+									_n( '%d order moved to the Trash.', '%d orders moved to the Trash.', $storesuite_bulk_trashed, 'storesuite' ),
+									$storesuite_bulk_trashed
+								)
+							);
+							?>
+						</p>
+					<?php endif; ?>
+					<?php if ( $storesuite_bulk_skipped ) : ?>
+						<p class="storesuite-bulk-edit-feedback-line">
+							<?php
+							echo esc_html(
+								sprintf(
+									/* translators: %d: number of orders skipped. */
+									_n( '%d order could not be updated.', '%d orders could not be updated.', $storesuite_bulk_skipped, 'storesuite' ),
+									$storesuite_bulk_skipped
+								)
+							);
+							?>
+						</p>
+					<?php endif; ?>
+				</div>
+			<?php endif; ?>
 			<div class="storesuite-table-header-part">
 				<div class="row g-2">
 					<div class="col-md-auto storesuite-orders-toolbar-bulk">
-						<div class="storesuite-form-group d-flex align-items-center storesuite-bulk-order-actions mb-0">
+						<div class="storesuite-form-group d-flex align-items-center storesuite-bulk-product-actions storesuite-bulk-order-actions mb-0">
 							<select name="action" id="bulk-action-selector-top" class="storesuite-form-control" form="storesuite-order-bulk-actions">
 								<option value="-1"><?php esc_html_e( 'Bulk actions', 'storesuite' ); ?></option>
 								<option value="mark_processing"><?php esc_html_e( 'Change status to processing', 'storesuite' ); ?></option>
@@ -121,15 +173,16 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					<thead>
 						<tr>
 							<th class="check-column">
-								<label class="my-storesuite-checkbox">
-									<input type="checkbox" id="cb-select-all-orders" class="my-storesuite-checkbox-input">
-									<span class="my-storesuite-checkbox-back"></span>
-									<span class="my-storesuite-tick">
-										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
-											<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"></path>
-										</svg>
-									</span>
-								</label>
+								<?php
+								storesuite_get_template_part(
+									'shared/list-bulk-checkbox',
+									'',
+									array(
+										'is_all' => true,
+										'id'     => 'cb-select-all-orders',
+									)
+								);
+								?>
 							</th>
 							<th><?php echo esc_html__( 'Order', 'storesuite' ); ?></th>
 							<th><?php echo esc_html__( 'Status', 'storesuite' ); ?></th>
@@ -175,15 +228,16 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									?>
 								<tr class="storesuite-list-row">
 									<td class="check-column">
-										<label class="my-storesuite-checkbox">
-											<input type="checkbox" name="bulk_order_ids[]" value="<?php echo esc_attr( $order->get_id() ); ?>" class="my-storesuite-checkbox-input">
-											<span class="my-storesuite-checkbox-back"></span>
-											<span class="my-storesuite-tick">
-												<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
-													<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"></path>
-												</svg>
-											</span>
-										</label>
+										<?php
+										storesuite_get_template_part(
+											'shared/list-bulk-checkbox',
+											'',
+											array(
+												'value' => (string) $order->get_id(),
+												'input_name' => 'bulk_order_ids[]',
+											)
+										);
+										?>
 									</td>
 									<td data-title="<?php echo esc_attr__( 'Order', 'storesuite' ); ?>">
 										<?php $orders_obj->get_order_number_column_value( $order ); ?>

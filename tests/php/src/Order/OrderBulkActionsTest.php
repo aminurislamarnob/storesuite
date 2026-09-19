@@ -55,35 +55,49 @@ class OrderBulkActionsTest extends StoreSuiteTestCase {
 		return $query;
 	}
 
-	public function test_bulk_mark_completed_updates_orders() {
+	public function test_bulk_mark_completed_updates_orders_and_reports_counts() {
 		wp_set_current_user( $this->admin_id );
 		$order_a = self::factory()->order->create();
 		$order_b = self::factory()->order->create();
 
-		// A non-existent ID must be skipped without aborting the batch.
-		// (Result counts in the redirect arrive with the Tier 1 branch.)
-		$this->run_bulk( 'mark_completed', array( $order_a->get_id(), $order_b->get_id(), 999999 ) );
+		$query = $this->run_bulk( 'mark_completed', array( $order_a->get_id(), $order_b->get_id(), 999999 ) );
 
 		$this->assertSame( 'completed', wc_get_order( $order_a->get_id() )->get_status() );
 		$this->assertSame( 'completed', wc_get_order( $order_b->get_id() )->get_status() );
+		$this->assertSame( '2', $query['updated'] );
+		$this->assertSame( '1', $query['skipped'], 'A non-existent order ID must be counted as skipped.' );
+	}
+
+	public function test_bulk_status_change_counts_unchanged_orders_as_skipped() {
+		wp_set_current_user( $this->admin_id );
+		$done    = self::factory()->order->create( array( 'status' => 'completed' ) );
+		$pending = self::factory()->order->create();
+
+		$query = $this->run_bulk( 'mark_completed', array( $done->get_id(), $pending->get_id() ) );
+
+		$this->assertSame( 'completed', wc_get_order( $pending->get_id() )->get_status() );
+		$this->assertSame( '1', $query['updated'] );
+		$this->assertSame( '1', $query['skipped'], 'An order already in the target status is a no-op and must be reported as skipped.' );
 	}
 
 	public function test_bulk_trash_soft_deletes_orders() {
 		wp_set_current_user( $this->admin_id );
 		$order = self::factory()->order->create();
 
-		$this->run_bulk( 'trash', array( $order->get_id() ) );
+		$query = $this->run_bulk( 'trash', array( $order->get_id() ) );
 
 		$this->assertSame( 'trash', wc_get_order( $order->get_id() )->get_status() );
+		$this->assertSame( '1', $query['trashed'] );
 	}
 
 	public function test_bulk_action_rejected_without_valid_nonce() {
 		wp_set_current_user( $this->admin_id );
 		$order = self::factory()->order->create( array( 'status' => 'processing' ) );
 
-		$this->run_bulk( 'mark_completed', array( $order->get_id() ), false );
+		$query = $this->run_bulk( 'mark_completed', array( $order->get_id() ), false );
 
 		$this->assertSame( 'processing', wc_get_order( $order->get_id() )->get_status() );
+		$this->assertArrayNotHasKey( 'updated', $query );
 	}
 
 	public function test_bulk_action_requires_manage_woocommerce() {
@@ -91,17 +105,20 @@ class OrderBulkActionsTest extends StoreSuiteTestCase {
 		$order = self::factory()->order->create( array( 'status' => 'processing' ) );
 
 		wp_set_current_user( $this->customer_id );
-		$this->run_bulk( 'mark_completed', array( $order->get_id() ) );
+		$query = $this->run_bulk( 'mark_completed', array( $order->get_id() ) );
 
 		$this->assertSame( 'processing', wc_get_order( $order->get_id() )->get_status() );
+		$this->assertArrayNotHasKey( 'updated', $query );
 	}
 
 	public function test_unknown_bulk_action_skips_everything() {
 		wp_set_current_user( $this->admin_id );
 		$order = self::factory()->order->create( array( 'status' => 'processing' ) );
 
-		$this->run_bulk( 'mark_exploded', array( $order->get_id() ) );
+		$query = $this->run_bulk( 'mark_exploded', array( $order->get_id() ) );
 
 		$this->assertSame( 'processing', wc_get_order( $order->get_id() )->get_status() );
+		$this->assertSame( '1', $query['skipped'] );
+		$this->assertArrayNotHasKey( 'updated', $query );
 	}
 }

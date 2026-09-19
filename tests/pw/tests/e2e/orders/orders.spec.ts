@@ -51,16 +51,15 @@ test.describe( 'orders list', () => {
 			.filter( { hasText: `#${ orderId }` } );
 		await expect( row ).toHaveCount( 1 );
 
-		await row.locator( 'input[name="bulk_order_ids[]"]' ).check();
+		await row.locator( 'input.storesuite-bulk-cb' ).check();
 
 		// The action select and Apply button live in the toolbar, associated
 		// with the POST form through their form="..." attribute.
 		await page.locator( '#bulk-action-selector-top' ).selectOption( 'mark_completed' );
 		await page.locator( 'button#doaction' ).click();
 
-		// The handler redirects back to the orders list. (Result counts in
-		// the redirect URL arrive with the Tier 1 branch.)
-		await page.waitForURL( /\/orders\// );
+		// The handler redirects back with result counts for the notice.
+		await expect( page ).toHaveURL( /updated=1/ );
 		await expect(
 			page
 				.locator( '.my-storesuite-tbl tbody tr.storesuite-list-row' )

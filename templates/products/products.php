@@ -109,6 +109,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								<option value="-1"><?php esc_html_e( 'Bulk actions', 'storesuite' ); ?></option>
 								<option value="edit"><?php esc_html_e( 'Edit', 'storesuite' ); ?></option>
 								<option value="trash"><?php esc_html_e( 'Move to Trash', 'storesuite' ); ?></option>
+								<option value="delete"><?php esc_html_e( 'Delete permanently', 'storesuite' ); ?></option>
 								<option value="export"><?php esc_html_e( 'Export', 'storesuite' ); ?></option>
 							</select>
 							<button type="submit" id="storesuite-product-doaction" class="my-storesuite-button" form="storesuite-product-bulk-actions"><?php esc_html_e( 'Apply', 'storesuite' ); ?></button>
@@ -161,11 +162,26 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 								</button>
 							</div>
 							<div class="col-auto">
+								<?php
+								// Number of active filters, shown as a badge on the toggle.
+								// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filter values.
+								$storesuite_active_filter_keys  = array( 'product_cat', 'product_type', 'stock_status', 'product_brand', 'post_status', 'date_from', 'date_to', 'price_min', 'price_max' );
+								$storesuite_active_filter_count = 0;
+								foreach ( $storesuite_active_filter_keys as $storesuite_active_filter_key ) {
+									if ( isset( $_GET[ $storesuite_active_filter_key ] ) && '' !== trim( sanitize_text_field( wp_unslash( $_GET[ $storesuite_active_filter_key ] ) ) ) ) {
+										++$storesuite_active_filter_count;
+									}
+								}
+								// phpcs:enable
+								?>
 								<button type="button" class="my-storesuite-button storesuite-filter-toggle" id="storesuite-filter-toggle">
 									<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-funnel" viewBox="0 0 16 16">
 										<path d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z"/>
 									</svg>
 									<span class="storesuite-button-label"><?php esc_html_e( 'Filter', 'storesuite' ); ?></span>
+									<?php if ( $storesuite_active_filter_count > 0 ) : ?>
+										<span class="storesuite-filter-count" aria-label="<?php echo esc_attr( sprintf( /* translators: %d: number of active filters. */ _n( '%d active filter', '%d active filters', $storesuite_active_filter_count, 'storesuite' ), $storesuite_active_filter_count ) ); ?>"><?php echo esc_html( (string) $storesuite_active_filter_count ); ?></span>
+									<?php endif; ?>
 								</button>
 							</div>
 						</div>
@@ -188,8 +204,56 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					'product_type' => isset( $_GET['product_type'] ) ? sanitize_text_field( wp_unslash( $_GET['product_type'] ) ) : '',
 					'stock_status' => isset( $_GET['stock_status'] ) ? sanitize_text_field( wp_unslash( $_GET['stock_status'] ) ) : '',
 					'brand'        => isset( $_GET['product_brand'] ) ? absint( $_GET['product_brand'] ) : '',
+					'status'       => isset( $_GET['post_status'] ) ? sanitize_key( wp_unslash( $_GET['post_status'] ) ) : '',
+					'date_from'    => isset( $_GET['date_from'] ) ? sanitize_text_field( wp_unslash( $_GET['date_from'] ) ) : '',
+					'date_to'      => isset( $_GET['date_to'] ) ? sanitize_text_field( wp_unslash( $_GET['date_to'] ) ) : '',
+					'price_min'    => isset( $_GET['price_min'] ) ? sanitize_text_field( wp_unslash( $_GET['price_min'] ) ) : '',
+					'price_max'    => isset( $_GET['price_max'] ) ? sanitize_text_field( wp_unslash( $_GET['price_max'] ) ) : '',
+					'orderby'      => isset( $_GET['orderby'] ) ? sanitize_key( wp_unslash( $_GET['orderby'] ) ) : '',
+					'order'        => isset( $_GET['order'] ) ? sanitize_key( wp_unslash( $_GET['order'] ) ) : '',
 				);
 				// phpcs:enable
+
+				// Sortable column header link: toggles asc/desc, keeps search + filters, resets to page 1.
+				$storesuite_sort_header = function ( $sort_key, $label ) use ( $filters, $search_term ) {
+					$is_sorted = $filters['orderby'] === $sort_key;
+					$next_dir  = ( $is_sorted && 'asc' === $filters['order'] ) ? 'desc' : 'asc';
+
+					$args = array_merge(
+						array( 'search_by' => $search_term ),
+						array(
+							'product_cat'   => $filters['category'],
+							'product_type'  => $filters['product_type'],
+							'stock_status'  => $filters['stock_status'],
+							'product_brand' => $filters['brand'],
+							'post_status'   => $filters['status'],
+							'date_from'     => $filters['date_from'],
+							'date_to'       => $filters['date_to'],
+							'price_min'     => $filters['price_min'],
+							'price_max'     => $filters['price_max'],
+						)
+					);
+					$args = array_filter(
+						$args,
+						function ( $value ) {
+							return '' !== $value && 0 !== $value;
+						}
+					);
+
+					$args['orderby'] = $sort_key;
+					$args['order']   = $next_dir;
+
+					$url = add_query_arg( array_map( 'rawurlencode', array_map( 'strval', $args ) ), storesuite_get_navigation_url( 'products' ) );
+
+					printf(
+						'<a class="storesuite-sort-link%s" href="%s" aria-sort="%s">%s<span class="storesuite-sort-indicator" aria-hidden="true">%s</span></a>',
+						$is_sorted ? ' is-sorted' : '',
+						esc_url( $url ),
+						esc_attr( $is_sorted ? ( 'desc' === $filters['order'] ? 'descending' : 'ascending' ) : 'none' ),
+						esc_html( $label ),
+						$is_sorted ? ( 'desc' === $filters['order'] ? '&darr;' : '&uarr;' ) : '&updownarrow;'
+					);
+				};
 				$products_obj  = new Products();
 				$products_data = $products_obj->get_paginated_products( $current_page, $search_term, $filters );
 				$product_query = $products_data->products;
@@ -200,23 +264,24 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 					<thead>
 						<tr>
 							<th class="check-column">
-								<label class="my-storesuite-checkbox">
-									<input type="checkbox" id="cb-select-all-products" class="my-storesuite-checkbox-input" aria-label="<?php esc_attr_e( 'Select all', 'storesuite' ); ?>">
-									<span class="my-storesuite-checkbox-back"></span>
-									<span class="my-storesuite-tick">
-										<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-check" viewBox="0 0 16 16">
-											<path d="M10.97 4.97a.75.75 0 0 1 1.07 1.05l-3.99 4.99a.75.75 0 0 1-1.08.02L4.324 8.384a.75.75 0 1 1 1.06-1.06l2.094 2.093 3.473-4.425z"/>
-										</svg>
-									</span>
-								</label>
+								<?php
+								storesuite_get_template_part(
+									'shared/list-bulk-checkbox',
+									'',
+									array(
+										'is_all' => true,
+										'id'     => 'cb-select-all-products',
+									)
+								);
+								?>
 							</th>
 							<th><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Name', 'storesuite' ); ?></th>
+							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'title', __( 'Name', 'storesuite' ) ); ?></th>
 							<th><?php esc_html_e( 'Category', 'storesuite' ); ?></th>
 							<th><?php esc_html_e( 'Status', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'SKU', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Stock', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Price', 'storesuite' ); ?></th>
+							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'sku', __( 'SKU', 'storesuite' ) ); ?></th>
+							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'stock', __( 'Stock', 'storesuite' ) ); ?></th>
+							<th class="storesuite-sortable-col"><?php $storesuite_sort_header( 'price', __( 'Price', 'storesuite' ) ); ?></th>
 							<th><?php esc_html_e( 'Type', 'storesuite' ); ?></th>
 							<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
 						</tr>

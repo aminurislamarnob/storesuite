@@ -265,6 +265,8 @@ final class StoreSuite {
 		$this->container['storesuite_list_actions']                = new ListTable\ListActions();
 		$this->container['storesuite_product_bulk_edit']           = new Product\ProductBulkEdit();
 		$this->container['storesuite_product_quick_edit']          = new Product\ProductQuickEdit();
+		$this->container['storesuite_product_inline_edit']         = new Product\ProductInlineEdit();
+		$this->container['storesuite_inventory_controller']        = new Inventory\InventoryController();
 		$this->container['storesuite_product_controller']          = new Product\ProductController();
 		$this->container['storesuite_product_ai']                  = new Product\ProductAI();
 		$this->container['storesuite_product_image_ai']            = new Product\ProductImageAI();

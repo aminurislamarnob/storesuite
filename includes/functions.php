@@ -18,10 +18,6 @@ function storesuite_get_template_part( $slug, $name = '', $args = array() ) {
 
 	$args = wp_parse_args( $args, $defaults );
 
-	if ( $args && is_array( $args ) ) {
-		extract( $args ); // phpcs:ignore
-	}
-
 	$template = '';
 
 	// Look in yourtheme/my-storesuite/slug-name.php and yourtheme/my-storesuite/slug.php
@@ -44,6 +40,13 @@ function storesuite_get_template_part( $slug, $name = '', $args = array() ) {
 
 	// Allow 3rd party plugin filter template file from their plugin
 	$template = apply_filters( 'storesuite_get_template_part', $template, $slug, $name );
+
+	// Extract only after the template has been resolved, and never overwrite
+	// this function's own variables: an arg keyed "name" (or "slug", "template",
+	// ...) must not be able to break template resolution or the include below.
+	if ( $args && is_array( $args ) ) {
+		extract( $args, EXTR_SKIP ); // phpcs:ignore
+	}
 
 	if ( $template ) {
 		include $template;
@@ -132,6 +135,40 @@ function storesuite_get_post_status_class( $status = '' ) {
 	}
 
 	return $statuses;
+}
+
+/**
+ * HTML for one product row of a product-based list table.
+ *
+ * Shared by the first paint, quick edit and inline cell edit AJAX row refreshes.
+ *
+ * @param int    $product_id Product ID.
+ * @param string $context    List context: 'products' (default) or 'inventory'.
+ * @return string
+ */
+function storesuite_get_product_list_row_html( $product_id, $context = 'products' ) {
+	$product_id = absint( $product_id );
+	$product    = wc_get_product( $product_id );
+	if ( ! $product_id || ! $product ) {
+		return '';
+	}
+
+	$row_templates = array(
+		'products'  => 'products/product-list-table-row',
+		'inventory' => 'inventory/inventory-list-table-row',
+	);
+	$template      = isset( $row_templates[ $context ] ) ? $row_templates[ $context ] : $row_templates['products'];
+
+	ob_start();
+	storesuite_get_template_part(
+		$template,
+		'',
+		array(
+			'product_id' => $product_id,
+			'product'    => $product,
+		)
+	);
+	return ob_get_clean();
 }
 
 /**

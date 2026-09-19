@@ -23,6 +23,7 @@ class HandlePaginations {
 	 */
 	public function __construct() {
 		add_filter( 'storesuite_products_per_page', array( $this, 'set_products_per_page' ) );
+		add_filter( 'storesuite_inventory_per_page', array( $this, 'set_inventory_per_page' ) );
 		add_filter( 'storesuite_orders_per_page', array( $this, 'set_orders_per_page' ) );
 		add_filter( 'storesuite_categories_per_page', array( $this, 'set_category_per_page' ) );
 		add_filter( 'storesuite_tags_per_page', array( $this, 'set_tag_per_page' ) );
@@ -118,5 +119,20 @@ class HandlePaginations {
 		}
 
 		return $coupons_per_page;
+	}
+
+	/**
+	 * Set inventory items per page.
+	 *
+	 * @param int $inventory_per_page The number of inventory rows per page.
+	 * @return int The number of inventory rows per page.
+	 */
+	public function set_inventory_per_page( $inventory_per_page ) {
+		$storesuite_inventory_per_page = (int) storesuite_get_option_by_key( 'storesuite_inventory_per_page' );
+		if ( $storesuite_inventory_per_page > 0 ) {
+			return (int) $storesuite_inventory_per_page;
+		}
+
+		return $inventory_per_page;
 	}
 }

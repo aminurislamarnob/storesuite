@@ -6,7 +6,8 @@
 			if ( typeof StoreSuiteTaxonomyList === 'undefined' ) {
 				return;
 			}
-			this.bindSelectAll();
+			// Select-all/indeterminate sync is handled globally in script.js
+			// (StoreFrontCommonConfig.handleBulkActionCheckbox).
 			this.bindBulkApply();
 			this.initQuickEditModal();
 		},
@@ -53,33 +54,6 @@
 					$( '.my-storesuite-wrapper' )
 				);
 			}
-		},
-
-		/**
-		 * Header "select all" checkbox toggles every row checkbox in its table.
-		 */
-		bindSelectAll: function () {
-			$( document ).on(
-				'change',
-				'.storesuite-bulk-select-all',
-				function () {
-					var isChecked = $( this ).is( ':checked' );
-					$( this )
-						.closest( 'table' )
-						.find( '.storesuite-bulk-cb' )
-						.prop( 'checked', isChecked );
-				}
-			);
-
-			// Keep the header checkbox in sync when a row checkbox changes.
-			$( document ).on( 'change', '.storesuite-bulk-cb', function () {
-				var $table = $( this ).closest( 'table' );
-				var total = $table.find( '.storesuite-bulk-cb' ).length;
-				var checked = $table.find( '.storesuite-bulk-cb:checked' ).length;
-				$table
-					.find( '.storesuite-bulk-select-all' )
-					.prop( 'checked', total > 0 && total === checked );
-			} );
 		},
 
 		/**
@@ -242,6 +216,9 @@
 					if ( ! objectType || ! itemId ) {
 						return;
 					}
+
+					// Close the row menu the click came from before the modal opens.
+					$trigger.closest( '.storesuite-dropdown-menu' ).stop( true, false ).slideUp( 150 );
 
 					$modalBody.empty();
 					self.blockUi();

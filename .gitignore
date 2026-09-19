@@ -9,3 +9,5 @@ vendor
 phpcs-report.txt
 .phpunit.result.cache
 .gitkeep
+test-results
+playwright-report

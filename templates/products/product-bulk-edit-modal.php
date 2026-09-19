@@ -9,12 +9,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-$post_type_object = get_post_type_object( 'product' );
-if ( ! $post_type_object ) {
+$storesuite_post_type_object = get_post_type_object( 'product' );
+if ( ! $storesuite_post_type_object ) {
 	return;
 }
 
-$can_publish = current_user_can( $post_type_object->cap->publish_posts );
+$can_publish = current_user_can( $storesuite_post_type_object->cap->publish_posts );
 
 $inline_edit_statuses = array(
 	'-1' => __( '— No change —', 'storesuite' ),
@@ -38,6 +38,32 @@ $shipping_class = get_terms(
 if ( is_wp_error( $shipping_class ) ) {
 	$shipping_class = array();
 }
+
+$storesuite_bulk_categories = get_terms(
+	array(
+		'taxonomy'   => 'product_cat',
+		'hide_empty' => false,
+	)
+);
+if ( is_wp_error( $storesuite_bulk_categories ) ) {
+	$storesuite_bulk_categories = array();
+}
+
+$storesuite_bulk_tags = get_terms(
+	array(
+		'taxonomy'   => 'product_tag',
+		'hide_empty' => false,
+	)
+);
+if ( is_wp_error( $storesuite_bulk_tags ) ) {
+	$storesuite_bulk_tags = array();
+}
+
+$storesuite_bulk_tax_ops = array(
+	''       => __( '— No change —', 'storesuite' ),
+	'add'    => __( 'Add', 'storesuite' ),
+	'remove' => __( 'Remove', 'storesuite' ),
+);
 ?>
 <div id="storesuite-product-bulk-edit-modal" class="storesuite-product-bulk-modal-overlay" hidden aria-hidden="true">
 	<div
@@ -103,6 +129,43 @@ if ( is_wp_error( $shipping_class ) ) {
 							</div>
 						</div>
 					<?php endif; ?>
+
+						<div class="row">
+							<div class="col-md-6">
+								<div class="storesuite-form-group">
+									<label for="storesuite-bulk-cat-op" class="storesuite-form-label"><?php esc_html_e( 'Categories', 'storesuite' ); ?></label>
+									<select name="storesuite_bulk_cat_op" id="storesuite-bulk-cat-op" class="storesuite-form-control">
+										<?php foreach ( $storesuite_bulk_tax_ops as $storesuite_tax_op_value => $storesuite_tax_op_label ) : ?>
+											<option value="<?php echo esc_attr( $storesuite_tax_op_value ); ?>"><?php echo esc_html( $storesuite_tax_op_label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="storesuite-form-group">
+									<select name="storesuite_bulk_cats[]" id="storesuite-bulk-cats" class="storesuite-form-control storesuite-select2" multiple data-placeholder="<?php esc_attr_e( 'Select categories…', 'storesuite' ); ?>" aria-label="<?php esc_attr_e( 'Categories to add or remove', 'storesuite' ); ?>">
+										<?php foreach ( $storesuite_bulk_categories as $storesuite_bulk_category ) : ?>
+											<option value="<?php echo esc_attr( (string) $storesuite_bulk_category->term_id ); ?>"><?php echo esc_html( $storesuite_bulk_category->name ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div class="storesuite-form-group">
+									<label for="storesuite-bulk-tag-op" class="storesuite-form-label"><?php esc_html_e( 'Tags', 'storesuite' ); ?></label>
+									<select name="storesuite_bulk_tag_op" id="storesuite-bulk-tag-op" class="storesuite-form-control">
+										<?php foreach ( $storesuite_bulk_tax_ops as $storesuite_tax_op_value => $storesuite_tax_op_label ) : ?>
+											<option value="<?php echo esc_attr( $storesuite_tax_op_value ); ?>"><?php echo esc_html( $storesuite_tax_op_label ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+								<div class="storesuite-form-group">
+									<select name="storesuite_bulk_tags[]" id="storesuite-bulk-tags" class="storesuite-form-control storesuite-select2" multiple data-placeholder="<?php esc_attr_e( 'Select tags…', 'storesuite' ); ?>" aria-label="<?php esc_attr_e( 'Tags to add or remove', 'storesuite' ); ?>">
+										<?php foreach ( $storesuite_bulk_tags as $storesuite_bulk_tag ) : ?>
+											<option value="<?php echo esc_attr( (string) $storesuite_bulk_tag->term_id ); ?>"><?php echo esc_html( $storesuite_bulk_tag->name ); ?></option>
+										<?php endforeach; ?>
+									</select>
+								</div>
+							</div>
+						</div>
 					</div>
 
 				<?php

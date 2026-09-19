@@ -22,11 +22,12 @@ $WP_CLI user create customer customer@example.com --role=customer --user_pass=pa
 $WP_CLI option update woocommerce_notify_low_stock_amount 3
 
 # Wide per-page settings give the list specs headroom: every run adds an
-# order, a coupon and a category, and the seeded rows must stay on page 1
-# of a persistent site for many runs.
+# order, a coupon and a category, and specs that seed their own products
+# add more still — the seeded rows must stay on page 1 of a persistent
+# site for many runs.
 $WP_CLI eval '
 $settings = get_option( "storesuite_settings", array() );
-foreach ( array( "order", "coupon", "category" ) as $list ) {
+foreach ( array( "order", "coupon", "category", "product", "inventory" ) as $list ) {
 	$settings[ "storesuite_{$list}_per_page" ] = "50";
 }
 update_option( "storesuite_settings", $settings );

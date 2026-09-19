@@ -227,6 +227,7 @@
 			// Mirror WooCommerce: clearing the selection unchecks the product list.
 			$( 'input[name="bulk_product_ids[]"]:checked, #cb-select-all-products' )
 				.prop( 'checked', false );
+			$( '#cb-select-all-products' ).prop( 'indeterminate', false );
 		},
 
 		closeModal: function () {

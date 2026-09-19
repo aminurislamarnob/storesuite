@@ -956,7 +956,8 @@
 					).val();
 					if (
 						selectedBulkAction !== 'edit' &&
-						selectedBulkAction !== 'trash'
+						selectedBulkAction !== 'trash' &&
+						selectedBulkAction !== 'delete'
 					) {
 						return;
 					}
@@ -995,84 +996,130 @@
 					}
 
 					var bulkEditConfig = StoreSuite_Product.bulk_edit || {};
-					if ( ! bulkEditConfig.trash_nonce ) {
+					var isBulkDelete = selectedBulkAction === 'delete';
+					var removalNonce = isBulkDelete
+						? bulkEditConfig.delete_nonce
+						: bulkEditConfig.trash_nonce;
+					if ( ! removalNonce ) {
 						self.showError();
 						return;
 					}
 
 					var $bulkActionsForm = $( this );
-					var $bulkActionsSubmitButton = $bulkActionsForm.find(
-						'button[type="submit"]'
-					);
-					var bulkTrashFormData = new FormData();
-					var productIndex;
-
-					bulkTrashFormData.append(
-						'action',
-						'storesuite_bulk_trash_products'
-					);
-					bulkTrashFormData.append(
-						'security',
-						bulkEditConfig.trash_nonce
-					);
-					for (
-						productIndex = 0;
-						productIndex < selectedProductIds.length;
-						productIndex++
-					) {
-						bulkTrashFormData.append(
-							'product_ids[]',
-							selectedProductIds[ productIndex ]
+					var runBulkRemoval = function () {
+						var $bulkActionsSubmitButton = $bulkActionsForm.find(
+							'button[type="submit"]'
 						);
+						var bulkRemovalFormData = new FormData();
+						var productIndex;
+
+						bulkRemovalFormData.append(
+							'action',
+							isBulkDelete
+								? 'storesuite_bulk_delete_products'
+								: 'storesuite_bulk_trash_products'
+						);
+						bulkRemovalFormData.append( 'security', removalNonce );
+						for (
+							productIndex = 0;
+							productIndex < selectedProductIds.length;
+							productIndex++
+						) {
+							bulkRemovalFormData.append(
+								'product_ids[]',
+								selectedProductIds[ productIndex ]
+							);
+						}
+
+						$bulkActionsSubmitButton.prop( 'disabled', true );
+						window.StoreSuite.storeSuiteLoader.block(
+							$( '.my-storesuite-wrapper' )
+						);
+
+						$.ajax( {
+							url: storeSuiteFormHandler.ajax_url,
+							type: 'POST',
+							data: bulkRemovalFormData,
+							processData: false,
+							contentType: false,
+							success: function ( bulkRemovalResponse ) {
+								Swal.close();
+								if ( bulkRemovalResponse.success ) {
+									Swal.fire( {
+										icon: 'success',
+										title: isBulkDelete
+											? bulkEditConfig.delete_success_title ||
+											  bulkEditConfig.success_title
+											: bulkEditConfig.trash_success_title ||
+											  bulkEditConfig.success_title,
+										text:
+											bulkRemovalResponse.data &&
+											bulkRemovalResponse.data.message
+												? bulkRemovalResponse.data.message
+												: '',
+										confirmButtonText: bulkEditConfig.ok_button,
+									} ).then( function () {
+										window.location.reload();
+									} );
+								} else {
+									self.showError(
+										bulkRemovalResponse.data &&
+											( bulkRemovalResponse.data.message ||
+												bulkRemovalResponse.data.error )
+									);
+								}
+							},
+							error: function ( xhr ) {
+								Swal.close();
+								self.showError( self.getXhrErrorMessage( xhr ) );
+							},
+							complete: function () {
+								$bulkActionsSubmitButton.prop( 'disabled', false );
+								window.StoreSuite.storeSuiteLoader.unblock(
+									$( '.my-storesuite-wrapper' )
+								);
+							},
+						} );
+					};
+
+					if ( isBulkDelete ) {
+						if ( typeof Swal === 'undefined' ) {
+							return;
+						}
+						Swal.fire( {
+							icon: 'warning',
+							title: bulkEditConfig.delete_confirm_title,
+							text: bulkEditConfig.delete_confirm_message,
+							showCancelButton: true,
+							confirmButtonText: bulkEditConfig.delete_confirm_button,
+							cancelButtonText: bulkEditConfig.cancel_button,
+						} ).then( function ( confirmResult ) {
+							if ( ! confirmResult.isConfirmed ) {
+								return;
+							}
+							// Second confirmation: permanent deletion skips
+							// the trash, so a mis-click cannot be undone.
+							Swal.fire( {
+								icon: 'error',
+								title: bulkEditConfig.delete_recheck_title,
+								text: (
+									bulkEditConfig.delete_recheck_message || ''
+								).replace( '%d', selectedProductIds.length ),
+								showCancelButton: true,
+								confirmButtonText:
+									bulkEditConfig.delete_recheck_button,
+								cancelButtonText: bulkEditConfig.cancel_button,
+								focusCancel: true,
+							} ).then( function ( recheckResult ) {
+								if ( recheckResult.isConfirmed ) {
+									runBulkRemoval();
+								}
+							} );
+						} );
+						return;
 					}
 
-					$bulkActionsSubmitButton.prop( 'disabled', true );
-					window.StoreSuite.storeSuiteLoader.block(
-						$( '.my-storesuite-wrapper' )
-					);
-
-					$.ajax( {
-						url: storeSuiteFormHandler.ajax_url,
-						type: 'POST',
-						data: bulkTrashFormData,
-						processData: false,
-						contentType: false,
-						success: function ( bulkTrashResponse ) {
-							Swal.close();
-							if ( bulkTrashResponse.success ) {
-								Swal.fire( {
-									icon: 'success',
-									title:
-										bulkEditConfig.trash_success_title ||
-										bulkEditConfig.success_title,
-									text:
-										bulkTrashResponse.data &&
-										bulkTrashResponse.data.message
-											? bulkTrashResponse.data.message
-											: '',
-									confirmButtonText: bulkEditConfig.ok_button,
-								} ).then( function () {
-									window.location.reload();
-								} );
-							} else {
-								self.showError(
-									bulkTrashResponse.data &&
-										( bulkTrashResponse.data.message ||
-											bulkTrashResponse.data.error )
-								);
-							}
-						},
-						error: function ( xhr ) {
-							Swal.close();
-							self.showError( self.getXhrErrorMessage( xhr ) );
-						},
-						complete: function () {
-							$bulkActionsSubmitButton.prop( 'disabled', false );
-							window.StoreSuite.storeSuiteLoader.unblock(
-								$( '.my-storesuite-wrapper' )
-							);
-						},
-					} );
+					runBulkRemoval();
 				}
 			);
 		},
@@ -1085,7 +1132,22 @@
 			}
 
 			var $bulkHiddenPostInputs = $( '#storesuite-bulk-edit-post-ids' );
+			var $bulkEditForm = $bulkEditModal.find( 'form' ).first();
 			var productIndex;
+
+			// Start from a clean form every time: the modal is hidden, not
+			// destroyed, on close, so a previous Add/Remove choice would
+			// otherwise be applied silently to the next selection.
+			if ( $bulkEditForm.length ) {
+				$bulkEditForm[ 0 ].reset();
+				$bulkEditForm
+					.find( 'select[multiple]' )
+					.val( null )
+					.trigger( 'change' );
+				$bulkEditForm
+					.find( '.storesuite-bulk-edit-submit' )
+					.prop( 'disabled', false );
+			}
 
 			$bulkHiddenPostInputs.empty();
 
@@ -1102,6 +1164,9 @@
 					} )
 				);
 			}
+
+			// Enhance the category/tag multi-selects on first open.
+			this.initSelect2( $bulkEditModal );
 
 			suiteModal.open( $bulkEditModal );
 		},
@@ -1275,6 +1340,9 @@
 					if ( ! productId ) {
 						return;
 					}
+
+					// Close the row menu the click came from before the modal opens.
+					$( this ).closest( '.storesuite-dropdown-menu' ).stop( true, false ).slideUp( 150 );
 
 					resetQuickEditModalContent();
 					activeQuickEditProductId = String( productId );

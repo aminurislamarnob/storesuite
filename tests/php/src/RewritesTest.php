@@ -18,11 +18,10 @@ class RewritesTest extends StoreSuiteTestCase {
 	public function test_all_dashboard_endpoints_have_query_vars() {
 		$rewrites = new Rewrites();
 
-		// NOTE: the 'inventory' endpoint arrives with the Tier 1 branch
-		// (feat/inventory-view); its assertions live in that branch's tests.
 		$expected = array(
 			'analytics',
 			'products',
+			'inventory',
 			'import-products',
 			'add-new-product',
 			'edit-product',
@@ -70,6 +69,7 @@ class RewritesTest extends StoreSuiteTestCase {
 
 		$this->assertContains( 'existing', $vars );
 		$this->assertContains( 'products', $vars );
+		$this->assertContains( 'inventory', $vars );
 		$this->assertContains( 'edit-account-details', $vars );
 	}
 
@@ -81,7 +81,7 @@ class RewritesTest extends StoreSuiteTestCase {
 
 		global $wp_rewrite;
 
-		foreach ( array( 'products', 'orders', 'coupons', 'categories', 'tags', 'brands' ) as $list ) {
+		foreach ( array( 'products', 'inventory', 'orders', 'coupons', 'categories', 'tags', 'brands' ) as $list ) {
 			$this->assertArrayHasKey(
 				'storesuite-dashboard/' . $list . '/page/([^/]+)/?$',
 				$wp_rewrite->extra_rules_top,

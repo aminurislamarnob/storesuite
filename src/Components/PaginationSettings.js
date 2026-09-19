@@ -17,6 +17,11 @@ const PAGINATION_FIELDS = [
 		label: __( 'Products per page', 'storesuite' ),
 	},
 	{
+		key: 'inventoryPerPage',
+		apiKey: 'storesuite_inventory_per_page',
+		label: __( 'Inventory items per page', 'storesuite' ),
+	},
+	{
 		key: 'orderPerPage',
 		apiKey: 'storesuite_order_per_page',
 		label: __( 'Orders per page', 'storesuite' ),

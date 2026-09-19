@@ -17,6 +17,12 @@
 }
 
 @media ( max-width: 767px ) {
+	/* Inline cell editor fills the stacked-card cell on mobile. */
+	.storesuite-inline-editor {
+		max-width: 100%;
+		width: 100%;
+	}
+
 	/* Off-canvas sidebar */
 	.my-storesuite-container .my-storesuite-sidebar {
 		--storesuite-sidebar-current-width: var( --storesuite-sidebar-width-expanded );

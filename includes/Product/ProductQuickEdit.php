@@ -254,21 +254,6 @@ class ProductQuickEdit {
 	 * @return string
 	 */
 	private function get_product_list_row_html( $post_id ) {
-		$post_id = absint( $post_id );
-		$product = wc_get_product( $post_id );
-		if ( ! $post_id || ! $product ) {
-			return '';
-		}
-
-		ob_start();
-		storesuite_get_template_part(
-			'products/product-list-table-row',
-			'',
-			array(
-				'product_id' => $post_id,
-				'product'    => $product,
-			)
-		);
-		return ob_get_clean();
+		return storesuite_get_product_list_row_html( $post_id );
 	}
 }
