@@ -8051,3 +8051,215 @@ ul.storesuite-notifications-list {
 [data-theme="dark"] .storesuite-order-documents .storesuite-order-documents-list .my-storesuite-button:hover svg {
   background: var(--storesuite-primary-bg);
 }
+
+/* ---------------------------------------------------------------------------
+ * ACF field groups on the product form (templates/products/acf/).
+ * ------------------------------------------------------------------------- */
+.storesuite-acf-input-group {
+  display: flex;
+  align-items: stretch;
+}
+.storesuite-acf-input-group .storesuite-form-control,
+.storesuite-acf-input-group .storesuite-acf-range {
+  flex: 1;
+  min-width: 0;
+}
+.storesuite-acf-input-addon {
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  border: 1px solid var(--storesuite-border-color);
+  border-radius: 6px;
+  background: var(--storesuite-bg-color-light);
+  color: var(--storesuite-text-color-light);
+  font-size: 14px;
+  white-space: nowrap;
+}
+.storesuite-acf-input-addon:first-child {
+  border-right: 0;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+.storesuite-acf-input-addon:last-child {
+  border-left: 0;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.storesuite-acf-input-group .storesuite-form-control:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+.storesuite-acf-input-group .storesuite-form-control:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+/* Range: slider plus live value read-out. */
+.storesuite-acf-range {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 40px;
+}
+.storesuite-acf-range-input {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--storesuite-primary-bg);
+}
+.storesuite-acf-range-output {
+  min-width: 3ch;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--storesuite-text-color);
+}
+
+/* Colour: native swatch beside the editable hex value. */
+.storesuite-acf-color {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.storesuite-acf-color-swatch {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  padding: 4px;
+  border: 1px solid var(--storesuite-border-color);
+  border-radius: 6px;
+  background: transparent;
+  cursor: pointer;
+}
+.storesuite-acf-color-swatch::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+.storesuite-acf-color-swatch::-webkit-color-swatch,
+.storesuite-acf-color-swatch::-moz-color-swatch {
+  border: 0;
+  border-radius: 4px;
+}
+.storesuite-acf-color .storesuite-form-control {
+  flex: 1;
+  min-width: 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Layout-only fields. */
+.storesuite-acf-message {
+  color: var(--storesuite-text-color);
+  font-size: 14px;
+}
+.storesuite-acf-message p:last-child {
+  margin-bottom: 0;
+}
+.storesuite-acf-separator {
+  margin: 4px 0 0;
+  border: 0;
+  border-top: 1px solid var(--storesuite-border-color);
+}
+.storesuite-acf-field-unsupported-note {
+  margin: 0;
+  color: var(--storesuite-text-color-light);
+  font-style: italic;
+}
+
+/* Choice lists: native checkbox / radio inputs beside their labels. */
+.storesuite-acf-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 4px 0;
+}
+.storesuite-acf-choices-horizontal {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+/* Outranks the generic `.storesuite-form-group label` block rule. */
+.my-storesuite-container .storesuite-form-group .storesuite-acf-choice,
+.my-storesuite-wrapper .storesuite-form-group .storesuite-acf-choice {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-weight: 400;
+  cursor: pointer;
+}
+.storesuite-acf-choice input[type="checkbox"],
+.storesuite-acf-choice input[type="radio"] {
+  width: 16px;
+  height: 16px;
+  margin: 0;
+  accent-color: var(--storesuite-primary-bg);
+}
+
+/* Button group: radios rendered as a segmented control. */
+.storesuite-acf-button-group {
+  display: inline-flex;
+  flex-wrap: wrap;
+  border: 1px solid var(--storesuite-border-color);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.storesuite-acf-button-group-input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.my-storesuite-container .storesuite-form-group .storesuite-acf-button-group-option,
+.my-storesuite-wrapper .storesuite-form-group .storesuite-acf-button-group-option {
+  display: block;
+  margin: 0;
+  padding: 0 16px;
+  height: 38px;
+  line-height: 38px;
+  font-weight: 500;
+  color: var(--storesuite-text-color);
+  background: var(--storesuite-bg-color-light);
+  border-right: 1px solid var(--storesuite-border-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.storesuite-acf-button-group-option:last-child {
+  border-right: 0;
+}
+.storesuite-acf-button-group-input:checked + .storesuite-acf-button-group-option {
+  background: var(--storesuite-primary-bg);
+  color: var(--storesuite-button-text-color);
+}
+.storesuite-acf-button-group-input:focus-visible + .storesuite-acf-button-group-option {
+  outline: 2px solid var(--storesuite-primary-bg);
+  outline-offset: -2px;
+}
+
+/* True/false: the standard switch, nested inside the field wrapper. */
+.storesuite-acf-field .storesuite-acf-switch {
+  min-height: 40px;
+  margin-bottom: 0;
+}
+
+/* WYSIWYG: keep the editor chrome inside the card. */
+.storesuite-acf-wysiwyg .wp-editor-wrap {
+  max-width: 100%;
+}
+
+/* Image: the featured-image drop area, capped so it stays a tile in wide columns. */
+.storesuite-acf-image .image-drop-container {
+  max-width: 220px;
+}
+
+/* Validation dialog: one line per failing field. */
+.swal2-html-container .storesuite-error-list {
+  margin: 0;
+  padding: 0 0 0 20px;
+  text-align: left;
+  list-style: disc;
+}
+.swal2-html-container .storesuite-error-list li + li {
+  margin-top: 6px;
+}
+
+/* Conditional logic: fields whose rules do not pass. */
+.storesuite-acf-field.storesuite-acf-hidden {
+  display: none;
+}

@@ -314,6 +314,22 @@ function storesuite_get_navigation_url( $name = '' ) {
 	return apply_filters( 'storesuite_get_navigation_url', esc_url( $url ), $name );
 }
 
+/**
+ * Whether WooCommerce's Point of Sale feature is enabled.
+ *
+ * WooCommerce 11 made the feature always-on and deprecated querying it through
+ * FeaturesUtil, so the flag is only read on older versions.
+ *
+ * @return bool
+ */
+function storesuite_is_pos_feature_enabled() {
+	if ( defined( 'WC_VERSION' ) && version_compare( WC_VERSION, '11.0', '>=' ) ) {
+		return true;
+	}
+
+	return class_exists( '\Automattic\WooCommerce\Utilities\FeaturesUtil' )
+		&& \Automattic\WooCommerce\Utilities\FeaturesUtil::feature_is_enabled( 'point_of_sale' );
+}
 
 /**
  * Check if it's a store suite dashboard page
