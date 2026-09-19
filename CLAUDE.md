@@ -120,3 +120,17 @@ The dashboard page (created on activation with `[storesuite_dashboard]` shortcod
 ## CI/CD
 
 GitHub Actions (`.github/workflows/deploy.yml`) triggers on git tag push: installs with `--no-dev`, builds assets, creates ZIP via rsync + `.distignore`, uploads as GitHub release artifact, and deploys to WordPress.org via SVN.
+
+## Agent skills
+
+### Issue tracker
+
+Issues are tracked in GitHub Issues on `aminurislamarnob/storesuite` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Default vocabulary: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context: `CONTEXT.md` + `docs/adr/` at the repo root (created lazily by `/domain-modeling`). See `docs/agents/domain.md`.
