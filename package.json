@@ -1,6 +1,6 @@
 {
 	"name": "storesuite",
-	"version": "1.3.1",
+	"version": "1.4.0",
 	"description": "Run the following command for development environment.",
 	"main": "index.js",
 	"scripts": {

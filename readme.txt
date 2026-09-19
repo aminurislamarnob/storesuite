@@ -5,7 +5,7 @@ Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce 
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.3.1
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -150,6 +150,12 @@ Integrating Appsero SDK **DOES NOT IMMEDIATELY** start gathering data, **without
 Learn more about how [Appsero collects and uses this data](https://appsero.com/privacy-policy/).
 
 == Changelog ==
+
+= 1.4.0 =
+* Lower the minimum PHP version to **7.4** (previously 8.1), matching the WordPress and WooCommerce floors so StoreSuite can be installed on the same hosts they run on. PHP compatibility is now checked in CI on every change.
+* Fix a fatal error when using **AI product text or image generation** on WordPress 6.9. The WordPress AI Client only ships with WordPress 7.0, so on older versions the AI buttons now return a clear message instead of crashing the request.
+* The plugin name shown in the **Plugins** list now matches the WordPress.org listing.
+* The release package no longer includes development-only files.
 
 = 1.3.1 =
 * Fix the login screen redirecting to My Account before anyone had logged in. The redirect fired while the login **form** was rendering, which broke plain `wp-login.php` and hidden login URLs from plugins such as WPS Hide Login. The form now renders normally; the redirect only runs after a successful login.
