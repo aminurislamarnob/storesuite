@@ -8,6 +8,7 @@
  * Author URI: https://github.com/aminurislamarnob/
  * Text Domain: storesuite
  * Requires at least: 6.9
+ * Requires PHP: 7.4
  * WC requires at least: 10.4.3
  * Requires Plugins: woocommerce
  * License: GPL2

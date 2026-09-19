@@ -10,8 +10,6 @@ use WC_Order;
 use Automattic\WooCommerce\Enums\OrderStatus;
 use Automattic\WooCommerce\Internal\DataStores\Orders\OrdersTableDataStore;
 
-use function Symfony\Component\VarDumper\Dumper\esc;
-
 /**
  * Plugin order manager class
  */
