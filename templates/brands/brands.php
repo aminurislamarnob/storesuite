@@ -38,6 +38,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							</div>
 						</form>
 					</div>
+					<div class="col-md-auto storesuite-toolbar-columns">
+						<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'brands' ) ); ?>
+					</div>
 					<div class="col-md-auto text-right storesuite-toolbar-add">
 						<?php do_action( 'storesuite_brands_toolbar_add_button' ); ?>
 					</div>
@@ -57,12 +60,12 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							<th class="check-column">
 								<?php storesuite_get_template_part( 'shared/list-bulk-checkbox', '', array( 'is_all' => true ) ); ?>
 							</th>
-							<th width="60"><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Name', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Description', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Parent', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Slug', 'storesuite' ); ?></th>
-							<th><?php esc_html_e( 'Count', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'brands', 'image' ); ?> width="60"><?php esc_html_e( 'Image', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'brands', 'name' ); ?>><?php esc_html_e( 'Name', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'brands', 'description' ); ?>><?php esc_html_e( 'Description', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'brands', 'parent' ); ?>><?php esc_html_e( 'Parent', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'brands', 'slug' ); ?>><?php esc_html_e( 'Slug', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'brands', 'count' ); ?>><?php esc_html_e( 'Count', 'storesuite' ); ?></th>
 							<th class="text-right"><?php esc_html_e( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>

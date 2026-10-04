@@ -77,6 +77,8 @@
 	.storesuite-dashboard-braedcrumb,
 	.storesuite-table-header-part .storesuite-export-toggle .storesuite-button-label,
 	.storesuite-table-header-part .storesuite-filter-toggle .storesuite-button-label,
+	.storesuite-toolbar-actions .storesuite-column-manager-toggle .storesuite-button-label,
+	.storesuite-toolbar-actions .storesuite-import-link .storesuite-button-label,
 	.storesuite-toolbar-actions .my-storesuite-button .storesuite-add-product-text,
 	.storesuite-ai-bundle-prefix,
 	.storesuite-list-table thead,
@@ -92,8 +94,19 @@
 
 	.storesuite-table-header-part .storesuite-search-toggle svg,
 	.storesuite-table-header-part .storesuite-export-toggle svg,
+	.storesuite-toolbar-actions .storesuite-import-link svg,
+	.storesuite-toolbar-actions .storesuite-column-manager-toggle svg,
 	.storesuite-filter-toggle svg {
 		margin-right: 0;
+	}
+
+	.storesuite-toolbar-actions .storesuite-column-manager-count,
+	.storesuite-orders-toolbar-tools .storesuite-column-manager-count {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		margin: 0;
+		border: 2px solid var( --storesuite-page-bg );
 	}
 
 	.storesuite-toolbar-actions {
@@ -114,10 +127,102 @@
 	.storesuite-table-header-part .storesuite-export-toggle,
 	.storesuite-table-header-part .storesuite-filter-toggle,
 	.storesuite-table-header-part .storesuite-search-toggle,
+	.storesuite-toolbar-actions .storesuite-import-link,
+	.storesuite-toolbar-actions .storesuite-column-manager-toggle,
+	.storesuite-orders-toolbar-tools .storesuite-column-manager-toggle,
 	.storesuite-orders-title-actions .storesuite-filter-toggle {
 		width: 45px;
 		height: 38px;
 		padding: 5px;
+	}
+
+	/* Orders: Add Order + Filter live in the title row; keep Columns + Export as one row */
+	.storesuite-orders-toolbar .storesuite-toolbar-add {
+		display: block;
+		width: 100%;
+	}
+
+	.storesuite-orders-toolbar-add-btn,
+	.storesuite-orders-toolbar-filter {
+		display: none;
+	}
+
+	.storesuite-orders-toolbar-tools {
+		display: flex;
+		gap: 8px;
+		width: 100%;
+	}
+
+	.storesuite-orders-toolbar-tools .storesuite-column-manager,
+	.storesuite-orders-toolbar-tools .storesuite-export-toggle {
+		flex: 1 1 0;
+	}
+
+	.storesuite-orders-toolbar-tools .storesuite-column-manager-toggle,
+	.storesuite-orders-toolbar-tools .storesuite-export-toggle {
+		width: 100%;
+		height: auto;
+		padding: 10px 20px;
+	}
+
+	.storesuite-orders-toolbar .storesuite-orders-toolbar-tools .my-storesuite-button .storesuite-button-label {
+		display: inline;
+	}
+
+	.storesuite-orders-toolbar .storesuite-orders-toolbar-tools .my-storesuite-button svg {
+		margin-right: 5px;
+	}
+
+	.storesuite-orders-toolbar-tools .storesuite-column-manager-count {
+		position: static;
+		margin-left: 6px;
+		border: 0;
+	}
+
+	.storesuite-orders-toolbar-tools .storesuite-column-manager-menu {
+		left: 0;
+		right: auto;
+		width: 100%;
+		max-width: none;
+	}
+
+	/* Coupon / taxonomy lists: the Columns toggle fills its own row */
+	.storesuite-toolbar-columns .storesuite-column-manager,
+	.storesuite-toolbar-columns .storesuite-column-manager-toggle {
+		width: 100%;
+	}
+
+	.storesuite-toolbar-columns .storesuite-column-manager-menu {
+		left: 0;
+		right: auto;
+		width: 100%;
+		max-width: none;
+	}
+
+	/* Edit history: the change cell is the card body, not a label/value pair */
+	.storesuite-edit-history-table tr.storesuite-list-row td.storesuite-history-change {
+		display: block;
+		border-top: 0;
+		text-align: left;
+	}
+
+	.storesuite-history-item {
+		flex-direction: column;
+		align-items: flex-start;
+		gap: 2px;
+	}
+
+	.storesuite-edit-history-table tr.storesuite-list-row td.storesuite-history-actions.is-empty {
+		display: none;
+	}
+
+	.storesuite-bulk-edit-feedback-actions {
+		width: 100%;
+		margin-left: 0;
+	}
+
+	.storesuite-bulk-edit-feedback-actions .my-storesuite-button {
+		width: 100%;
 	}
 
 	/* Order form: push Update/Create button to the very bottom */
@@ -259,7 +364,7 @@
 		padding: 8px 16px;
 		border: 1px solid var( --storesuite-border-color );
 		border-radius: 8px;
-		background: #fff;
+		background: var( --storesuite-surface-bg );
 	}
 
 	.storesuite-list-table tr.storesuite-list-row td,
@@ -545,7 +650,7 @@
 		padding: 8px 16px;
 		border: 1px solid var( --storesuite-border-color );
 		border-radius: 8px;
-		background: #fff;
+		background: var( --storesuite-surface-bg );
 	}
 
 	.my-storesuite-attributes-table tr.storesuite-attribute-row td {
@@ -695,6 +800,7 @@
 
 	.storesuite-table-header-part .storesuite-export-toggle .storesuite-button-label,
 	.storesuite-table-header-part .storesuite-filter-toggle .storesuite-button-label,
+	.storesuite-table-header-part .storesuite-column-manager-toggle .storesuite-button-label,
 	.storesuite-toolbar-add,
 	.storesuite-dashboard-title-wrapper:has( .storesuite-title-action ) .storesuite-dashboard-braedcrumb {
 		display: none;
@@ -706,15 +812,34 @@
 	}
 
 	.storesuite-table-header-part .storesuite-export-toggle svg,
-	.storesuite-table-header-part .storesuite-filter-toggle svg {
+	.storesuite-table-header-part .storesuite-filter-toggle svg,
+	.storesuite-table-header-part .storesuite-column-manager-toggle svg {
 		margin-right: 0;
 	}
 
 	.storesuite-table-header-part .storesuite-export-toggle,
-	.storesuite-table-header-part .storesuite-filter-toggle {
+	.storesuite-table-header-part .storesuite-filter-toggle,
+	.storesuite-table-header-part .storesuite-column-manager-toggle {
 		width: 45px;
 		height: 38px;
 		padding: 5px;
+	}
+
+	.storesuite-table-header-part .storesuite-column-manager-count {
+		position: absolute;
+		top: -6px;
+		right: -6px;
+		margin: 0;
+		border: 2px solid var( --storesuite-page-bg );
+	}
+
+	.storesuite-orders-toolbar .storesuite-toolbar-add {
+		display: block;
+	}
+
+	.storesuite-orders-toolbar-add-btn,
+	.storesuite-orders-toolbar-filter {
+		display: none;
 	}
 
 	.storesuite-toolbar-search .storesuite-table-search-input {

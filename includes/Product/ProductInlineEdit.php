@@ -6,6 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use PluginizeLab\StoreSuite\EditHistory\EditHistoryController;
+use PluginizeLab\StoreSuite\EditHistory\EditHistoryManager;
+
 /**
  * Product inline cell edit service class.
  *
@@ -65,6 +68,7 @@ class ProductInlineEdit {
 		$product_id = isset( $_POST['product_id'] ) ? absint( wp_unslash( $_POST['product_id'] ) ) : 0;
 		$field      = isset( $_POST['field'] ) ? sanitize_key( wp_unslash( $_POST['field'] ) ) : '';
 		$context    = isset( $_POST['context'] ) ? sanitize_key( wp_unslash( $_POST['context'] ) ) : 'products';
+		$batch_id   = 0;
 
 		try {
 			if ( ! $product_id || 'product' !== get_post_type( $product_id ) ) {
@@ -79,6 +83,9 @@ class ProductInlineEdit {
 			if ( ! $product ) {
 				throw new \RuntimeException( esc_html__( 'Product not found.', 'storesuite' ), 404 );
 			}
+
+			$history = new EditHistoryManager();
+			$before  = $history->snapshot_product( $product );
 
 			switch ( $field ) {
 				case 'price':
@@ -106,6 +113,19 @@ class ProductInlineEdit {
 			}
 
 			$product->save();
+
+			$batch_id = $history->record_from_snapshots(
+				'inline',
+				'product',
+				sprintf(
+					/* translators: 1: field label, 2: product name. */
+					__( '%1$s changed on "%2$s"', 'storesuite' ),
+					EditHistoryManager::field_label( 'price' === $field ? 'regular_price' : $field ),
+					$product->get_name()
+				),
+				array( $product_id => $before ),
+				array( $product_id => $history->snapshot_product_fresh( $product_id ) )
+			);
 
 			/**
 			 * After a successful inline cell edit save.
@@ -141,6 +161,7 @@ class ProductInlineEdit {
 			array(
 				'message' => __( 'Product updated.', 'storesuite' ),
 				'row'     => storesuite_get_product_list_row_html( $product_id, $context ),
+				'undo'    => EditHistoryController::undo_payload( $batch_id ),
 			)
 		);
 	}

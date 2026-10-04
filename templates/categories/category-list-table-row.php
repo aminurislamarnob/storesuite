@@ -13,7 +13,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<td class="check-column">
 		<?php storesuite_get_template_part( 'shared/list-bulk-checkbox', '', array( 'value' => $category->term_id ) ); ?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'categories', 'image' ); ?> data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
 		<?php
 		$thumbnail_id = absint( get_term_meta( $category->term_id, 'thumbnail_id', true ) );
 		if ( $thumbnail_id ) {
@@ -34,15 +34,15 @@ if ( ! defined( 'ABSPATH' ) ) {
 		}
 		?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'categories', 'name' ); ?> data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
 		<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-category' ) . '%s', $category->term_id ) ); ?>">
 			<?php echo esc_html( $dash_prefix . $category->name ); ?>
 		</a>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>"><?php echo esc_html( wp_trim_words( $category->description, '9', '...' ) ); ?></td>
-	<td data-title="<?php esc_attr_e( 'Parent', 'storesuite' ); ?>"><?php echo esc_html( $parent ? $parent->name : '-' ); ?></td>
-	<td data-title="<?php esc_attr_e( 'Slug', 'storesuite' ); ?>"><?php echo esc_html( $category->slug ); ?></td>
-	<td data-title="<?php esc_attr_e( 'Count', 'storesuite' ); ?>"><?php echo esc_html( $category->count ); ?></td>
+	<td<?php storesuite_list_column_attrs( 'categories', 'description' ); ?> data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>"><?php echo esc_html( wp_trim_words( $category->description, '9', '...' ) ); ?></td>
+	<td<?php storesuite_list_column_attrs( 'categories', 'parent' ); ?> data-title="<?php esc_attr_e( 'Parent', 'storesuite' ); ?>"><?php echo esc_html( $parent ? $parent->name : '-' ); ?></td>
+	<td<?php storesuite_list_column_attrs( 'categories', 'slug' ); ?> data-title="<?php esc_attr_e( 'Slug', 'storesuite' ); ?>"><?php echo esc_html( $category->slug ); ?></td>
+	<td<?php storesuite_list_column_attrs( 'categories', 'count' ); ?> data-title="<?php esc_attr_e( 'Count', 'storesuite' ); ?>"><?php echo esc_html( $category->count ); ?></td>
 	<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">
 		<div class="storesuite-dropdown">
 			<span class="storesuite-dropdown-icon">

@@ -20,6 +20,7 @@ class CouponController {
 		add_action( 'wp_ajax_storesuite_add_coupon', array( $this, 'handle_add_coupon' ) );
 		add_action( 'wp_ajax_storesuite_edit_coupon', array( $this, 'handle_edit_coupon' ) );
 		add_action( 'wp_ajax_storesuite_delete_coupon', array( $this, 'handle_delete_coupon' ) );
+		add_action( 'wp_ajax_storesuite_duplicate_coupon', array( $this, 'handle_duplicate_coupon' ) );
 		add_action( 'storesuite_dashboard_title_after', array( $this, 'render_title_add_coupon_button' ) );
 	}
 
@@ -200,6 +201,39 @@ class CouponController {
 				)
 			);
 		}
+	}
+
+	/**
+	 * AJAX: duplicate a coupon as a draft and hand back the edit URL of the copy.
+	 *
+	 * @return void
+	 */
+	public function handle_duplicate_coupon() {
+		check_ajax_referer( '_storesuite_duplicate_nonce_', 'security' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_send_json_error( array( 'error' => __( 'You do not have permission to perform this action.', 'storesuite' ) ), 403 );
+		}
+
+		$coupon_id = isset( $_POST['id'] ) ? absint( wp_unslash( $_POST['id'] ) ) : 0;
+		if ( ! $coupon_id || 'shop_coupon' !== get_post_type( $coupon_id ) ) {
+			wp_send_json_error( array( 'error' => __( 'Invalid coupon ID', 'storesuite' ) ), 400 );
+		}
+
+		$manager = new CouponManager();
+		$new_id  = $manager->duplicate_coupon( $coupon_id );
+
+		if ( is_wp_error( $new_id ) ) {
+			wp_send_json_error( array( 'error' => $new_id->get_error_message() ), 400 );
+		}
+
+		wp_send_json_success(
+			array(
+				'message'  => __( 'Coupon duplicated. Opening the copy…', 'storesuite' ),
+				'id'       => $new_id,
+				'redirect' => storesuite_get_navigation_url( 'edit-coupon' ) . $new_id,
+			)
+		);
 	}
 
 	/**

@@ -14,7 +14,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<td class="check-column">
 		<?php storesuite_get_template_part( 'shared/list-bulk-checkbox', '', array( 'value' => $brand->term_id ) ); ?>
 	</td>
-	<td class="brand-image" data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'brands', 'image' ); ?> class="brand-image" data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
 		<?php
 		$thumbnail_id = absint( get_term_meta( $brand->term_id, 'thumbnail_id', true ) );
 		if ( $thumbnail_id ) {
@@ -35,19 +35,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 		}
 		?>
 	</td>
-	<td class="brand-name" data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'brands', 'name' ); ?> class="brand-name" data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
 		<?php echo wp_kses_post( $dash_prefix ); ?><a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-brand' ) . '%s', $brand->term_id ) ); ?>"><?php echo esc_html( $brand->name ); ?></a>
 	</td>
-	<td class="brand-description" data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'brands', 'description' ); ?> class="brand-description" data-title="<?php esc_attr_e( 'Description', 'storesuite' ); ?>">
 		<?php echo esc_html( wp_trim_words( $brand->description, 10, '...' ) ); ?>
 	</td>
-	<td class="brand-parent" data-title="<?php esc_attr_e( 'Parent', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'brands', 'parent' ); ?> class="brand-parent" data-title="<?php esc_attr_e( 'Parent', 'storesuite' ); ?>">
 		<?php echo esc_html( $parent ? $parent->name : '-' ); ?>
 	</td>
-	<td class="brand-slug" data-title="<?php esc_attr_e( 'Slug', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'brands', 'slug' ); ?> class="brand-slug" data-title="<?php esc_attr_e( 'Slug', 'storesuite' ); ?>">
 		<?php echo esc_html( $brand->slug ); ?>
 	</td>
-	<td class="brand-count" data-title="<?php esc_attr_e( 'Count', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'brands', 'count' ); ?> class="brand-count" data-title="<?php esc_attr_e( 'Count', 'storesuite' ); ?>">
 		<?php echo esc_html( $brand->count ); ?>
 	</td>
 	<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">

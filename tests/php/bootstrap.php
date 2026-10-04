@@ -50,6 +50,11 @@ tests_add_filter(
 			WC_Install::install();
 		}
 
+		// StoreSuite custom tables (real tables, like WooCommerce's, so they
+		// survive the per-test transaction rollback).
+		\PluginizeLab\StoreSuite\Notification\NotificationInstaller::create_table();
+		\PluginizeLab\StoreSuite\EditHistory\EditHistoryInstaller::create_tables();
+
 		// The HPOS "newly installed" check runs on admin_init and issues a
 		// self-joined orders query that MySQL cannot execute against the test
 		// suite's TEMPORARY tables ("Can't reopen table"). Mark the install as

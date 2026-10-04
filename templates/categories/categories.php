@@ -38,6 +38,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							</div>
 						</form>
 					</div>
+					<div class="col-md-auto storesuite-toolbar-columns">
+						<?php storesuite_get_template_part( 'shared/column-manager', '', array( 'table' => 'categories' ) ); ?>
+					</div>
 					<div class="col-md-auto text-right storesuite-toolbar-add">
 						<?php do_action( 'storesuite_categories_toolbar_add_button' ); ?>
 					</div>
@@ -57,12 +60,12 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							<th class="check-column">
 								<?php storesuite_get_template_part( 'shared/list-bulk-checkbox', '', array( 'is_all' => true ) ); ?>
 							</th>
-							<th width="60"><?php echo esc_html__( 'Image', 'storesuite' ); ?></th>
-							<th width="210"><?php echo esc_html__( 'Name', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Description', 'storesuite' ); ?></th>
-							<th><?php echo esc_html__( 'Parent', 'storesuite' ); ?></th>
-							<th width="210"><?php echo esc_html__( 'Slug', 'storesuite' ); ?></th>
-							<th width="70"><?php echo esc_html__( 'Count', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'categories', 'image' ); ?> width="60"><?php echo esc_html__( 'Image', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'categories', 'name' ); ?> width="210"><?php echo esc_html__( 'Name', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'categories', 'description' ); ?>><?php echo esc_html__( 'Description', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'categories', 'parent' ); ?>><?php echo esc_html__( 'Parent', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'categories', 'slug' ); ?> width="210"><?php echo esc_html__( 'Slug', 'storesuite' ); ?></th>
+							<th<?php storesuite_list_column_attrs( 'categories', 'count' ); ?> width="70"><?php echo esc_html__( 'Count', 'storesuite' ); ?></th>
 							<th class="text-right"><?php echo esc_html__( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>

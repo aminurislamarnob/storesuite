@@ -6,6 +6,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use PluginizeLab\StoreSuite\EditHistory\EditHistoryManager;
+
 /**
  * Plugin order controller class
  */
@@ -488,12 +490,19 @@ class OrderController {
 		$updated = 0;
 		$trashed = 0;
 		$skipped = 0;
+		$history = new EditHistoryManager();
+		$before  = array();
+		$after   = array();
 
 		foreach ( $order_ids as $order_id ) {
 			$order = wc_get_order( $order_id );
 			if ( ! $order ) {
 				++$skipped;
 				continue;
+			}
+
+			if ( 'trash' !== $action ) {
+				$before[ $order_id ] = $history->snapshot_order( $order );
 			}
 
 			switch ( $action ) {
@@ -516,7 +525,24 @@ class OrderController {
 					++$skipped;
 					break;
 			}
+
+			if ( isset( $before[ $order_id ] ) ) {
+				$after[ $order_id ] = $history->snapshot_order( wc_get_order( $order_id ) );
+			}
 		}
+
+		$batch_id = $history->record_from_snapshots(
+			'order_bulk',
+			'order',
+			sprintf(
+				/* translators: 1: status label, 2: number of orders. */
+				_n( 'Changed status to %1$s on %2$d order', 'Changed status to %1$s on %2$d orders', $updated, 'storesuite' ),
+				wc_get_order_status_name( str_replace( 'mark_', '', $action ) ),
+				$updated
+			),
+			$before,
+			$after
+		);
 
 		// Redirect back with the result counts for the list notice.
 		$redirect_url = add_query_arg(
@@ -525,6 +551,7 @@ class OrderController {
 					'updated' => $updated,
 					'trashed' => $trashed,
 					'skipped' => $skipped,
+					'history' => $batch_id,
 				)
 			),
 			storesuite_get_navigation_url( 'orders' )

@@ -54,6 +54,7 @@
 			this.handleCouponDelete();
 			this.handleGenerateCouponCode();
 			this.handleEditAccount();
+			this.handleDuplicateItem();
 			this.bindEditAccountPasswordLiveValidation();
 			this.bindPasswordVisibilityToggle();
 			this.initEditAccountPasswordToggle();
@@ -1861,6 +1862,56 @@
 				} );
 
 				return false;
+			} );
+		},
+
+		/**
+		 * Duplicate a product or coupon from the list row actions, then open
+		 * the edit page of the draft copy.
+		 */
+		handleDuplicateItem: function () {
+			var self = this;
+
+			$( document ).on( 'click', '.storesuite-duplicate-item', function ( e ) {
+				e.preventDefault();
+
+				var $button = $( this );
+				var objectType = $button.data( 'object' );
+				var objectId = $button.data( 'id' );
+
+				if ( ! objectId || ! objectType ) {
+					return;
+				}
+
+				var action =
+					'coupon' === objectType
+						? 'storesuite_duplicate_coupon'
+						: 'storesuite_duplicate_product';
+
+				self.showLoading( storeSuiteFormHandler.i18n.duplicating );
+
+				$.ajax( {
+					url: storeSuiteFormHandler.ajax_url,
+					type: 'POST',
+					data: {
+						action: action,
+						id: objectId,
+						security: storeSuiteFormHandler.duplicate_nonce,
+					},
+					success: function ( response ) {
+						if ( response.success && response.data.redirect ) {
+							window.location.href = response.data.redirect;
+							return;
+						}
+
+						Swal.close();
+						self.showError( response.data && response.data.error );
+					},
+					error: function () {
+						Swal.close();
+						self.showError();
+					},
+				} );
 			} );
 		},
 

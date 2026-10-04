@@ -105,6 +105,20 @@ export async function deleteProductsViaApi( ids: number[] ): Promise< void > {
 	await api.dispose();
 }
 
+export async function deleteCouponsViaApi( ids: number[] ): Promise< void > {
+	if ( ! ids.length ) {
+		return;
+	}
+
+	const api = await apiContext( adminAuth() );
+
+	for ( const id of ids ) {
+		await api.delete( `/wp-json/wc/v3/coupons/${ id }`, { params: { force: true } } );
+	}
+
+	await api.dispose();
+}
+
 /**
  * Read a product back through the REST API to assert what was actually
  * persisted, independent of what the list page renders.

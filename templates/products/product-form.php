@@ -752,6 +752,15 @@ $pos_feature_enabled = FeaturesUtil::feature_is_enabled( 'point_of_sale' );
 						</div>
 					</div>
 				</div>
+				<?php
+				/**
+				 * After the main column cards of the product form.
+				 *
+				 * @param int    $product_id    Product ID (0 on the add form).
+				 * @param string $template_type add-product|edit-product.
+				 */
+				do_action( 'storesuite_product_form_after_cards', $product_id, isset( $template_type ) ? $template_type : ( $is_edit_mode ? 'edit-product' : 'add-product' ) );
+				?>
 			</div>
 			<div class="col-md-4">
 				<div class="storesuite-card storesuite-card-with-header">

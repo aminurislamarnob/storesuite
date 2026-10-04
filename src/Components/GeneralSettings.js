@@ -7,6 +7,7 @@ import {
 	Spinner,
 	SelectControl,
 	ToggleControl,
+	__experimentalNumberControl as NumberControl,
 } from '@wordpress/components';
 import apiFetch from '@wordpress/api-fetch';
 
@@ -36,6 +37,12 @@ const GeneralSettings = () => {
 	const [ sidebarIconDarkId, setSidebarIconDarkId ] = useState(
 		parseInt( settings.storesuite_dashboard_sidebar_icon_dark_id, 10 ) || 0
 	);
+	const [ editHistoryEnabled, setEditHistoryEnabled ] = useState(
+		settings.storesuite_edit_history_enabled !== 'no'
+	);
+	const [ editHistoryRetention, setEditHistoryRetention ] = useState(
+		parseInt( settings.storesuite_edit_history_retention_days, 10 ) || 90
+	);
 
 	useEffect( () => {
 		apiFetch( { path: '/wp/v2/pages?per_page=100&page=1' } )
@@ -64,6 +71,8 @@ const GeneralSettings = () => {
 			storesuite_dashboard_sidebar_icon_id: sidebarIconId,
 			storesuite_dashboard_sidebar_logo_dark_id: sidebarLogoDarkId,
 			storesuite_dashboard_sidebar_icon_dark_id: sidebarIconDarkId,
+			storesuite_edit_history_enabled: editHistoryEnabled ? 'yes' : 'no',
+			storesuite_edit_history_retention_days: editHistoryRetention,
 		} );
 	};
 
@@ -151,6 +160,41 @@ const GeneralSettings = () => {
 								onChange={ setPreventAdminAccess }
 							/>
 						</div>
+						<div className="storesuite-settings-group edit-history">
+							<ToggleControl
+								label={ __( 'Edit history', 'storesuite' ) }
+								help={ __(
+									'Record the before and after values of inline and bulk edits so they can be undone from the History page.',
+									'storesuite'
+								) }
+								checked={ editHistoryEnabled }
+								onChange={ setEditHistoryEnabled }
+								__nextHasNoMarginBottom
+							/>
+						</div>
+						{ editHistoryEnabled && (
+							<div className="storesuite-settings-group edit-history-retention">
+								<NumberControl
+									label={ __(
+										'Keep history for (days)',
+										'storesuite'
+									) }
+									help={ __(
+										'Older entries are removed by a daily cleanup.',
+										'storesuite'
+									) }
+									value={ editHistoryRetention }
+									min={ 1 }
+									max={ 3650 }
+									onChange={ ( value ) =>
+										setEditHistoryRetention(
+											parseInt( value, 10 ) || 90
+										)
+									}
+									__next40pxDefaultSize
+								/>
+							</div>
+						) }
 						<Button
 							variant="primary"
 							type="submit"

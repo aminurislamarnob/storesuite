@@ -795,4 +795,37 @@ class ProductManager {
 
 		return $brands;
 	}
+
+	/**
+	 * Duplicate a product as a draft copy.
+	 *
+	 * Delegates to WooCommerce's own duplicator so variations, images, meta
+	 * and the unique SKU suffix are handled exactly as in wp-admin. The copy is
+	 * saved as a draft named "<name> (Copy)".
+	 *
+	 * @param int $product_id Source product ID.
+	 * @return int|WP_Error New product ID, or WP_Error when the source is missing.
+	 */
+	public function duplicate_product( $product_id ) {
+		$product = wc_get_product( $product_id );
+
+		if ( ! $product || 'variation' === $product->get_type() ) {
+			return new WP_Error( 'storesuite_invalid_product', __( 'Product not found', 'storesuite' ) );
+		}
+
+		if ( ! class_exists( 'WC_Admin_Duplicate_Product', false ) ) {
+			require_once WC()->plugin_path() . '/includes/admin/class-wc-admin-duplicate-product.php';
+		}
+
+		$duplicator = new \WC_Admin_Duplicate_Product();
+		$duplicate  = $duplicator->product_duplicate( $product );
+
+		if ( ! $duplicate || ! $duplicate->get_id() ) {
+			return new WP_Error( 'storesuite_duplicate_failed', __( 'The product could not be duplicated.', 'storesuite' ) );
+		}
+
+		do_action( 'storesuite_product_duplicated', $duplicate->get_id(), $product_id );
+
+		return $duplicate->get_id();
+	}
 }

@@ -92,6 +92,10 @@ class Assets {
 		$frontend_sweetalert2         = STORESUITE_PLUGIN_ASSET . '/frontend/library/sweetalert2.min.js';
 		$frontend_variation_script    = STORESUITE_PLUGIN_ASSET . '/frontend/product-variation.js';
 		$frontend_product_export      = STORESUITE_PLUGIN_ASSET . '/frontend/product-export.js';
+		$frontend_order_export        = STORESUITE_PLUGIN_ASSET . '/frontend/order-export.js';
+		$frontend_edit_history        = STORESUITE_PLUGIN_ASSET . '/frontend/edit-history.js';
+		$frontend_column_manager      = STORESUITE_PLUGIN_ASSET . '/frontend/column-manager.js';
+		$frontend_ai_search           = STORESUITE_PLUGIN_ASSET . '/frontend/ai-search.js';
 		$frontend_product_inline_edit = STORESUITE_PLUGIN_ASSET . '/frontend/product-inline-edit.js';
 		$frontend_taxonomy_list       = STORESUITE_PLUGIN_ASSET . '/frontend/taxonomy-list.js';
 		$frontend_coupon_bulk         = STORESUITE_PLUGIN_ASSET . '/frontend/coupon-bulk.js';
@@ -115,6 +119,10 @@ class Assets {
 		wp_register_script( 'wc-accounting', WC()->plugin_url() . '/assets/js/accounting/accounting.min.js', array( 'jquery' ), '0.4.2', true );
 		wp_register_script( 'storesuite_variation_script', $frontend_variation_script, array( 'jquery', 'storesuite_selectWoo', 'storesuite_sweetalert2_script', 'jquery-ui-sortable', 'jquery-ui-datepicker' ), STORESUITE_PLUGIN_VERSION, true );
 		wp_register_script( 'storesuite_product_export_script', $frontend_product_export, array( 'jquery', 'storesuite_product_script', 'storesuite_selectWoo', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_order_export_script', $frontend_order_export, array( 'jquery', 'storesuite_order_script', 'storesuite_selectWoo', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_edit_history_script', $frontend_edit_history, array( 'jquery', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_column_manager_script', $frontend_column_manager, array( 'jquery', 'storesuite_global_script' ), STORESUITE_PLUGIN_VERSION, true );
+		wp_register_script( 'storesuite_ai_search_script', $frontend_ai_search, array( 'jquery' ), STORESUITE_PLUGIN_VERSION, true );
 
 		// Inline cell editing on the products list table.
 		wp_register_script( 'storesuite_product_inline_edit_script', $frontend_product_inline_edit, array( 'jquery', 'storesuite_script', 'storesuite_sweetalert2_script' ), STORESUITE_PLUGIN_VERSION, true );
@@ -323,6 +331,7 @@ class Assets {
 			|| storesuite_is_endpoint_url( 'edit-attribute' )
 			|| storesuite_is_endpoint_url( 'attribute-terms' );
 		$is_account   = storesuite_is_endpoint_url( 'edit-account-details' );
+		$is_history   = storesuite_is_endpoint_url( 'edit-history' );
 		$is_import    = storesuite_is_endpoint_url( 'import-products' );
 		$is_inventory = storesuite_is_endpoint_url( 'inventory' );
 
@@ -335,7 +344,7 @@ class Assets {
 
 		$needs_media        = $is_products || $is_categories || $is_brands || $is_account;
 		$needs_form_handler = $is_products || $is_inventory || $is_coupons || $is_categories || $is_tags || $is_brands || $is_attributes || $is_account;
-		$needs_sweetalert   = $needs_form_handler || $is_orders;
+		$needs_sweetalert   = $needs_form_handler || $is_orders || $is_history;
 		$needs_select2      = $is_products || $is_inventory || $is_orders || $is_coupons;
 		// jQuery UI datepicker styles: any page that renders .date-picker inputs
 		// (the coupon expiry date, the product sale schedule, the order created
@@ -412,6 +421,7 @@ class Assets {
 				array(
 					'ajax_url'                     => admin_url( 'admin-ajax.php' ),
 					'storesuite_woo_delete_nonce_' => wp_create_nonce( '_storesuite_delete_nonce_' ),
+					'duplicate_nonce'              => wp_create_nonce( '_storesuite_duplicate_nonce_' ),
 					'search_products_nonce'        => wp_create_nonce( 'search-products' ),
 					'coupon_code_generator'        => array(
 						'generate_button_text' => esc_html__( 'Generate coupon code', 'storesuite' ),
@@ -510,6 +520,7 @@ class Assets {
 						'coupon_updated_successfully'    => __( 'Coupon updated successfully!', 'storesuite' ),
 						'delete_coupon_warning'          => __( 'This will delete the coupon permanently. This action cannot be undone.', 'storesuite' ),
 						'deleting'                       => __( 'Deleting...', 'storesuite' ),
+						'duplicating'                    => __( 'Duplicating...', 'storesuite' ),
 						'are_you_sure'                   => __( 'Are you sure?', 'storesuite' ),
 						'yes_delete'                     => __( 'Yes, delete it!', 'storesuite' ),
 						'validation_error'               => __( 'Validation Error', 'storesuite' ),
@@ -582,9 +593,94 @@ class Assets {
 			wp_enqueue_media();
 		}
 
+		// Natural-language AI search on the Products list.
+		if ( storesuite_is_endpoint_url( 'products' ) && \PluginizeLab\StoreSuite\Product\ProductAiSearch::is_available() ) {
+			wp_enqueue_script( 'storesuite_ai_search_script' );
+			wp_localize_script(
+				'storesuite_ai_search_script',
+				'StoreSuite_AiSearch',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( \PluginizeLab\StoreSuite\Product\ProductAiSearch::NONCE_ACTION ),
+					'i18n'     => array(
+						'empty_query'      => __( 'Describe what you are looking for first.', 'storesuite' ),
+						'thinking'         => __( 'Working out the filters…', 'storesuite' ),
+						'applying'         => __( 'Applying filters…', 'storesuite' ),
+						'unexpected_error' => __( 'An unexpected error occurred. Please try again.', 'storesuite' ),
+					),
+				)
+			);
+		}
+
+		// "Columns" dropdown on every list table.
+		$is_column_list = storesuite_is_endpoint_url( 'products' ) || $is_inventory || storesuite_is_endpoint_url( 'orders' )
+			|| storesuite_is_endpoint_url( 'coupons' ) || storesuite_is_endpoint_url( 'categories' )
+			|| storesuite_is_endpoint_url( 'tags' ) || storesuite_is_endpoint_url( 'brands' );
+		if ( $is_column_list ) {
+			wp_enqueue_script( 'storesuite_column_manager_script' );
+			wp_localize_script(
+				'storesuite_column_manager_script',
+				'StoreSuite_ColumnManager',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( \PluginizeLab\StoreSuite\ListTable\ColumnManager::NONCE_ACTION ),
+				)
+			);
+		}
+
+		// Undo toasts on the list pages, the History page and the orders feedback notice.
+		if ( $is_products || $is_inventory || $is_orders || $is_history ) {
+			wp_enqueue_script( 'storesuite_sweetalert2_script' );
+			wp_enqueue_script( 'storesuite_edit_history_script' );
+			wp_localize_script(
+				'storesuite_edit_history_script',
+				'StoreSuite_EditHistory',
+				array(
+					'ajax_url' => admin_url( 'admin-ajax.php' ),
+					'nonce'    => wp_create_nonce( \PluginizeLab\StoreSuite\EditHistory\EditHistoryController::NONCE_ACTION ),
+					'context'  => $is_inventory ? 'inventory' : ( storesuite_is_endpoint_url( 'products' ) ? 'products' : '' ),
+					'i18n'     => array(
+						'saved'            => __( 'Saved', 'storesuite' ),
+						'undo'             => __( 'Undo', 'storesuite' ),
+						'undoing'          => __( 'Undoing…', 'storesuite' ),
+						'undone_title'     => __( 'Reverted', 'storesuite' ),
+						'error_title'      => __( 'Undo failed', 'storesuite' ),
+						'ok_button'        => __( 'OK', 'storesuite' ),
+						'unexpected_error' => __( 'An unexpected error occurred. Please try again.', 'storesuite' ),
+						'confirm_title'    => __( 'Undo this change?', 'storesuite' ),
+						'confirm_text'     => __( 'Every field in this change is set back to its previous value. Fields edited again since then are left alone.', 'storesuite' ),
+						'confirm_button'   => __( 'Yes, undo it', 'storesuite' ),
+						'cancel_button'    => __( 'Cancel', 'storesuite' ),
+					),
+				)
+			);
+		}
+
 		if ( $is_orders ) {
 			wp_enqueue_script( 'storesuite_selectWoo' );
 			wp_enqueue_script( 'storesuite_order_script' );
+
+			if ( storesuite_is_endpoint_url( 'orders' ) ) {
+				wp_enqueue_script( 'storesuite_order_export_script' );
+				wp_localize_script(
+					'storesuite_order_export_script',
+					'StoreSuite_OrderExport',
+					array(
+						'ajax_url'     => admin_url( 'admin-ajax.php' ),
+						'export_nonce' => wp_create_nonce( 'storesuite_order_export' ),
+						'i18n'         => array(
+							'error_title'           => __( 'Error!', 'storesuite' ),
+							'ok_button'             => __( 'OK', 'storesuite' ),
+							'unexpected_error'      => __( 'An unexpected error occurred. Please try again.', 'storesuite' ),
+							'select_orders_title'   => __( 'Select orders', 'storesuite' ),
+							'select_orders_message' => __( 'Choose at least one order to export.', 'storesuite' ),
+							/* translators: %1$s: number of orders, %2$s: "clear your selection" link. */
+							'bulk_export_notice'    => __( 'You are about to export %1$s orders. To export all orders, %2$s.', 'storesuite' ),
+							'clear_selection'       => __( 'clear your selection', 'storesuite' ),
+						),
+					)
+				);
+			}
 
 			wp_enqueue_script( 'wc-accounting' );
 			wp_localize_script(

@@ -49,13 +49,13 @@ if ( null !== $storesuite_stock_qty && $storesuite_stock_qty <= 0 ) {
 		);
 		?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'inventory', 'image' ); ?> data-title="<?php esc_attr_e( 'Image', 'storesuite' ); ?>">
 		<img src="<?php echo esc_url( $storesuite_inv_thumb ); ?>" class="my-storesuite-thumb" alt="<?php echo esc_attr( get_the_title( $product_id ) ); ?>">
 	</td>
-	<td class="tbl-product-name" data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'inventory', 'name' ); ?> class="tbl-product-name" data-title="<?php esc_attr_e( 'Name', 'storesuite' ); ?>">
 		<a href="<?php echo esc_url( sprintf( storesuite_get_navigation_url( 'edit-product' ) . '%s', $product_id ) ); ?>"><?php echo esc_html( get_the_title( $product_id ) ); ?></a>
 	</td>
-	<td data-title="<?php esc_attr_e( 'SKU', 'storesuite' ); ?>"
+	<td<?php storesuite_list_column_attrs( 'inventory', 'sku' ); ?> data-title="<?php esc_attr_e( 'SKU', 'storesuite' ); ?>"
 		<?php if ( $storesuite_inline_sku ) : ?>
 		class="storesuite-inline-cell" data-inline-field="sku" data-inline-value="<?php echo esc_attr( $product->get_sku() ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
 		<?php endif; ?>
@@ -68,7 +68,7 @@ if ( null !== $storesuite_stock_qty && $storesuite_stock_qty <= 0 ) {
 		}
 		?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Stock Qty', 'storesuite' ); ?>"
+	<td<?php storesuite_list_column_attrs( 'inventory', 'stock_qty' ); ?> data-title="<?php esc_attr_e( 'Stock Qty', 'storesuite' ); ?>"
 		<?php if ( $storesuite_inline_stock ) : ?>
 		class="storesuite-inline-cell" data-inline-field="stock_quantity" data-inline-value="<?php echo esc_attr( (string) $storesuite_stock_qty ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
 		<?php endif; ?>
@@ -79,7 +79,7 @@ if ( null !== $storesuite_stock_qty && $storesuite_stock_qty <= 0 ) {
 			<span class="no-sku">&ndash;</span>
 		<?php endif; ?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Stock Status', 'storesuite' ); ?>"
+	<td<?php storesuite_list_column_attrs( 'inventory', 'stock_status' ); ?> data-title="<?php esc_attr_e( 'Stock Status', 'storesuite' ); ?>"
 		<?php if ( $storesuite_inline_sstatus ) : ?>
 		class="storesuite-inline-cell" data-inline-field="stock_status" data-inline-value="<?php echo esc_attr( $product->get_stock_status() ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
 		<?php endif; ?>
@@ -94,14 +94,14 @@ if ( null !== $storesuite_stock_qty && $storesuite_stock_qty <= 0 ) {
 		}
 		?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Backorders', 'storesuite' ); ?>">
+	<td<?php storesuite_list_column_attrs( 'inventory', 'backorders' ); ?> data-title="<?php esc_attr_e( 'Backorders', 'storesuite' ); ?>">
 		<?php
 		$storesuite_backorder_options = wc_get_product_backorder_options();
 		$storesuite_backorders        = $product->get_backorders();
 		echo esc_html( isset( $storesuite_backorder_options[ $storesuite_backorders ] ) ? $storesuite_backorder_options[ $storesuite_backorders ] : $storesuite_backorders );
 		?>
 	</td>
-	<td data-title="<?php esc_attr_e( 'Price', 'storesuite' ); ?>"
+	<td<?php storesuite_list_column_attrs( 'inventory', 'price' ); ?> data-title="<?php esc_attr_e( 'Price', 'storesuite' ); ?>"
 		<?php if ( $storesuite_inline_price ) : ?>
 		class="storesuite-inline-cell" data-inline-field="price" data-regular-price="<?php echo esc_attr( $product->get_regular_price() ); ?>" data-sale-price="<?php echo esc_attr( $product->get_sale_price() ); ?>" tabindex="0" title="<?php echo esc_attr( $storesuite_inline_title ); ?>"
 		<?php endif; ?>

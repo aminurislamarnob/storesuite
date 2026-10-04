@@ -1226,6 +1226,13 @@
 								if ( suiteModal && $bulkEditModal.length ) {
 									suiteModal.close( $bulkEditModal );
 								}
+								var bulkUndo =
+									bulkSaveResponse.data &&
+									bulkSaveResponse.data.undo &&
+									window.StoreSuite &&
+									window.StoreSuite.editHistory
+										? bulkSaveResponse.data.undo
+										: null;
 								Swal.fire( {
 									icon: 'success',
 									title: bulkEditConfig.success_title,
@@ -1236,7 +1243,18 @@
 											: '',
 									confirmButtonText:
 										storeSuiteFormHandler.i18n.ok_button,
-								} ).then( function () {
+									showDenyButton: !! bulkUndo,
+									denyButtonText: bulkUndo
+										? window.StoreSuite.editHistory.i18n().undo
+										: '',
+								} ).then( function ( bulkResult ) {
+									if ( bulkUndo && bulkResult.isDenied ) {
+										window.StoreSuite.editHistory.undo( bulkUndo, {
+											confirm: false,
+											reload: true,
+										} );
+										return;
+									}
 									window.location.reload();
 								} );
 							} else {
