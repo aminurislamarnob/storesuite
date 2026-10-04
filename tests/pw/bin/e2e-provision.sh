@@ -13,6 +13,24 @@ WP_CLI="${WP_CLI:-wp}"
 $WP_CLI plugin activate woocommerce
 $WP_CLI plugin activate storesuite
 
+# Optional: Yoast SEO, for the product SEO specs (they skip themselves without it).
+# Not fatal: current Yoast releases refuse to install on older WordPress versions,
+# and those specs skipping is the right outcome there.
+if [ "${E2E_WITH_YOAST:-false}" = "true" ]; then
+	$WP_CLI plugin install wordpress-seo --activate \
+		|| echo "Yoast SEO could not be installed here; the product SEO specs will skip."
+fi
+
+# Optional: a deterministic AI text generator, so the AI Generate specs run
+# without a real provider (they skip themselves without it). Installed as a
+# must-use plugin next to this site's wp-content.
+if [ "${E2E_WITH_FAKE_AI:-false}" = "true" ]; then
+	mu_dir="$( $WP_CLI eval 'echo WPMU_PLUGIN_DIR;' )"
+	mkdir -p "$mu_dir"
+	cp "$( dirname "$0" )/storesuite-e2e-fake-ai.php" "$mu_dir/storesuite-e2e-fake-ai.php"
+	echo "Fake AI generator installed at $mu_dir/storesuite-e2e-fake-ai.php"
+fi
+
 $WP_CLI rewrite structure '/%postname%/'
 $WP_CLI rewrite flush
 

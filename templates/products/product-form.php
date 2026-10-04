@@ -752,6 +752,17 @@ $pos_feature_enabled = FeaturesUtil::feature_is_enabled( 'point_of_sale' );
 						</div>
 					</div>
 				</div>
+				<?php
+				/**
+				 * Fires at the bottom of the product form's main column, after the last card.
+				 *
+				 * Use this to add cards to the product add/edit form, e.g. third-party integrations.
+				 *
+				 * @param WC_Product|null $product      Product being edited, null on the add form.
+				 * @param bool            $is_edit_mode Whether this is the edit form.
+				 */
+				do_action( 'storesuite_product_form_after_main_cards', $is_edit_mode && ! empty( $product ) ? $product : null, $is_edit_mode );
+				?>
 			</div>
 			<div class="col-md-4">
 				<div class="storesuite-card storesuite-card-with-header">
