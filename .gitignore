@@ -13,3 +13,6 @@ phpcs-report.txt
 # Playwright artefacts (root-level runs)
 test-results/
 tests/e2e/.auth/
+
+# Local QA artefacts (responsive-screen-fixer screenshots, reports)
+.claude/QA-review/

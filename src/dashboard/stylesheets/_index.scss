@@ -617,3 +617,50 @@
 		}
 	}
 }
+
+// Tablets between Bootstrap's lg tier and desktop (992–1199px): the quick
+// actions card sits in a ~310px column, where four square tiles overflow
+// the card and scroll the page sideways. Three shrinkable columns fit.
+// Ends below 1200px so the desktop layout is untouched.
+@media ( min-width: 992px ) and ( max-width: 1199.98px ) {
+	.storesuite-quick-actions__grid {
+		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
+	}
+
+	.storesuite-quick-action-item {
+		min-width: 0;
+	}
+
+	.storesuite-quick-action-item__label {
+		overflow-wrap: anywhere;
+	}
+}
+
+// Landscape phones and small tablets (783–960px): WooCommerce's SummaryList
+// switches to its single-column mobile markup below 960px, which stacks six
+// KPI cards over ~800px of a 360–430px tall screen. Keep three columns.
+@media ( min-width: 783px ) and ( max-width: 960px ) {
+	.storesuite-dashboard-layout ul.woocommerce-summary:not( [class*='has-'] ) {
+		grid-template-columns: repeat( 3, minmax( 0, 1fr ) );
+	}
+}
+
+// Touch devices: WooCommerce's chart controls render a 13px select (iOS zooms
+// the page on focus under 16px) and 36px-tall buttons. Mouse-driven desktops
+// never match this query.
+@media ( pointer: coarse ) {
+	.storesuite-dashboard-layout {
+		// !important: WordPress components set these through runtime
+		// (emotion) styles that outrank any stylesheet selector.
+		.components-select-control__input {
+			font-size: 16px !important;
+			min-height: 44px !important;
+		}
+
+		.woocommerce-chart__type-button,
+		.woocommerce-legend__item > button {
+			min-width: 44px;
+			min-height: 44px;
+		}
+	}
+}
