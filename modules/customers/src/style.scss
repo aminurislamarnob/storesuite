@@ -1,0 +1,156 @@
+/**
+ * Customer CRM — app styles. Uses the shared StoreSuite CSS variables that
+ * style.css exposes on the dashboard.
+ */
+
+.storesuite-customers-wrapper {
+	.storesuite-linklike {
+		background: none;
+		border: 0;
+		padding: 0;
+		color: var( --storesuite-primary-bg, #2d5bdb );
+		cursor: pointer;
+		font: inherit;
+		text-align: left;
+
+		&:hover {
+			text-decoration: underline;
+		}
+	}
+
+	.storesuite-customers-toolbar {
+		margin-bottom: 16px;
+	}
+
+	.storesuite-customers-search {
+		width: 100%;
+		max-width: 320px;
+		height: 40px;
+		padding: 8px 12px;
+		border: 1px solid var( --storesuite-border-color, #e2e8f0 );
+		border-radius: 6px;
+	}
+
+	.storesuite-customers-loading {
+		display: flex;
+		justify-content: center;
+		padding: 64px 0;
+	}
+
+	.storesuite-stat-row {
+		display: grid;
+		grid-template-columns: repeat( 4, 1fr );
+		gap: 16px;
+		margin: 16px 0;
+
+		@media ( max-width: 767px ) {
+			grid-template-columns: repeat( 2, 1fr );
+		}
+	}
+
+	.storesuite-stat-tile {
+		display: flex;
+		flex-direction: column;
+		gap: 4px;
+		padding: 16px;
+		background: #fff;
+		border: 1px solid var( --storesuite-border-color, #e2e8f0 );
+		border-radius: 6px;
+
+		.storesuite-stat-value {
+			font-size: 20px;
+			font-weight: 600;
+			color: var( --storesuite-text-black, #334155 );
+		}
+
+		.storesuite-stat-label {
+			font-size: 13px;
+			color: var( --storesuite-text-color-light, #828282 );
+		}
+	}
+
+	.storesuite-profile-columns {
+		display: grid;
+		grid-template-columns: 2fr 1fr;
+		gap: 16px;
+
+		@media ( max-width: 1024px ) {
+			grid-template-columns: 1fr;
+		}
+	}
+
+	.storesuite-profile-orders {
+		width: 100%;
+		border-collapse: collapse;
+
+		th,
+		td {
+			padding: 10px 8px;
+			text-align: left;
+			border-top: 1px solid var( --storesuite-border-color, #e2e8f0 );
+		}
+	}
+
+	.storesuite-tags-editor {
+		margin-top: 12px;
+
+		.storesuite-tags-list {
+			display: flex;
+			flex-wrap: wrap;
+			gap: 6px;
+			margin-bottom: 8px;
+		}
+
+		.storesuite-tag-pill {
+			display: inline-flex;
+			align-items: center;
+			gap: 6px;
+			padding: 4px 10px;
+			background: var( --storesuite-bg-color-light, #f7f7f7 );
+			border-radius: 6px;
+			font-size: 12px;
+
+			button {
+				background: none;
+				border: 0;
+				cursor: pointer;
+				font-size: 14px;
+				line-height: 1;
+			}
+		}
+
+		.storesuite-tag-input {
+			height: 36px;
+			padding: 6px 10px;
+			border: 1px solid var( --storesuite-border-color, #e2e8f0 );
+			border-radius: 6px;
+		}
+	}
+
+	.storesuite-notes-list {
+		margin: 12px 0 0;
+		list-style: none;
+		padding: 0;
+
+		li {
+			padding: 10px 0;
+			border-top: 1px solid var( --storesuite-border-color, #e2e8f0 );
+		}
+
+		.storesuite-note-meta {
+			margin-top: 4px;
+			font-size: 12px;
+			color: var( --storesuite-text-color-light, #828282 );
+			display: flex;
+			gap: 8px;
+		}
+	}
+
+	.storesuite-address-block {
+		margin-bottom: 16px;
+
+		h4 {
+			margin: 0 0 6px;
+		}
+	}
+}
