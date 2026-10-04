@@ -69,11 +69,17 @@ jobs:
                   curl -sL https://downloads.wordpress.org/plugin/advanced-custom-fields.latest-stable.zip -o /tmp/advanced-custom-fields.zip
                   unzip -q /tmp/advanced-custom-fields.zip -d /tmp
 
+            - name: Download Advanced Shipment Tracking
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/woo-advanced-shipment-tracking.latest-stable.zip -o /tmp/woo-advanced-shipment-tracking.zip
+                  unzip -q /tmp/woo-advanced-shipment-tracking.zip -d /tmp
+
             - name: Run PHPUnit
               env:
                   WP_CORE_DIR: /tmp/wordpress
                   WC_DIR: /tmp/woocommerce
                   ACF_DIR: /tmp/advanced-custom-fields
+                  AST_DIR: /tmp/woo-advanced-shipment-tracking
                   WP_DB_NAME: wordpress_test
                   WP_DB_USER: root
                   WP_DB_PASS: root

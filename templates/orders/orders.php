@@ -116,6 +116,16 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 			<?php storesuite_get_template_part( 'orders/order-filters-offcanvas' ); ?>
 			<form id="storesuite-order-bulk-actions" method="post">
 				<?php wp_nonce_field( 'storesuite_order_bulk_action', 'storesuite_bulk_action_nonce' ); ?>
+				<?php
+				/**
+				 * Filters the extra columns of the orders list, shown before the Actions column.
+				 *
+				 * Each column's cell is rendered by the `storesuite_order_list_column_{$key}` action.
+				 *
+				 * @param array<string, string> $columns Column key => column label.
+				 */
+				$extra_columns = (array) apply_filters( 'storesuite_order_list_columns', array() );
+				?>
 				<div class="storesuite-table-responsive">
 				<table class="my-storesuite-tbl my-storesuite-product-list-table storesuite-list-table">
 					<thead>
@@ -138,6 +148,9 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							<th><?php echo esc_html__( 'Customer', 'storesuite' ); ?></th>
 							<th><?php echo esc_html__( 'Billing Phone', 'storesuite' ); ?></th>
 							<th><?php echo esc_html__( 'Date', 'storesuite' ); ?></th>
+							<?php foreach ( $extra_columns as $column_label ) : ?>
+								<th><?php echo esc_html( $column_label ); ?></th>
+							<?php endforeach; ?>
 							<th class="text-right"><?php echo esc_html__( 'Actions', 'storesuite' ); ?></th>
 						</tr>
 					</thead>
@@ -160,7 +173,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							$orders = $orders_obj->get_all_orders( $orders_per_page, $current_page, $filters );
 
 							if ( empty( $orders->orders ) ) {
-								echo '<tr id="order-row-not-found"><td colspan="9">';
+								echo '<tr id="order-row-not-found"><td colspan="' . esc_attr( 9 + count( $extra_columns ) ) . '">';
 								storesuite_get_template_part(
 									'not-found',
 									'',
@@ -214,6 +227,21 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									<td data-title="<?php echo esc_attr__( 'Date', 'storesuite' ); ?>">
 										<?php echo wp_kses_post( $orders_obj->get_order_date_column_value( $order ) ); ?>
 									</td>
+									<?php foreach ( $extra_columns as $column_key => $column_label ) : ?>
+										<td data-title="<?php echo esc_attr( $column_label ); ?>">
+											<?php
+											/**
+											 * Fires inside an extra orders list column cell.
+											 *
+											 * The dynamic part is the column key registered through
+											 * the `storesuite_order_list_columns` filter.
+											 *
+											 * @param WC_Order $order Current order.
+											 */
+											do_action( 'storesuite_order_list_column_' . $column_key, $order );
+											?>
+										</td>
+									<?php endforeach; ?>
 									<td class="text-right" data-title="<?php esc_attr_e( 'Actions', 'storesuite' ); ?>">
 										<div class="storesuite-dropdown">
 											<span class="storesuite-dropdown-icon">

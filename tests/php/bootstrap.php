@@ -5,7 +5,8 @@
  * Requires a WordPress core checkout (WP_CORE_DIR, default /tmp/wordpress) and a
  * WooCommerce plugin directory (WC_DIR, default /tmp/woocommerce). An Advanced
  * Custom Fields directory (ACF_DIR, default /tmp/advanced-custom-fields) is
- * loaded when present. See .github/workflows/phpunit.yml for the reference
+ * loaded when present, and so is an Advanced Shipment Tracking directory
+ * (AST_DIR, default /tmp/woo-advanced-shipment-tracking). See .github/workflows/phpunit.yml for the reference
  * environment.
  *
  * @package StoreSuite\Tests
@@ -44,6 +45,27 @@ tests_add_filter(
 			require rtrim( $acf_dir, '/' ) . '/acf.php';
 		}
 
+		// Advanced Shipment Tracking is optional too: its integration tests skip
+		// themselves when it is absent (see ShipmentTrackingTestHelpers::require_ast()).
+		$ast_dir = getenv( 'AST_DIR' );
+		if ( ! $ast_dir ) {
+			$ast_dir = '/tmp/woo-advanced-shipment-tracking';
+		}
+		$ast_file = rtrim( $ast_dir, '/' ) . '/woocommerce-advanced-shipment-tracking.php';
+		if ( file_exists( $ast_file ) ) {
+			// AST only boots when WooCommerce is listed as an active plugin, and
+			// the suite loads WooCommerce directly instead of activating it.
+			add_filter(
+				'option_active_plugins',
+				function ( $plugins ) {
+					$plugins   = is_array( $plugins ) ? $plugins : array();
+					$plugins[] = 'woocommerce/woocommerce.php';
+					return array_unique( $plugins );
+				}
+			);
+			require $ast_file;
+		}
+
 		require dirname( __DIR__, 2 ) . '/storesuite.php';
 
 		// Keep the suite hermetic: core update checks phone home to
@@ -68,6 +90,11 @@ tests_add_filter(
 		// suite's TEMPORARY tables ("Can't reopen table"). Mark the install as
 		// not-new so the check is skipped during AJAX tests.
 		update_option( 'woocommerce_newly_installed', 'no' );
+
+		// Advanced Shipment Tracking runs its upgrade routine on admin requests
+		// (which every AJAX dispatch is) and that routine downloads carrier
+		// logos. Mark its data as current so the suite stays offline.
+		update_option( 'wc_advanced_shipment_tracking', '4.5' );
 
 		// Reload capabilities added by the install.
 		$GLOBALS['wp_roles'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Standard WooCommerce test-suite reset.

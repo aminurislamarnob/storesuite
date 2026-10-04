@@ -278,6 +278,7 @@ final class StoreSuite {
 		$this->container['storesuite_order_hooks']                 = new Order\OrderHooks();
 		$this->container['storesuite_pdf_invoices_integration']    = new Integration\PdfInvoicesIntegration();
 		$this->container['storesuite_acf_integration']             = new Integration\Acf\AcfIntegration();
+		$this->container['storesuite_tracking_integration']        = new Integration\ShipmentTrackingIntegration();
 		$this->container['storesuite_coupon_controller']           = new Coupon\CouponController();
 		$this->container['storesuite_coupon_manager']              = new Coupon\CouponManager();
 		$this->container['storesuite_coupon_bulk_edit']            = new Coupon\CouponBulkEdit();

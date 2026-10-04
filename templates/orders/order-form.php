@@ -575,6 +575,14 @@ if ( ! defined( 'ABSPATH' ) ) {
 					<input type="hidden" name="context" id="context" value="<?php echo esc_attr( $context ); ?>">
 					<button type="submit" class="create-order-btn"><?php echo ( 'auto-draft' === $order->get_status() ) ? esc_html__( 'Create Order', 'storesuite' ) : esc_html__( 'Update Order', 'storesuite' ); ?></button>
 				</div>
+				<?php
+					/**
+					 * Action hook fired after the Create / Update Order button, before the order notes.
+					 *
+					 * @param WC_Order $order Order data.
+					 */
+					do_action( 'storesuite_after_order_form_submit', $order );
+				?>
 
 				<!-- Order Notes Section -->
 				<div id="new_order_notes" class="storesuite-card">

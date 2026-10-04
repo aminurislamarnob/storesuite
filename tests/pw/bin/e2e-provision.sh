@@ -14,6 +14,8 @@ $WP_CLI plugin activate woocommerce
 $WP_CLI plugin activate storesuite
 # Optional: the ACF integration spec skips itself when the plugin is absent.
 $WP_CLI plugin activate advanced-custom-fields || echo "ACF not installed; skipping."
+# Optional: the shipment tracking spec skips itself when the plugin is absent.
+$WP_CLI plugin activate woo-advanced-shipment-tracking || echo "Advanced Shipment Tracking not installed; skipping."
 
 $WP_CLI rewrite structure '/%postname%/'
 $WP_CLI rewrite flush
@@ -155,6 +157,32 @@ echo "ACF field group seeded.\n";
 	if ! $WP_CLI eval 'echo get_posts( [ "post_type" => "attachment", "title" => "E2E Image", "fields" => "ids" ] ) ? "E2E_IMAGE_PRESENT" : "E2E_IMAGE_MISSING";' | grep -q E2E_IMAGE_PRESENT; then
 		$WP_CLI media import "$( cd "$( dirname "$0" )/../../.." && pwd )/assets/frontend/images/storesuite-logo-dark.png" --title="E2E Image"
 	fi
+fi
+
+# One enabled carrier for the shipment tracking spec. Advanced Shipment
+# Tracking fills its carrier table from a remote sync, so the spec uses its own
+# row; it is stored as a custom carrier so that sync never removes it.
+if $WP_CLI plugin is-active woo-advanced-shipment-tracking 2>/dev/null; then
+	$WP_CLI eval '
+global $wpdb;
+WC_Advanced_Shipment_Tracking_Install::get_instance()->create_shippment_tracking_table();
+$table = WC_Advanced_Shipment_Tracking_Actions::get_instance()->table;
+if ( ! $wpdb->get_var( $wpdb->prepare( "SELECT id FROM {$table} WHERE ts_slug = %s", "e2e-carrier" ) ) ) {
+	$wpdb->insert(
+		$table,
+		[
+			"provider_name"         => "E2E Carrier",
+			"ts_slug"               => "e2e-carrier",
+			"provider_url"          => "https://example.com/track?n=%number%",
+			"shipping_country"      => "Global",
+			"shipping_country_name" => "Global",
+			"shipping_default"      => 0,
+			"display_in_order"      => 1,
+		]
+	);
+}
+echo "Shipment tracking carrier seeded.\n";
+'
 fi
 
 echo "Provisioning complete."
