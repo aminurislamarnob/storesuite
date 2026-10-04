@@ -8,7 +8,6 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CostOfGoodsSoldController;
 use Automattic\WooCommerce\Internal\ProductFeed\Integrations\POSCatalog\POSProductVisibilitySync;
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
 use WP_Error;
 
 /**
@@ -72,8 +71,8 @@ class ProductManager {
 			'name'              => sanitize_text_field( $data['product_title'] ),
 			'slug'              => $product_slug,
 			'type'              => ! empty( $data['post_type'] ) ? $data['post_type'] : 'simple',
-			'description'       => wp_kses_post( $data['product_description'] ),
-			'short_description' => wp_kses_post( $data['product_short_description'] ),
+			'description'       => wp_kses_post( $data['product_description'] ?? '' ),
+			'short_description' => wp_kses_post( $data['product_short_description'] ?? '' ),
 			'status'            => $post_status,
 		);
 
@@ -239,7 +238,7 @@ class ProductManager {
 
 		$product = $this->create_product( $post_data );
 
-		if ( $product && FeaturesUtil::feature_is_enabled( 'point_of_sale' ) ) {
+		if ( $product && storesuite_is_pos_feature_enabled() ) {
 			$visible_in_pos = ! empty( $data['_visible_in_pos'] );
 			wc_get_container()->get( POSProductVisibilitySync::class )->set_product_pos_visibility( $product->get_id(), $visible_in_pos );
 		}
@@ -509,9 +508,15 @@ class ProductManager {
 			$product->set_category_ids( $args['categories'] );
 		}
 
-		// Product brands.
+		// Product brands. WC_Product::set_brand_ids() arrived in WooCommerce
+		// 10.3; older versions get the terms assigned after the save below.
+		$legacy_brands = null;
 		if ( isset( $args['brands'] ) && is_array( $args['brands'] ) ) {
-			$product->set_brand_ids( $args['brands'] );
+			if ( method_exists( $product, 'set_brand_ids' ) ) {
+				$product->set_brand_ids( $args['brands'] );
+			} else {
+				$legacy_brands = array_map( 'absint', $args['brands'] );
+			}
 		}
 
 		// Product tags.
@@ -613,6 +618,10 @@ class ProductManager {
 		}
 
 		$product_id = $product->save();
+
+		if ( null !== $legacy_brands && $product_id ) {
+			wp_set_object_terms( $product_id, $legacy_brands, 'product_brand' );
+		}
 
 		return wc_get_product( $product_id );
 	}

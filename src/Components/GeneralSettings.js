@@ -13,6 +13,9 @@ import apiFetch from '@wordpress/api-fetch';
 import { useSettings } from '../context/SettingsContext';
 import DashboardSidebarImageControl from './DashboardSidebarImageControl';
 
+// Only offered when Advanced Custom Fields is active on the site.
+const ACF_ACTIVE = window.storeSuiteAdmin?.acfActive ?? false;
+
 const GeneralSettings = () => {
 	const { settings, isSaving, saveSettings } = useSettings();
 
@@ -23,6 +26,10 @@ const GeneralSettings = () => {
 	const [ preventAdminAccess, setPreventAdminAccess ] = useState(
 		settings.storesuite_prevent_admin_access === 'yes' ||
 			settings.storesuite_prevent_admin_access === true
+	);
+	// Defaults to on: an unset value means the integration is enabled.
+	const [ acfProductFields, setAcfProductFields ] = useState(
+		settings.storesuite_acf_product_fields !== 'no'
 	);
 	const [ sidebarLogoId, setSidebarLogoId ] = useState(
 		parseInt( settings.storesuite_dashboard_sidebar_logo_id, 10 ) || 0
@@ -60,6 +67,9 @@ const GeneralSettings = () => {
 		saveSettings( {
 			storesuite_dashboard_page_id: dashboardPage,
 			storesuite_prevent_admin_access: preventAdminAccess ? 'yes' : 'no',
+			...( ACF_ACTIVE && {
+				storesuite_acf_product_fields: acfProductFields ? 'yes' : 'no',
+			} ),
 			storesuite_dashboard_sidebar_logo_id: sidebarLogoId,
 			storesuite_dashboard_sidebar_icon_id: sidebarIconId,
 			storesuite_dashboard_sidebar_logo_dark_id: sidebarLogoDarkId,
@@ -151,6 +161,22 @@ const GeneralSettings = () => {
 								onChange={ setPreventAdminAccess }
 							/>
 						</div>
+						{ ACF_ACTIVE && (
+							<div className="storesuite-settings-group acf-product-fields">
+								<ToggleControl
+									label={ __(
+										'ACF fields on the product form',
+										'storesuite'
+									) }
+									help={ __(
+										'Show Advanced Custom Fields field groups assigned to products on the frontend add/edit product form.',
+										'storesuite'
+									) }
+									checked={ acfProductFields }
+									onChange={ setAcfProductFields }
+								/>
+							</div>
+						) }
 						<Button
 							variant="primary"
 							type="submit"

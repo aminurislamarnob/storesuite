@@ -38,6 +38,12 @@ Leave it empty and your regular image is used in both themes — perfectly fine 
 
 Toggle this on to **prevent shop managers from reaching the wp-admin dashboard**. They get the clean StoreSuite frontend and nothing else — no plugin settings, no theme files, nothing they could accidentally break. This is the setting that makes StoreSuite a safe hand-off for non-technical staff.
 
+### ACF fields on the product form
+
+![ACF fields on the product form toggle](screenshots/screenshot-51.png)
+
+This toggle only appears when the **Advanced Custom Fields** plugin is active. It is on by default: every ACF field group assigned to products shows up as a box on the frontend add/edit product form (see *Custom fields from ACF* in the Products guide). Turn it off to hide those boxes again — handy if a field group misbehaves — and back on whenever you like. Which groups appear is decided by ACF's own location rules; there is no per-group switch here.
+
 Click **Save Changes** when you're done with this tab.
 
 ---

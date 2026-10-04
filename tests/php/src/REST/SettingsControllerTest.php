@@ -79,6 +79,22 @@ class SettingsControllerTest extends StoreSuiteTestCase {
 		$this->assertSame( 'yes', storesuite_get_option_by_key( 'storesuite_prevent_admin_access' ) );
 	}
 
+	public function test_acf_product_fields_setting_round_trips_and_is_admin_only() {
+		wp_set_current_user( $this->admin_id );
+
+		$response = $this->do_rest_request( 'POST', self::ROUTE, array( 'storesuite_acf_product_fields' => 'no' ) );
+
+		$this->assertSame( 200, $response->get_status() );
+		$this->assertSame( 'no', $response->get_data()['storesuite_acf_product_fields'] );
+		$this->assertSame( 'no', storesuite_get_option_by_key( 'storesuite_acf_product_fields' ) );
+
+		$this->assertSame( 400, $this->do_rest_request( 'POST', self::ROUTE, array( 'storesuite_acf_product_fields' => 'maybe' ) )->get_status() );
+
+		wp_set_current_user( $this->shop_manager_id );
+		$this->assertSame( 403, $this->do_rest_request( 'POST', self::ROUTE, array( 'storesuite_acf_product_fields' => 'yes' ) )->get_status() );
+		$this->assertSame( 'no', storesuite_get_option_by_key( 'storesuite_acf_product_fields' ), 'A denied write must not persist anything.' );
+	}
+
 	public function test_schema_enum_rejects_unknown_values() {
 		wp_set_current_user( $this->admin_id );
 

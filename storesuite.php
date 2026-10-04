@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name: StoreSuite – Frontend Shop Manager for WooCommerce with AI – Product, Order, Coupon Management & Analytics Dashboard
+ * Plugin Name: StoreSuite – Frontend Shop Manager for WooCommerce with AI
  * Plugin URI:  https://wordpress.org/plugins/storesuite/
  * Description: AI-assisted frontend dashboard to manage your WooCommerce store — products, orders, coupons, categories, and analytics in one place.
- * Version: 1.4.0
+ * Version: 1.5.0
  * Author: Aminur Islam Arnob
  * Author URI: https://github.com/aminurislamarnob/
  * Text Domain: storesuite
@@ -61,7 +61,7 @@ function storesuite_init_appsero_tracker() {
 
 	$client = new Appsero\Client(
 		'f7ef1e53-4c57-466c-b668-cb5c2d34a3e7',
-		'StoreSuite – Frontend Shop Manager for WooCommerce with AI – Product, Order, Coupon Management & Analytics Dashboard',
+		'StoreSuite – Frontend Shop Manager for WooCommerce with AI',
 		__FILE__
 	);
 

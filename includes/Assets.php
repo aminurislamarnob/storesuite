@@ -218,6 +218,8 @@ class Assets {
 					// Whether at least one AI provider is connected (text or image).
 					'aiConnected'                => \PluginizeLab\StoreSuite\Product\ProductAI::is_text_supported() || \PluginizeLab\StoreSuite\Product\ProductImageAI::is_supported(),
 					'connectorsUrl'              => admin_url( 'options-connectors.php' ),
+					// Shows the ACF product-fields toggle on the General tab.
+					'acfActive'                  => \PluginizeLab\StoreSuite\Integration\Acf\AcfIntegration::is_acf_active(),
 				)
 			);
 

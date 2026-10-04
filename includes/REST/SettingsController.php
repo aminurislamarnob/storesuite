@@ -94,6 +94,10 @@ class SettingsController extends WP_REST_Controller {
 			$storesuite_settings['storesuite_prevent_admin_access'] = sanitize_text_field( $val );
 		}
 
+		if ( $request->has_param( 'storesuite_acf_product_fields' ) ) {
+			$storesuite_settings['storesuite_acf_product_fields'] = sanitize_text_field( $request->get_param( 'storesuite_acf_product_fields' ) );
+		}
+
 		$branding_image_keys = array(
 			'storesuite_dashboard_sidebar_logo_id',
 			'storesuite_dashboard_sidebar_icon_id',
@@ -285,6 +289,12 @@ class SettingsController extends WP_REST_Controller {
 				),
 				'storesuite_prevent_admin_access'          => array(
 					'description' => __( 'Prevent vendors from accessing wp-admin. If HPOS is enabled, admin access is blocked regardless.', 'storesuite' ),
+					'type'        => 'string',
+					'enum'        => array( 'yes', 'no' ),
+					'context'     => array( 'view', 'edit' ),
+				),
+				'storesuite_acf_product_fields'            => array(
+					'description' => __( 'Show Advanced Custom Fields field groups on the frontend product form. Only applies when ACF is active.', 'storesuite' ),
 					'type'        => 'string',
 					'enum'        => array( 'yes', 'no' ),
 					'context'     => array( 'view', 'edit' ),

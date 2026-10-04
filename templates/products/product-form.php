@@ -6,7 +6,6 @@
  */
 
 use Automattic\WooCommerce\Internal\CostOfGoodsSold\CostOfGoodsSoldController;
-use Automattic\WooCommerce\Utilities\FeaturesUtil;
 
 if ( ! defined( 'ABSPATH' ) ) {
 	exit;
@@ -174,7 +173,7 @@ if ( $cogs_is_enabled ) {
 }
 
 // Point of Sale feature availability.
-$pos_feature_enabled = FeaturesUtil::feature_is_enabled( 'point_of_sale' );
+$pos_feature_enabled = storesuite_is_pos_feature_enabled();
 ?>
 <form id="storesuite-add-product" method="POST">
 		<div class="row">
@@ -752,6 +751,18 @@ $pos_feature_enabled = FeaturesUtil::feature_is_enabled( 'point_of_sale' );
 						</div>
 					</div>
 				</div>
+
+				<?php
+				/**
+				 * Fires in the main column after the "Others" card.
+				 *
+				 * Integrations render additional cards here (e.g. ACF field groups).
+				 *
+				 * @param int  $product_id   Product ID, 0 on the add form.
+				 * @param bool $is_edit_mode Whether the edit form is rendered.
+				 */
+				do_action( 'storesuite_product_form_after_others', $product_id, $is_edit_mode );
+				?>
 			</div>
 			<div class="col-md-4">
 				<div class="storesuite-card storesuite-card-with-header">

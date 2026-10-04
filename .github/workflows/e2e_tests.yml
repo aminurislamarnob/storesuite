@@ -29,9 +29,12 @@ jobs:
                     - lane: latest
                       wp: latest
                       wc: latest-stable
+                    # The plugin's declared minimums ("Requires at least" /
+                    # "WC requires at least" in storesuite.php); WordPress
+                    # refuses to activate it on anything older.
                     - lane: pinned
-                      wp: '6.8'
-                      wc: '10.1.2'
+                      wp: '6.9'
+                      wc: '10.4.3'
         env:
             WP_DIR: /tmp/wp-e2e
             BASE_URL: http://127.0.0.1:9999
@@ -87,6 +90,18 @@ jobs:
               run: |
                   curl -sL "https://downloads.wordpress.org/plugin/woocommerce.${{ matrix.wc }}.zip" -o /tmp/woocommerce.zip
                   unzip -q /tmp/woocommerce.zip -d "$WP_DIR/wp-content/plugins"
+
+            # ACF is not pinned: the integration targets the current free release on both lanes.
+            - name: Download Advanced Custom Fields
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/advanced-custom-fields.latest-stable.zip -o /tmp/acf.zip
+                  unzip -q /tmp/acf.zip -d "$WP_DIR/wp-content/plugins"
+
+            # Not pinned either: the integration targets the current free release on both lanes.
+            - name: Download Advanced Shipment Tracking
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/woo-advanced-shipment-tracking.latest-stable.zip -o /tmp/ast.zip
+                  unzip -q /tmp/ast.zip -d "$WP_DIR/wp-content/plugins"
 
             - name: Install the site
               run: |

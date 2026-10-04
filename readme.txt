@@ -5,7 +5,7 @@ Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce 
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,6 +16,8 @@ Frontend shop manager dashboard for WooCommerce. Manage products, orders, coupon
 StoreSuite is a free frontend shop manager for WooCommerce that puts complete store management in one fast dashboard. Manage products (simple, variable, grouped, and external), orders, coupons, categories, tags, brands, and attributes — without opening wp-admin. Generate product titles, descriptions, and images with AI, export products to CSV, and track sales with a full analytics suite that matches WooCommerce admin reports: Revenue, Orders, Products, Customers, and more. Fully responsive on mobile and tablet, and 100% free with no feature gates, trials, or upsells.
 
 ✨ **[All Features](https://storesuite.dev/features/)** | 📖 **[Documentation](https://storesuite.dev/docs/)** | 🆘 **[Support](https://wordpress.org/support/plugin/storesuite/#new-post)**
+
+https://www.youtube.com/watch?v=HXfJfzyU9W8
 
 = 💎 Premium-grade features, completely free =
 
@@ -54,6 +56,7 @@ No feature gates. No trial limits. No upsell.
 * 🌗 **Dark and light mode** – A header toggle switches the whole dashboard between light and dark; the choice is remembered per user and the operating system preference is honoured on the first visit
 * 🔔 **Dashboard notifications** – A bell in the header surfaces new orders, customer registrations, and product reviews in realtime, with a full notifications page and per-event settings
 * 🧾 **PDF invoice support** – Invoice, packing slip, and delivery note actions appear on the order list and order details when PDF Invoices & Packing Slips for WooCommerce or the WebToffee WooCommerce PDF Invoices plugin is active (see *StoreSuite Compatible Plugins* below)
+* 🧱 **Advanced Custom Fields support** – ACF field groups assigned to products appear on the frontend add/edit product form, with values saved through ACF so wp-admin stays in sync (see *StoreSuite Compatible Plugins* below)
 * 📱 **Fully responsive** – The entire frontend dashboard and analytics reports adapt to mobile and desktop screens with an off-canvas sidebar, stacked cards, and touch-friendly controls
 * 🔑 **Bring your own AI** – Built on the WordPress 7.0 central AI connector; generation runs on the provider and keys you configure in WordPress
 * ⚡ **Built for WooCommerce HPOS** – Fully compatible with High-Performance Order Storage
@@ -62,6 +65,8 @@ No feature gates. No trial limits. No upsell.
 
 * [PDF Invoices & Packing Slips for WooCommerce](https://wordpress.org/plugins/woocommerce-pdf-invoices-packing-slips/) – adds Invoice and Packing Slip documents.
 * [WebToffee WooCommerce PDF Invoices, Packing Slips, Delivery Notes & Shipping Labels](https://wordpress.org/plugins/print-invoices-packing-slip-labels-for-woocommerce/) – adds Invoice, Packing Slip, Delivery Note, Shipping Label, and Dispatch Label actions.
+* [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/) – field groups located on products render as cards on the frontend product form. Supported types: text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator; conditional logic and ACF's validation rules are honoured. Other types (including ACF Pro types) show an "edit in WordPress admin" note and are never overwritten. Can be switched off under Settings → General.
+* [Advanced Shipment Tracking for WooCommerce](https://wordpress.org/plugins/woo-advanced-shipment-tracking/) – adds a Shipment Tracking card to the order details page and the add/edit order form, and a Shipment Tracking column and Add Tracking action to the orders list, so shop managers can add and delete tracking numbers without wp-admin. Carriers and settings are still managed in wp-admin; the Pro edition is not supported yet.
 
 = How It Works =
 
@@ -150,6 +155,14 @@ Integrating Appsero SDK **DOES NOT IMMEDIATELY** start gathering data, **without
 Learn more about how [Appsero collects and uses this data](https://appsero.com/privacy-policy/).
 
 == Changelog ==
+
+= 1.5.0 =
+* **Advanced Custom Fields on the product form.** Field groups located on products now render as cards on the frontend add/edit product form and save through ACF, so wp-admin and `get_field()` stay in sync. Supports text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator fields; honours conditional logic and runs ACF's validation before saving, with empty required fields flagged under the field like the product title. Other field types show a read-only note. A toggle on Settings → General turns the integration off. Deliberate differences from wp-admin (ISO date display, passwords never prefilled, ignored UI-only settings) are listed in the products documentation.
+* **Shipment tracking on orders.** With the free Advanced Shipment Tracking for WooCommerce plugin active, the order details page and the add/edit order form show a Shipment Tracking card and the orders list gains a Shipment Tracking column and an Add Tracking action. Tracking is saved through that plugin, so its customer emails, order notes and order status changes work as they do in wp-admin.
+* Developers: new `storesuite_order_list_columns` filter and `storesuite_order_list_column_{$key}` action for adding columns to the orders list.
+* Developers: new `storesuite_product_form_after_others` template action and `storesuite_product_pre_save_validation` filter on the product form.
+* Stopped querying the deprecated `point_of_sale` feature flag on WooCommerce 11.
+* Fix an "unexpected error" when saving a product on older WooCommerce versions (such as 10.4) that have Point of Sale enabled but cannot store a product's POS visibility. The **Available for POS** switch is hidden on those versions.
 
 = 1.4.0 =
 * Lower the minimum PHP version to **7.4** (previously 8.1), matching the WordPress and WooCommerce floors so StoreSuite can be installed on the same hosts they run on. PHP compatibility is now checked in CI on every change.
