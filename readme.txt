@@ -5,7 +5,7 @@ Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce 
 Requires at least: 6.9
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.4.0
+Stable tag: 1.5.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,6 +16,8 @@ Frontend shop manager dashboard for WooCommerce. Manage products, orders, coupon
 StoreSuite is a free frontend shop manager for WooCommerce that puts complete store management in one fast dashboard. Manage products (simple, variable, grouped, and external), orders, coupons, categories, tags, brands, and attributes — without opening wp-admin. Generate product titles, descriptions, and images with AI, export products to CSV, and track sales with a full analytics suite that matches WooCommerce admin reports: Revenue, Orders, Products, Customers, and more. Fully responsive on mobile and tablet, and 100% free with no feature gates, trials, or upsells.
 
 ✨ **[All Features](https://storesuite.dev/features/)** | 📖 **[Documentation](https://storesuite.dev/docs/)** | 🆘 **[Support](https://wordpress.org/support/plugin/storesuite/#new-post)**
+
+https://www.youtube.com/watch?v=HXfJfzyU9W8
 
 = 💎 Premium-grade features, completely free =
 
@@ -154,8 +156,8 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 
 == Changelog ==
 
-= Unreleased =
-* **Advanced Custom Fields on the product form.** Field groups located on products now render as cards on the frontend add/edit product form and save through ACF, so wp-admin and `get_field()` stay in sync. Supports text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator fields; honours conditional logic and runs ACF's validation before saving. Other field types show a read-only note. A toggle on Settings → General turns the integration off. Deliberate differences from wp-admin (ISO date display, passwords never prefilled, ignored UI-only settings) are listed in the products documentation.
+= 1.5.0 =
+* **Advanced Custom Fields on the product form.** Field groups located on products now render as cards on the frontend add/edit product form and save through ACF, so wp-admin and `get_field()` stay in sync. Supports text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator fields; honours conditional logic and runs ACF's validation before saving, with empty required fields flagged under the field like the product title. Other field types show a read-only note. A toggle on Settings → General turns the integration off. Deliberate differences from wp-admin (ISO date display, passwords never prefilled, ignored UI-only settings) are listed in the products documentation.
 * **Shipment tracking on orders.** With the free Advanced Shipment Tracking for WooCommerce plugin active, the order details page and the add/edit order form show a Shipment Tracking card and the orders list gains a Shipment Tracking column and an Add Tracking action. Tracking is saved through that plugin, so its customer emails, order notes and order status changes work as they do in wp-admin.
 * Developers: new `storesuite_order_list_columns` filter and `storesuite_order_list_column_{$key}` action for adding columns to the orders list.
 * Developers: new `storesuite_product_form_after_others` template action and `storesuite_product_pre_save_validation` filter on the product form.
