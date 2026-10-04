@@ -23,13 +23,26 @@ trait AiRequestTrait {
 	 *
 	 * @param string $capability_method AI Client readiness method, e.g.
 	 *                                   `is_supported_for_text_generation`.
+	 * @param bool   $reset             Forget every memoized answer instead of asking.
 	 * @return bool
 	 */
-	protected static function is_ai_capability_supported( $capability_method ) {
+	protected static function is_ai_capability_supported( $capability_method, $reset = false ) {
 		static $supported = array();
+
+		if ( $reset ) {
+			$supported = array();
+			return false;
+		}
 
 		if ( isset( $supported[ $capability_method ] ) ) {
 			return $supported[ $capability_method ];
+		}
+
+		// A custom text generator (see ProductAI::get_text_generator()) makes text
+		// generation available regardless of the core AI Client.
+		if ( 'is_supported_for_text_generation' === $capability_method && ProductAI::get_text_generator() ) {
+			$supported[ $capability_method ] = true;
+			return true;
 		}
 
 		$supported[ $capability_method ] = function_exists( 'wp_ai_client_prompt' )
@@ -38,6 +51,16 @@ trait AiRequestTrait {
 			&& wp_ai_client_prompt()->{ $capability_method }();
 
 		return $supported[ $capability_method ];
+	}
+
+	/**
+	 * Forget the memoized capability answers.
+	 *
+	 * Only needed when the environment changes within one request, e.g. tests
+	 * that supply and remove a custom text generator between cases.
+	 */
+	public static function reset_ai_support_cache() {
+		self::is_ai_capability_supported( '', true );
 	}
 
 	/**

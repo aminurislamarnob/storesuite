@@ -50,6 +50,8 @@ class YoastSeoIntegration {
 		add_action( 'storesuite_product_updated', array( $this, 'save' ) );
 		// Priority 20: after Assets has enqueued the product form script this one depends on.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 20 );
+		add_filter( 'storesuite_ai_text_fields', array( $this, 'register_ai_fields' ) );
+		add_filter( 'storesuite_ai_settings_group_labels', array( $this, 'register_ai_settings_group_label' ) );
 	}
 
 	/**
@@ -543,5 +545,219 @@ class YoastSeoIntegration {
 			true
 		);
 		wp_localize_script( 'storesuite_product_seo_script', 'StoreSuite_ProductSeo', $this->get_script_data() );
+	}
+
+	/* ----------------------------------------------------------------------
+	 * AI Generate for the SEO fields
+	 * -------------------------------------------------------------------- */
+
+	/**
+	 * Settings key of the toggle that switches every SEO Generate button on or off.
+	 */
+	const AI_ENABLED_SETTING = 'storesuite_ai_field_yoast_seo';
+
+	/**
+	 * Settings keys of the two editable system instructions.
+	 */
+	const AI_TITLE_INSTRUCTION_SETTING       = 'storesuite_ai_instruction_yoast_title';
+	const AI_DESCRIPTION_INSTRUCTION_SETTING = 'storesuite_ai_instruction_yoast_description';
+
+	/**
+	 * How much of the long description is sent as context, in characters.
+	 */
+	const AI_DESCRIPTION_CONTEXT_LENGTH = 2000;
+
+	/**
+	 * Default system instructions for the two kinds of SEO generation.
+	 *
+	 * Exposed so the AI settings page can prefill its textareas.
+	 *
+	 * @return array{title: string, description: string}
+	 */
+	public static function default_ai_instructions() {
+		return array(
+			'title'       => __( 'You are an expert e-commerce SEO copywriter. Write ONE title for the given platform that makes people click while staying accurate to the product. Use the focus keyphrase naturally and early when one is given. Never include the store name or any placeholders. Return only the title as plain text with no quotation marks, labels, or commentary.', 'storesuite' ),
+			'description' => __( 'You are an expert e-commerce SEO copywriter. Write ONE description for the given platform that summarises the product\'s main benefit, uses the focus keyphrase naturally when one is given, and ends with a short call to action. Never include the store name or any placeholders. Return only the description as plain text with no quotation marks, labels, or commentary.', 'storesuite' ),
+		);
+	}
+
+	/**
+	 * The six SEO fields AI can generate: key => [ kind, platform, meta key, target length ].
+	 *
+	 * Social fields are only offered for networks Yoast has switched on.
+	 *
+	 * @return array<string, array{kind: string, platform: string, meta: string, length: int}>
+	 */
+	protected function get_ai_field_specs(): array {
+		$specs = array(
+			'yoast_title'    => array(
+				'kind'     => 'title',
+				'platform' => 'google',
+				'meta'     => 'title',
+				'length'   => 60,
+			),
+			'yoast_metadesc' => array(
+				'kind'     => 'description',
+				'platform' => 'google',
+				'meta'     => 'metadesc',
+				'length'   => 156,
+			),
+		);
+
+		$platforms = array(
+			'opengraph' => 'social',
+			'twitter'   => 'x',
+		);
+
+		foreach ( array_keys( $this->get_social_networks() ) as $network ) {
+			$specs[ 'yoast_' . $network . '-title' ]       = array(
+				'kind'     => 'title',
+				'platform' => $platforms[ $network ],
+				'meta'     => $network . '-title',
+				'length'   => 70,
+			);
+			$specs[ 'yoast_' . $network . '-description' ] = array(
+				'kind'     => 'description',
+				'platform' => $platforms[ $network ],
+				'meta'     => $network . '-description',
+				'length'   => 200,
+			);
+		}
+
+		return $specs;
+	}
+
+	/**
+	 * Register the SEO fields with the AI field registry.
+	 *
+	 * @param array $fields Registered AI text fields.
+	 * @return array
+	 */
+	public function register_ai_fields( $fields ) {
+		$instructions = self::default_ai_instructions();
+		$labels       = array(
+			'yoast_title'                 => __( 'SEO title suggestion', 'storesuite' ),
+			'yoast_metadesc'              => __( 'Meta description suggestion', 'storesuite' ),
+			'yoast_opengraph-title'       => __( 'Social title suggestion', 'storesuite' ),
+			'yoast_opengraph-description' => __( 'Social description suggestion', 'storesuite' ),
+			'yoast_twitter-title'         => __( 'X title suggestion', 'storesuite' ),
+			'yoast_twitter-description'   => __( 'X description suggestion', 'storesuite' ),
+		);
+
+		foreach ( $this->get_ai_field_specs() as $key => $spec ) {
+			$is_title = 'title' === $spec['kind'];
+
+			$fields[ $key ] = array(
+				'label'               => $labels[ $key ],
+				'group'               => 'yoast_seo',
+				'instruction_label'   => $is_title
+					? __( 'SEO title system instruction', 'storesuite' )
+					: __( 'SEO description system instruction', 'storesuite' ),
+				'output'              => $is_title ? 'text' : 'textarea',
+				'instruction'         => $instructions[ $spec['kind'] ],
+				'instruction_setting' => $is_title ? self::AI_TITLE_INSTRUCTION_SETTING : self::AI_DESCRIPTION_INSTRUCTION_SETTING,
+				'enabled_setting'     => self::AI_ENABLED_SETTING,
+				'intro'               => $is_title
+					? 'Write a title for the following product.'
+					: 'Write a description for the following product.',
+				'needs_context'       => true,
+				'target'              => '#' . self::FIELD_PREFIX . $spec['meta'],
+				'rows'                => $is_title ? 2 : 4,
+				'length'              => $spec['length'],
+				'prompt_lines'        => function ( array $context, array $request ) use ( $spec ) {
+					return $this->get_ai_prompt_lines( $spec, $context, $request );
+				},
+			);
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * Name the "Yoast SEO" block on the AI settings page.
+	 *
+	 * @param array $labels Group labels keyed by group.
+	 * @return array
+	 */
+	public function register_ai_settings_group_label( $labels ) {
+		$labels['yoast_seo'] = __( 'Yoast SEO', 'storesuite' );
+		return $labels;
+	}
+
+	/**
+	 * Prompt lines specific to an SEO field: keyphrase, language, platform, length and details.
+	 *
+	 * @param array $spec    Field spec from get_ai_field_specs().
+	 * @param array $context Sanitized form context from ProductAI.
+	 * @param array $request Raw request data (the SEO card posts its keyphrase alongside).
+	 * @return string[]
+	 */
+	protected function get_ai_prompt_lines( array $spec, array $context, array $request ): array {
+		$lines = array();
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Missing -- Verified by ProductAI::handle_generate() before this runs.
+		$keyphrase = isset( $request[ self::FIELD_PREFIX . 'focuskw' ] ) ? sanitize_text_field( wp_unslash( $request[ self::FIELD_PREFIX . 'focuskw' ] ) ) : '';
+		if ( '' !== $keyphrase ) {
+			$lines[] = 'Focus keyphrase: ' . $keyphrase;
+		}
+
+		// The long description is context only, so markup is never sent.
+		if ( '' !== $context['description'] ) {
+			$details = trim( wp_strip_all_tags( $context['description'], true ) );
+			if ( mb_strlen( $details ) > self::AI_DESCRIPTION_CONTEXT_LENGTH ) {
+				$details = rtrim( mb_substr( $details, 0, self::AI_DESCRIPTION_CONTEXT_LENGTH ) ) . '…';
+			}
+			$lines[] = 'Product details: ' . $details;
+		}
+
+		$lines[] = 'Language: ' . $this->get_site_language_name();
+
+		$platforms = array(
+			'google' => 'Google search result',
+			'social' => 'social media share (Facebook, LinkedIn, WhatsApp)',
+			'x'      => 'X (Twitter) post',
+		);
+		$lines[]   = 'Platform: ' . $platforms[ $spec['platform'] ];
+
+		if ( 'description' === $spec['kind'] && 'google' === $spec['platform'] ) {
+			$lines[] = 'Length: between 120 and 156 characters.';
+		} else {
+			$lines[] = 'Length: at most ' . $spec['length'] . ' characters.';
+		}
+
+		return $lines;
+	}
+
+	/**
+	 * The site language as an English name, e.g. "German", for the prompt.
+	 *
+	 * @return string
+	 */
+	protected function get_site_language_name(): string {
+		$locale = get_locale();
+
+		require_once ABSPATH . 'wp-admin/includes/translation-install.php';
+		$translations = function_exists( 'wp_get_available_translations' ) ? wp_get_available_translations() : array();
+
+		if ( isset( $translations[ $locale ]['english_name'] ) ) {
+			return $translations[ $locale ]['english_name'];
+		}
+
+		$fallbacks = array(
+			'de' => 'German',
+			'fr' => 'French',
+			'es' => 'Spanish',
+			'it' => 'Italian',
+			'nl' => 'Dutch',
+			'pt' => 'Portuguese',
+			'bn' => 'Bengali',
+			'hi' => 'Hindi',
+			'ar' => 'Arabic',
+			'ja' => 'Japanese',
+			'zh' => 'Chinese',
+		);
+		$prefix    = strtolower( substr( $locale, 0, 2 ) );
+
+		return isset( $fallbacks[ $prefix ] ) ? $fallbacks[ $prefix ] : 'English';
 	}
 }

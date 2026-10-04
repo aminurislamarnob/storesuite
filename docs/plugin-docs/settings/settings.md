@@ -129,6 +129,17 @@ Leave a box empty to fall back to the built-in default. Click **Save Changes** t
 
 > **Tip:** Bake your brand voice into these instructions once — "friendly, no jargon, mention the material" — and every product your team generates comes out sounding like you, with no extra editing.
 
+### Yoast SEO
+
+![AI Settings — Yoast SEO block](screenshots/screenshot-54.png)
+
+When the **Yoast SEO** plugin is active, an extra block appears here for the AI helpers on the product form's **SEO (Yoast)** card:
+
+- **Offer AI generation for these fields** — one switch for all six SEO helpers: the SEO title, meta description, and the social and X titles and descriptions. Turn it off to hide every **Generate with AI** button on that card.
+- **SEO title system instruction** and **SEO description system instruction** — the briefs behind the titles and descriptions. The defaults ask for search-friendly copy that uses your focus keyphrase, never includes the store name, and (for descriptions) ends with a call to action. Rewrite them to taste; leave one empty to go back to the default.
+
+If Yoast SEO isn't installed, this block isn't shown.
+
 ---
 
 ## Notifications — what the bell tells you about

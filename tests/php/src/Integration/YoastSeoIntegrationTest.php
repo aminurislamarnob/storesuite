@@ -8,6 +8,7 @@
 namespace PluginizeLab\StoreSuite\Test\Integration;
 
 use PluginizeLab\StoreSuite\Integration\YoastSeoIntegration;
+use PluginizeLab\StoreSuite\Product\ProductAI;
 use PluginizeLab\StoreSuite\Test\StoreSuiteTestCase;
 
 /**
@@ -757,5 +758,228 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 		$this->assertMatchesRegularExpression( '/type="radio"[^>]+name="storesuite_yoast_meta-robots-nofollow"[^>]+value="1"[^>]+checked/', $html );
 		$this->assertStringContainsString( 'Yes (current default for Products)', $html );
 		$this->assertSame( 4, substr_count( $html, 'storesuite-seo-insert-variable' ) - 2, 'Social title and description of both networks offer Insert variable.' );
+	}
+
+	/* ----------------------------------------------------------------------
+	 * AI Generate for the SEO fields
+	 * -------------------------------------------------------------------- */
+
+	/**
+	 * Register the fake generator and build the prompt for one SEO field.
+	 *
+	 * @param YoastSeoIntegration $integration Integration under test.
+	 * @param string              $field       AI field key.
+	 * @param array               $request     Raw request fields.
+	 *
+	 * @return array{0: string, 1: string} Prompt and system instruction the generator received.
+	 */
+	private function generate_seo_field( YoastSeoIntegration $integration, string $field, array $request ): array {
+		$captured = array();
+		$callable = function ( $prompt, $instruction ) use ( &$captured ) {
+			$captured = array( $prompt, $instruction );
+			return 'Generated';
+		};
+		$filter   = function () use ( $callable ) {
+			return $callable;
+		};
+		add_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$fields = ProductAI::get_fields();
+		$this->assertArrayHasKey( $field, $fields, "AI field $field is registered." );
+
+		$ai = new ProductAI();
+		// Drive the prompt through the same code path the AJAX handler uses.
+		$method = new \ReflectionMethod( $ai, 'generate_one' );
+		$method->setAccessible( true );
+		$context = array(
+			'title'             => $request['product_title'] ?? '',
+			'short_description' => $request['product_short_description'] ?? '',
+			'description'       => $request['product_description'] ?? '',
+			'categories'        => array(),
+			'previous'          => $request['previous'] ?? '',
+		);
+		$method->invoke( $ai, $field, $context, $request );
+
+		remove_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		return $captured;
+	}
+
+	/**
+	 * With Yoast active the six SEO fields are registered; inactive, none are.
+	 *
+	 * @return void
+	 */
+	public function test_seo_ai_fields_follow_yoast_activation() {
+		$this->make_integration();
+		$keys = array_keys( ProductAI::get_fields() );
+		foreach ( array( 'yoast_title', 'yoast_metadesc', 'yoast_opengraph-title', 'yoast_opengraph-description', 'yoast_twitter-title', 'yoast_twitter-description' ) as $key ) {
+			$this->assertContains( $key, $keys );
+		}
+
+		$fields = ProductAI::get_fields();
+		$this->assertSame( '#storesuite_yoast_title', $fields['yoast_title']['target'] );
+		$this->assertSame( 60, $fields['yoast_title']['length'] );
+		$this->assertSame( 156, $fields['yoast_metadesc']['length'] );
+		$this->assertSame( 'yoast_seo', $fields['yoast_title']['group'] );
+
+		remove_all_filters( 'storesuite_ai_text_fields' );
+		$this->make_integration( false );
+		$this->assertNotContains( 'yoast_title', array_keys( ProductAI::get_fields() ) );
+	}
+
+	/**
+	 * Social fields are registered only for networks Yoast has enabled.
+	 *
+	 * @return void
+	 */
+	public function test_social_ai_fields_follow_yoast_feature_toggles() {
+		$this->make_integration( true, array( 'twitter' => false ) );
+		$keys = array_keys( ProductAI::get_fields() );
+
+		$this->assertContains( 'yoast_opengraph-title', $keys );
+		$this->assertNotContains( 'yoast_twitter-title', $keys );
+	}
+
+	/**
+	 * The SEO title prompt targets Google with the keyphrase, language and length.
+	 *
+	 * @return void
+	 */
+	public function test_seo_title_prompt() {
+		$integration = $this->make_integration();
+		list( $prompt, $instruction ) = $this->generate_seo_field(
+			$integration,
+			'yoast_title',
+			array(
+				'product_title'             => 'Ceramic Mug',
+				'product_short_description' => 'A sturdy 350ml mug.',
+				'storesuite_yoast_focuskw'  => 'ceramic <b>mug</b>',
+			)
+		);
+
+		$this->assertStringContainsString( 'Focus keyphrase: ceramic mug', $prompt );
+		$this->assertStringContainsString( 'Language: English', $prompt );
+		$this->assertStringContainsString( 'Platform: Google search result', $prompt );
+		$this->assertStringContainsString( 'at most 60 characters', $prompt );
+		$this->assertStringContainsString( 'Product name / keywords: Ceramic Mug', $prompt );
+		$this->assertStringNotContainsString( '%%', $prompt, 'The prompt never teaches the model Yoast variables.' );
+		$this->assertStringContainsString( 'SEO copywriter', $instruction );
+	}
+
+	/**
+	 * Without a keyphrase the keyphrase line is omitted, not left blank.
+	 *
+	 * @return void
+	 */
+	public function test_prompt_omits_empty_keyphrase() {
+		list( $prompt ) = $this->generate_seo_field( $this->make_integration(), 'yoast_title', array( 'product_title' => 'Mug' ) );
+
+		$this->assertStringNotContainsString( 'Focus keyphrase', $prompt );
+	}
+
+	/**
+	 * Descriptions get the 120–156 target, a call to action, and the long description cut down.
+	 *
+	 * @return void
+	 */
+	public function test_meta_description_prompt() {
+		$long = str_repeat( 'word ', 800 ); // ~4,000 characters.
+		list( $prompt, $instruction ) = $this->generate_seo_field(
+			$this->make_integration(),
+			'yoast_metadesc',
+			array(
+				'product_title'       => 'Mug',
+				'product_description' => '<p>' . $long . '</p>',
+			)
+		);
+
+		$this->assertStringContainsString( 'between 120 and 156 characters', $prompt );
+		$this->assertStringContainsString( 'Platform: Google search result', $prompt );
+		$this->assertMatchesRegularExpression( '/Product details: (word ){1,401}/', $prompt );
+		$this->assertLessThan( 2600, strlen( $prompt ), 'A huge description is cut to about 2,000 characters.' );
+		$this->assertStringContainsString( 'call to action', $instruction );
+	}
+
+	/**
+	 * Social and X fields carry their platform lines and lengths.
+	 *
+	 * @return void
+	 */
+	public function test_social_prompts_carry_platform_and_length() {
+		$integration = $this->make_integration();
+
+		list( $og ) = $this->generate_seo_field( $integration, 'yoast_opengraph-title', array( 'product_title' => 'Mug' ) );
+		$this->assertStringContainsString( 'Platform: social media share', $og );
+		$this->assertStringContainsString( 'at most 70 characters', $og );
+
+		list( $x ) = $this->generate_seo_field( $integration, 'yoast_twitter-description', array( 'product_title' => 'Mug' ) );
+		$this->assertStringContainsString( 'Platform: X (Twitter) post', $x );
+		$this->assertStringContainsString( 'at most 200 characters', $x );
+	}
+
+	/**
+	 * The site language is passed as a language name.
+	 *
+	 * @return void
+	 */
+	public function test_prompt_uses_site_language() {
+		add_filter( 'locale', $set = function () { return 'de_DE'; } );
+		list( $prompt ) = $this->generate_seo_field( $this->make_integration(), 'yoast_title', array( 'product_title' => 'Tasse' ) );
+		remove_filter( 'locale', $set );
+
+		$this->assertStringContainsString( 'Language: German', $prompt );
+	}
+
+	/**
+	 * Every SEO field posts through the shared AJAX action as plain text, with the group toggle honoured.
+	 *
+	 * @return void
+	 */
+	public function test_seo_field_generates_plain_text_and_honours_group_toggle() {
+		$this->make_integration();
+		$fields = ProductAI::get_fields();
+
+		$this->assertSame( 'text', $fields['yoast_title']['output'] );
+		$this->assertSame( 'textarea', $fields['yoast_metadesc']['output'] );
+		$this->assertSame( 'storesuite_ai_field_yoast_seo', $fields['yoast_title']['enabled_setting'] );
+		$this->assertSame( 'storesuite_ai_instruction_yoast_title', $fields['yoast_title']['instruction_setting'] );
+		$this->assertSame( 'storesuite_ai_instruction_yoast_description', $fields['yoast_metadesc']['instruction_setting'] );
+		$this->assertSame( 'storesuite_ai_instruction_yoast_description', $fields['yoast_twitter-description']['instruction_setting'], 'All descriptions share one instruction.' );
+	}
+
+	/**
+	 * The card renders Generate buttons only when text AI is available.
+	 *
+	 * @return void
+	 */
+	public function test_card_renders_generate_buttons_only_with_ai() {
+		$product = wc_get_product( $this->product_id );
+
+		ob_start();
+		$this->make_integration()->render_card( $product, true );
+		$without = ob_get_clean();
+		$this->assertStringNotContainsString( 'storesuite-ai-generate', $without );
+
+		$filter = function () {
+			return function () {
+				return 'x';
+			};
+		};
+		add_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		ob_start();
+		$this->make_integration()->render_card( $product, true );
+		$with = ob_get_clean();
+
+		remove_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$this->assertSame( 6, substr_count( $with, 'class="storesuite-ai-generate' ) );
+		$this->assertStringContainsString( 'data-field="yoast_title" data-target="#storesuite_yoast_title"', $with );
+		$this->assertStringContainsString( 'data-field="yoast_twitter-description" data-target="#storesuite_yoast_twitter-description"', $with );
 	}
 }
