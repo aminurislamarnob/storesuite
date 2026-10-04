@@ -64,6 +64,7 @@ No feature gates. No trial limits. No upsell.
 * [PDF Invoices & Packing Slips for WooCommerce](https://wordpress.org/plugins/woocommerce-pdf-invoices-packing-slips/) – adds Invoice and Packing Slip documents.
 * [WebToffee WooCommerce PDF Invoices, Packing Slips, Delivery Notes & Shipping Labels](https://wordpress.org/plugins/print-invoices-packing-slip-labels-for-woocommerce/) – adds Invoice, Packing Slip, Delivery Note, Shipping Label, and Dispatch Label actions.
 * [Advanced Custom Fields](https://wordpress.org/plugins/advanced-custom-fields/) – field groups located on products render as cards on the frontend product form. Supported types: text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator; conditional logic and ACF's validation rules are honoured. Other types (including ACF Pro types) show an "edit in WordPress admin" note and are never overwritten. Can be switched off under Settings → General.
+* [Advanced Shipment Tracking for WooCommerce](https://wordpress.org/plugins/woo-advanced-shipment-tracking/) – adds a Shipment Tracking card to the order details page and a Tracking column and Add Tracking action to the orders list, so shop managers can add and delete tracking numbers without wp-admin. Carriers and settings are still managed in wp-admin; the Pro edition is not supported yet.
 
 = How It Works =
 
@@ -155,6 +156,8 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 
 = Unreleased =
 * **Advanced Custom Fields on the product form.** Field groups located on products now render as cards on the frontend add/edit product form and save through ACF, so wp-admin and `get_field()` stay in sync. Supports text, text area, number, range, email, URL, password, color picker, select, checkbox, radio, button group, true/false, date, date time, time, WYSIWYG editor, image, message and separator fields; honours conditional logic and runs ACF's validation before saving. Other field types show a read-only note. A toggle on Settings → General turns the integration off. Deliberate differences from wp-admin (ISO date display, passwords never prefilled, ignored UI-only settings) are listed in the products documentation.
+* **Shipment tracking on orders.** With the free Advanced Shipment Tracking for WooCommerce plugin active, the order details page shows a Shipment Tracking card and the orders list gains a Tracking column and an Add Tracking action. Tracking is saved through that plugin, so its customer emails, order notes and order status changes work as they do in wp-admin.
+* Developers: new `storesuite_order_list_columns` filter and `storesuite_order_list_column_{$key}` action for adding columns to the orders list.
 * Developers: new `storesuite_product_form_after_others` template action and `storesuite_product_pre_save_validation` filter on the product form.
 * Stopped querying the deprecated `point_of_sale` feature flag on WooCommerce 11.
 

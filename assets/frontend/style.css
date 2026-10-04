@@ -8263,3 +8263,115 @@ ul.storesuite-notifications-list {
 .storesuite-acf-field.storesuite-acf-hidden {
   display: none;
 }
+
+/* ---------------------------------------------------------------------------
+ * Shipment tracking on orders (templates/orders/tracking/).
+ * ------------------------------------------------------------------------- */
+.storesuite-tracking-items {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+}
+.storesuite-tracking-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--storesuite-border-color);
+}
+.storesuite-tracking-item:first-child {
+  padding-top: 0;
+}
+.storesuite-tracking-item.storesuite-tracking-empty {
+  color: var(--storesuite-text-color-light);
+}
+.storesuite-tracking-logo {
+  flex: 0 0 36px;
+  width: 36px;
+  height: 36px;
+  border-radius: 6px;
+  object-fit: contain;
+}
+.storesuite-tracking-details {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.storesuite-tracking-carrier {
+  color: var(--storesuite-text-black);
+  font-weight: 500;
+}
+.storesuite-tracking-number {
+  color: var(--storesuite-text-color);
+  word-break: break-all;
+}
+.storesuite-tracking-date {
+  color: var(--storesuite-text-color-light);
+  font-size: 13px;
+}
+.storesuite-tracking-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 4px;
+  font-size: 13px;
+}
+.storesuite-tracking-actions a,
+.storesuite-tracking-cell a {
+  color: var(--storesuite-primary-bg);
+  text-decoration: none;
+}
+.storesuite-tracking-actions a:hover,
+.storesuite-tracking-cell a:hover {
+  text-decoration: underline;
+}
+.storesuite-tracking-actions .storesuite-delete-tracking {
+  color: #dc3545;
+}
+.storesuite-order-tracking .storesuite-add-tracking {
+  width: 100%;
+}
+.storesuite-order-tracking .storesuite-add-tracking svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Orders list column: one shipment per line. */
+.storesuite-tracking-cell-item {
+  display: block;
+  white-space: nowrap;
+}
+.storesuite-tracking-cell-carrier {
+  color: var(--storesuite-text-color-light);
+  font-size: 12px;
+}
+
+/* Add-tracking modal. */
+.storesuite-order-tracking-modal form {
+  margin: 0;
+}
+.storesuite-tracking-mark-as {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.storesuite-tracking-mark-as legend {
+  margin-bottom: 8px;
+  padding: 0;
+  color: var(--storesuite-text-black);
+  font-size: 14px;
+  font-weight: 500;
+}
+.storesuite-tracking-mark-as-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 16px;
+  color: var(--storesuite-text-color);
+  font-weight: 400;
+  cursor: pointer;
+}
+.storesuite-order-tracking-error {
+  display: block;
+  margin-top: 16px;
+}

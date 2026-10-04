@@ -117,6 +117,35 @@ Each action carries a small icon telling you what it does: a **printer** opens y
 
 ---
 
+## Shipment Tracking
+
+If your store uses the free **[Advanced Shipment Tracking for WooCommerce](https://wordpress.org/plugins/woo-advanced-shipment-tracking/)** plugin, tracking numbers can be added and removed right from the dashboard. There is nothing to switch on: the tracking tools appear as soon as that plugin is active.
+
+### On an order
+
+Open an order and look for the **Shipment Tracking** card in the right-hand column. It lists every shipment on the order with the carrier, the tracking number, the date it shipped and a **Track** link that opens the carrier's tracking page in a new tab.
+
+To record a shipment, click **Add Tracking** and fill in the form:
+
+| Field | What to enter |
+|-------|---------------|
+| **Tracking number** | The number from your shipping label |
+| **Carrier** | The company delivering the parcel. Only carriers enabled in the plugin's settings are listed |
+| **Date shipped** | Set to today; change it if the parcel left on another day |
+| **Mark order as** | Ticked by default, so saving also moves the order to **Completed**. Untick it to add tracking without changing the status |
+
+Click **Add Tracking** to save. The customer receives the shipment email with their tracking details, exactly as if you had added it in the WordPress admin, and a note is added to the order.
+
+An order can hold more than one tracking number, so parcels that ship separately can each be recorded. To remove one entered by mistake, click **Delete** under it and confirm.
+
+### From the orders list
+
+The orders list gains a **Tracking** column showing each order's tracking numbers as links to the carrier. To add tracking without opening the order, open the **⋯** menu at the end of the row and choose **Add Tracking**; the same form appears.
+
+> **Good to know:** Carriers, tracking emails and extra order statuses such as *Partially Shipped* are set up by an administrator under **WooCommerce → Shipment Tracking** in the WordPress admin. If the carrier you need is missing from the list, ask an administrator to enable it there. The Pro edition of the plugin is not supported in the dashboard yet.
+
+---
+
 ## A Few Friendly Tips
 
 - **Work by status.** Filter to Processing, fulfill those, mark them Completed — a clean, repeatable routine.

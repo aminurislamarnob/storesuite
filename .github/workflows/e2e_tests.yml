@@ -94,6 +94,12 @@ jobs:
                   curl -sL https://downloads.wordpress.org/plugin/advanced-custom-fields.latest-stable.zip -o /tmp/acf.zip
                   unzip -q /tmp/acf.zip -d "$WP_DIR/wp-content/plugins"
 
+            # Not pinned either: the integration targets the current free release on both lanes.
+            - name: Download Advanced Shipment Tracking
+              run: |
+                  curl -sL https://downloads.wordpress.org/plugin/woo-advanced-shipment-tracking.latest-stable.zip -o /tmp/ast.zip
+                  unzip -q /tmp/ast.zip -d "$WP_DIR/wp-content/plugins"
+
             - name: Install the site
               run: |
                   rsync -a --exclude '.git' --exclude 'node_modules' --exclude 'tests' ./ "$WP_DIR/wp-content/plugins/storesuite/"
