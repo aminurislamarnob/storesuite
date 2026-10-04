@@ -91,8 +91,12 @@ class ShipmentTrackingTest extends StoreSuiteAjaxTestCase {
 		$this->_setRole( 'shop_manager' );
 		$order = self::factory()->order->create();
 
-		$this->add_tracking_ajax( $this->tracking_fields( $order, array( 'tracking_number' => 'FIRST-1' ) ) );
-		$this->add_tracking_ajax( $this->tracking_fields( $order, array( 'tracking_number' => 'SECOND-2' ) ) );
+		$first  = $this->add_tracking_ajax( $this->tracking_fields( $order, array( 'tracking_number' => 'FIRST-1' ) ) );
+		$second = $this->add_tracking_ajax( $this->tracking_fields( $order, array( 'tracking_number' => 'SECOND-2' ) ) );
+
+		// The orders list folds every shipment after the first behind a toggle.
+		$this->assertStringNotContainsString( 'storesuite-tracking-cell-toggle', $first['data']['cell_html'] );
+		$this->assertStringContainsString( 'Show 1 more shipment', $second['data']['cell_html'] );
 
 		$this->assertSame(
 			array( 'FIRST-1', 'SECOND-2' ),
@@ -129,6 +133,30 @@ class ShipmentTrackingTest extends StoreSuiteAjaxTestCase {
 		$this->assertTrue( $response['success'] );
 		$this->assertTrue( $response['data']['status_changed'] );
 		$this->assertSame( 'partial-shipped', wc_get_order( $order->get_id() )->get_status() );
+	}
+
+	public function test_response_reports_the_new_order_status() {
+		$this->_setRole( 'shop_manager' );
+		$order = self::factory()->order->create();
+
+		$response = $this->add_tracking_ajax( $this->tracking_fields( $order, array( 'mark_order_as' => 'shipped' ) ) );
+
+		// The order form syncs its Status field from this instead of reloading.
+		$this->assertSame( 'wc-completed', $response['data']['order_status'] );
+	}
+
+	public function test_new_unsaved_order_takes_tracking_but_keeps_its_status() {
+		$this->_setRole( 'shop_manager' );
+		$order = self::factory()->order->create();
+		$order->set_status( 'auto-draft' );
+		$order->save();
+
+		$response = $this->add_tracking_ajax( $this->tracking_fields( $order, array( 'mark_order_as' => 'shipped' ) ) );
+
+		$this->assertTrue( $response['success'] );
+		$this->assertFalse( $response['data']['status_changed'] );
+		$this->assertCount( 1, ast_get_tracking_items( $order->get_id() ) );
+		$this->assertSame( 'auto-draft', wc_get_order( $order->get_id() )->get_status() );
 	}
 
 	public function test_empty_date_defaults_to_today() {

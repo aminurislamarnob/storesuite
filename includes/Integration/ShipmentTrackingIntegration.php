@@ -66,6 +66,7 @@ class ShipmentTrackingIntegration {
 		add_action( 'storesuite_order_list_row_actions', array( $this, 'render_list_row_action' ) );
 		// Priority 8 so the card sits below Documents (5) and above notes / customer history (10).
 		add_action( 'storesuite_after_order_details_action', array( $this, 'render_order_details_card' ), 8 );
+		add_action( 'storesuite_after_order_form_submit', array( $this, 'render_order_form_card' ) );
 		// Inside the page content, where the dashboard's form styles apply; the overlay itself is fixed.
 		add_action( 'storesuite_dashboard_before_main_content', array( $this, 'render_modal' ), 99 );
 
@@ -217,7 +218,52 @@ class ShipmentTrackingIntegration {
 	public function get_tracking_items( int $order_id ): array {
 		$items = $this->ast()->get_tracking_items( $order_id, true );
 
-		return is_array( $items ) ? $items : array();
+		if ( ! is_array( $items ) ) {
+			return array();
+		}
+
+		foreach ( $items as &$item ) {
+			$item = array_merge( $item, $this->describe_item( $item ) );
+		}
+		unset( $item );
+
+		return $items;
+	}
+
+	/**
+	 * The display details of a tracking item, matching AST's own wp-admin order box.
+	 *
+	 * @param array<string, mixed> $item Formatted AST tracking item.
+	 *
+	 * @return array{display_carrier:string, display_url:string, display_meta:string}
+	 */
+	protected function describe_item( array $item ): array {
+		$carrier = ! empty( $item['formatted_tracking_provider'] ) ? $item['formatted_tracking_provider'] : ( isset( $item['tracking_provider'] ) ? $item['tracking_provider'] : '' );
+		$url     = ! empty( $item['ast_tracking_link'] ) ? $item['ast_tracking_link'] : ( isset( $item['formatted_tracking_link'] ) ? $item['formatted_tracking_link'] : '' );
+		$meta    = '';
+
+		if ( ! empty( $item['date_shipped'] ) ) {
+			/* translators: %s: date shipped. */
+			$meta = sprintf( __( 'Shipped on %s', 'storesuite' ), date_i18n( wc_date_format(), (int) $item['date_shipped'] ) );
+		}
+
+		$user = ! empty( $item['user_id'] ) ? get_userdata( (int) $item['user_id'] ) : false;
+
+		if ( $user ) {
+			/* translators: %s: name of the user who added the tracking. */
+			$meta .= ' ' . sprintf( __( 'by %s', 'storesuite' ), $user->display_name );
+
+			if ( ! empty( $item['source'] ) ) {
+				/* translators: %s: where the tracking was added from, e.g. "edit order". */
+				$meta .= ' ' . sprintf( __( '(Added via %s)', 'storesuite' ), str_replace( '_', ' ', $item['source'] ) );
+			}
+		}
+
+		return array(
+			'display_carrier' => (string) $carrier,
+			'display_url'     => (string) $url,
+			'display_meta'    => trim( $meta ),
+		);
 	}
 
 	/**
@@ -244,7 +290,7 @@ class ShipmentTrackingIntegration {
 	 */
 	public function add_list_column( $columns ) {
 		if ( $this->can_manage() ) {
-			$columns[ self::COLUMN_KEY ] = __( 'Tracking', 'storesuite' );
+			$columns[ self::COLUMN_KEY ] = __( 'Shipment Tracking', 'storesuite' );
 		}
 
 		return $columns;
@@ -293,18 +339,45 @@ class ShipmentTrackingIntegration {
 			return;
 		}
 
+		$this->render_card( $order, true );
+	}
+
+	/**
+	 * Render the "Shipment Tracking" card in the sidebar of the add / edit order form.
+	 *
+	 * A new order is still an auto-draft: tracking can be attached, but its
+	 * status is chosen in the form, so the "Mark order as" choice is withheld.
+	 *
+	 * @param WC_Order $order Current order.
+	 */
+	public function render_order_form_card( $order ) {
+		if ( ! $order instanceof WC_Order || ! $this->can_manage() || ! $order->get_id() ) {
+			return;
+		}
+
+		$this->render_card( $order, 'auto-draft' !== $order->get_status() );
+	}
+
+	/**
+	 * Render the tracking card of an order.
+	 *
+	 * @param WC_Order $order         The order.
+	 * @param bool     $status_change Whether the modal may offer "Mark order as".
+	 */
+	protected function render_card( WC_Order $order, bool $status_change ) {
 		storesuite_get_template_part(
 			'orders/tracking/card',
 			'',
 			array(
-				'order'      => $order,
-				'items_html' => $this->get_items_html( $order->get_id() ),
+				'order'         => $order,
+				'items_html'    => $this->get_items_html( $order->get_id() ),
+				'status_change' => $status_change,
 			)
 		);
 	}
 
 	/**
-	 * Render the shared add-tracking modal once on the orders list and order details pages.
+	 * Render the shared add-tracking modal once on every order page that shows tracking.
 	 */
 	public function render_modal() {
 		if ( ! $this->is_tracking_page() || ! $this->can_manage() ) {
@@ -328,7 +401,10 @@ class ShipmentTrackingIntegration {
 	 * @return bool
 	 */
 	protected function is_tracking_page(): bool {
-		return storesuite_is_endpoint_url( 'orders' ) || storesuite_is_endpoint_url( 'order-details' );
+		return storesuite_is_endpoint_url( 'orders' )
+			|| storesuite_is_endpoint_url( 'order-details' )
+			|| storesuite_is_endpoint_url( 'add-new-order' )
+			|| storesuite_is_endpoint_url( 'edit-order' );
 	}
 
 	/**
@@ -415,6 +491,7 @@ class ShipmentTrackingIntegration {
 				'items_html'     => $this->get_items_html( $order->get_id() ),
 				'cell_html'      => $this->get_cell_html( $order->get_id() ),
 				'status_changed' => $status_changed,
+				'order_status'   => 'wc-' . $order->get_status(),
 			)
 		);
 	}
@@ -460,6 +537,11 @@ class ShipmentTrackingIntegration {
 		}
 
 		$status_before = $order->get_status();
+
+		// A new order is still being composed; its status comes from the order form.
+		if ( 'auto-draft' === $status_before ) {
+			$mark_as = '';
+		}
 
 		$args = array(
 			'tracking_provider' => $carrier,
@@ -538,7 +620,7 @@ class ShipmentTrackingIntegration {
 	}
 
 	/**
-	 * Enqueue the frontend script on the orders list and order details pages only.
+	 * Enqueue the frontend script on the order pages that show tracking only.
 	 */
 	public function enqueue_script() {
 		if ( ! storesuite_is_dashboard_page() || ! $this->is_tracking_page() || ! $this->can_manage() ) {

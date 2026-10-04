@@ -106,10 +106,11 @@ StoreSuite works with either of these (see the plugin's readme for the current l
 
 Install and set up whichever you prefer in the usual way, and make sure the documents you want are enabled in *that* plugin's settings. StoreSuite picks them up automatically — there's nothing to configure on the StoreSuite side, and if you have both active, you'll see both sets.
 
-You'll find the documents in two places:
+You'll find the documents in three places:
 
 - **In the orders list** — open any order's **⋯** menu and the document actions sit below **View** and **Edit**.
-- **On the order details page** — a **Documents** card gathers them all in one place, just above Order notes.
+- **On the order details page** — a **Documents** card gathers them all in one place, above Order notes.
+- **On the Edit Order form** — the same **Documents** card sits below the **Update Order** button. It isn't shown on **Add New Order**, since an order that hasn't been created yet has nothing to print.
 
 Each action carries a small icon telling you what it does: a **printer** opens your browser's print dialog straight away, and a **download arrow** saves the PDF to your computer. Printing happens right on the page — you stay on the order, no new tab, no losing your place.
 
@@ -125,9 +126,9 @@ If your store uses the free **[Advanced Shipment Tracking for WooCommerce](https
 
 ![Shipment Tracking card on an order](screenshots/screenshot-52.png)
 
-Open an order and look for the **Shipment Tracking** card in the right-hand column. It lists every shipment on the order with the carrier, the tracking number, the date it shipped and a **Track** link that opens the carrier's tracking page in a new tab.
+Open an order and look for the **Shipment Tracking** card in the right-hand column. It lists every shipment on the order with the carrier and the tracking number, and underneath the date it shipped, who added it and from where. Click the tracking number to open the carrier's tracking page in a new tab.
 
-To record a shipment, click **Add Tracking** and fill in the form:
+To record a shipment, click **Add Tracking Info** and fill in the form:
 
 ![Add Tracking form](screenshots/screenshot-53.png)
 
@@ -142,11 +143,20 @@ Click **Add Tracking** to save. The customer receives the shipment email with th
 
 An order can hold more than one tracking number, so parcels that ship separately can each be recorded. To remove one entered by mistake, click **Delete** under it and confirm.
 
+### While adding or editing an order
+
+![Shipment Tracking card on the edit order form](screenshots/screenshot-55.png)
+
+The same **Shipment Tracking** card sits in the right-hand column of the **Edit Order** and **Add New Order** forms, so you can record a shipment without leaving the form.
+
+- On **Edit Order**, saving tracking with **Mark order as** switched on also changes the form's **Status** field to match, and nothing else you were editing is lost. Click **Update Order** when you finish your other changes.
+- On **Add New Order**, the order doesn't exist yet, so the form's **Status** field decides its status and the **Mark order as** switch isn't shown. The tracking you add is kept when you click **Create Order**.
+
 ### From the orders list
 
-![Tracking column in the orders list](screenshots/screenshot-54.png)
+![Shipment Tracking column in the orders list](screenshots/screenshot-54.png)
 
-The orders list gains a **Tracking** column showing each order's tracking numbers as links to the carrier. To add tracking without opening the order, open the **⋯** menu at the end of the row and choose **Add Tracking**; the same form appears.
+The orders list gains a **Shipment Tracking** column. Each shipment gets its own small block showing the carrier, the tracking number as a link to the carrier's tracking page, the date it shipped, and who added it and from where. When an order has more than one shipment, the first is shown and the rest fold away behind a **Show more shipments** link; click it to open them and **Show less** to fold them back. To add tracking without opening the order, open the **⋯** menu at the end of the row and choose **Add Tracking**; the same form appears.
 
 > **Good to know:** Carriers, tracking emails and extra order statuses such as *Partially Shipped* are set up by an administrator under **WooCommerce → Shipment Tracking** in the WordPress admin. If the carrier you need is missing from the list, ask an administrator to enable it there. The Pro edition of the plugin is not supported in the dashboard yet.
 

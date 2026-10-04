@@ -2828,6 +2828,12 @@ span.select2-selection__clear {
   }
 }
 
+/* An order without line items leaves this box empty; its bottom margin would
+   push the cards below it out of line with the sidebar, so hide it until the
+   first item is added. */
+.storesuite-order-items-box:not(:has(.inside > *)) {
+  display: none;
+}
 .storesuite-dashboard-order-details .storesuite-table, .storesuite-order-items-box table {
   width: 100%;
   border-collapse: collapse;
@@ -8272,61 +8278,58 @@ ul.storesuite-notifications-list {
   padding: 0;
   list-style: none;
 }
+/* Each shipment mirrors an order note: a content block, then a meta line. */
 .storesuite-tracking-item {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--storesuite-border-color);
-}
-.storesuite-tracking-item:first-child {
-  padding-top: 0;
+  margin-bottom: 16px;
 }
 .storesuite-tracking-item.storesuite-tracking-empty {
+  margin-bottom: 0;
   color: var(--storesuite-text-color-light);
 }
-.storesuite-tracking-logo {
-  flex: 0 0 36px;
-  width: 36px;
-  height: 36px;
-  border-radius: 6px;
-  object-fit: contain;
+.storesuite-tracking-content {
+  margin-bottom: 8px;
+  padding: 12px 16px;
+  border-left: 4px solid #9e9e9e;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  color: #424242;
+  font-size: 14px;
+  line-height: 1.4;
+  word-break: break-word;
 }
-.storesuite-tracking-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-.storesuite-tracking-carrier {
-  color: var(--storesuite-text-black);
-  font-weight: 500;
-}
-.storesuite-tracking-number {
-  color: var(--storesuite-text-color);
-  word-break: break-all;
-}
-.storesuite-tracking-date {
-  color: var(--storesuite-text-color-light);
-  font-size: 13px;
-}
-.storesuite-tracking-actions {
-  display: flex;
-  gap: 12px;
-  margin-top: 4px;
-  font-size: 13px;
-}
-.storesuite-tracking-actions a,
+.storesuite-tracking-content a,
 .storesuite-tracking-cell a {
   color: var(--storesuite-primary-bg);
   text-decoration: none;
 }
-.storesuite-tracking-actions a:hover,
+.storesuite-tracking-content a:hover,
 .storesuite-tracking-cell a:hover {
   text-decoration: underline;
 }
-.storesuite-tracking-actions .storesuite-delete-tracking {
+.storesuite-tracking-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0;
+  color: #6c757d;
+  font-size: 12px;
+}
+.storesuite-tracking-meta .storesuite-delete-tracking {
+  flex: 0 0 auto;
   color: #dc3545;
+  text-decoration: underline;
+}
+.storesuite-tracking-meta .storesuite-delete-tracking:hover {
+  color: #c82333;
+}
+[data-theme="dark"] .storesuite-tracking-content {
+  border-left-color: rgb(71 85 105);
+  background-color: var(--storesuite-surface-elevated);
+  color: var(--storesuite-text-color);
+}
+[data-theme="dark"] .storesuite-tracking-meta {
+  color: var(--storesuite-text-color-light);
 }
 .storesuite-order-tracking .storesuite-add-tracking {
   width: 100%;
@@ -8337,21 +8340,58 @@ ul.storesuite-notifications-list {
   /* The icon token can be themed to white (it also colours sidebar icons), so follow the label. */
   fill: currentColor;
 }
-.storesuite-tracking-item:last-child {
-  border-bottom: 0;
-}
-.storesuite-tracking-item.storesuite-tracking-empty {
-  padding-bottom: 0;
-}
 
-/* Orders list column: one shipment per line. */
+/* Orders list column: one compact note-style block per shipment. */
 .storesuite-tracking-cell-item {
-  display: block;
-  white-space: nowrap;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 260px;
+  padding: 8px 12px;
+  border-left: 4px solid #9e9e9e;
+  border-radius: 8px;
+  background-color: #f5f5f5;
+  color: #424242;
+  font-size: 13px;
+  line-height: 1.4;
+  text-align: left;
 }
-.storesuite-tracking-cell-carrier {
-  color: var(--storesuite-text-color-light);
+.storesuite-tracking-cell-item + .storesuite-tracking-cell-item {
+  margin-top: 6px;
+}
+/* Padding, not margin, so the slide animation covers the gap too. */
+.storesuite-tracking-cell-more {
+  padding-top: 6px;
+}
+/* Shipments after the first stay collapsed behind this toggle. */
+.storesuite-tracking-cell-toggle {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--storesuite-primary-bg);
   font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.storesuite-tracking-cell-toggle:hover {
+  text-decoration: underline;
+}
+.storesuite-tracking-cell-number {
+  word-break: break-all;
+}
+.storesuite-tracking-cell-meta {
+  color: #6c757d;
+  font-size: 12px;
+}
+[data-theme="dark"] .storesuite-tracking-cell-item {
+  border-left-color: rgb(71 85 105);
+  background-color: var(--storesuite-surface-elevated);
+  color: var(--storesuite-text-color);
+}
+[data-theme="dark"] .storesuite-tracking-cell-meta {
+  color: var(--storesuite-text-color-light);
 }
 
 /* Add-tracking modal. */

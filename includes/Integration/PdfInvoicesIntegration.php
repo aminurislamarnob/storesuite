@@ -32,6 +32,24 @@ class PdfInvoicesIntegration {
 		add_action( 'storesuite_order_list_row_actions', array( $this, 'render_list_row_actions' ) );
 		// Priority 5 so the Documents card appears above notes / customer-history (default 10).
 		add_action( 'storesuite_after_order_details_action', array( $this, 'render_order_details_documents' ), 5 );
+		// Priority 5 so the Documents card sits above later cards on the edit order form, as on the details page.
+		add_action( 'storesuite_after_order_form_submit', array( $this, 'render_order_form_documents' ), 5 );
+	}
+
+	/**
+	 * Render the "Documents" card on the edit order form.
+	 *
+	 * The same hook fires on the add order form, where the order is still an
+	 * unsaved draft with nothing to print.
+	 *
+	 * @param WC_Order $order Current order.
+	 */
+	public function render_order_form_documents( $order ) {
+		if ( ! $order instanceof WC_Order || 'auto-draft' === $order->get_status() ) {
+			return;
+		}
+
+		$this->render_order_details_documents( $order );
 	}
 
 	/**

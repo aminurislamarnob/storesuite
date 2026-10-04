@@ -113,6 +113,17 @@
 			$trigger.closest( '.storesuite-dropdown-menu' ).hide();
 
 			this.resetForm();
+
+			// A new, unsaved order takes its status from the order form.
+			var allowStatus = String( $trigger.data( 'status-change' ) ) !== '0';
+			var $markAs = this.$form.find( '.storesuite-tracking-mark-as' );
+			$markAs.prop( 'hidden', ! allowStatus );
+			if ( ! allowStatus ) {
+				$markAs
+					.find( 'input[name="mark_order_as"]' )
+					.prop( 'checked', false );
+			}
+
 			this.$form.find( '#storesuite-tracking-order-id' ).val( orderId );
 			this.$modal
 				.find( '#storesuite-order-tracking-title' )
@@ -200,10 +211,20 @@
 						return;
 					}
 
-					// The order status changed, so the badge and status-dependent UI are stale.
 					if ( response.data.status_changed ) {
-						window.location.reload();
-						return;
+						var $formStatus = $( 'select#order_status' );
+
+						// On the order form a reload would drop unsaved edits, and a stale
+						// status field would undo the change on save: sync the field instead.
+						if ( $formStatus.length ) {
+							$formStatus
+								.val( response.data.order_status )
+								.trigger( 'change' );
+						} else {
+							// The badge and status-dependent UI are stale.
+							window.location.reload();
+							return;
+						}
 					}
 
 					self.refresh( response.data );
@@ -270,6 +291,18 @@
 			} );
 		},
 	};
+
+	// Orders list: expand / collapse the shipments after the first one.
+	$( document ).on( 'click', '.storesuite-tracking-cell-toggle', function () {
+		var $toggle = $( this );
+		var $more = $toggle.siblings( '.storesuite-tracking-cell-more' );
+		var expand = $toggle.attr( 'aria-expanded' ) !== 'true';
+
+		$more.stop( true, true )[ expand ? 'slideDown' : 'slideUp' ]( 200 );
+		$toggle
+			.attr( 'aria-expanded', expand ? 'true' : 'false' )
+			.text( $toggle.data( expand ? 'less-label' : 'more-label' ) );
+	} );
 
 	$( function () {
 		StoreSuiteOrderTrackingUi.init();

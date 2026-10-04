@@ -22,6 +22,10 @@ export class OrderTrackingPage {
 		await this.page.goto( `${ dashboardPath }/order-details/${ orderId }/` );
 	}
 
+	async gotoEditOrder( orderId: number ): Promise< void > {
+		await this.page.goto( `${ dashboardPath }/edit-order/${ orderId }/` );
+	}
+
 	async gotoOrders(): Promise< void > {
 		await this.page.goto( `${ dashboardPath }/orders/` );
 	}

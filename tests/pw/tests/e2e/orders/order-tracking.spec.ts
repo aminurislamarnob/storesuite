@@ -53,6 +53,32 @@ test.describe( 'shipment tracking on orders', () => {
 		await expect( tracking.card ).toContainText( 'No tracking added yet.' );
 	} );
 
+	test( 'the edit order form adds tracking and syncs its status field without reloading', async ( { page } ) => {
+		const orderId = await createOrderViaApi( 'processing' );
+		const trackingNumber = `E2E-${ Date.now() }`;
+		const tracking = new OrderTrackingPage( page );
+
+		await tracking.gotoEditOrder( orderId );
+		await expect( tracking.card ).toBeVisible();
+		await expect( page.locator( '#order_status' ) ).toHaveValue( 'wc-processing' );
+
+		// A marker on the page object survives only if the page is not reloaded.
+		await page.evaluate( () => {
+			( window as unknown as { e2eMarker: boolean } ).e2eMarker = true;
+		} );
+
+		await tracking.openModalFromCard();
+		await tracking.fill( trackingNumber, CARRIER, true );
+		await tracking.submit();
+
+		await expect( tracking.modal ).toBeHidden();
+		await expect( tracking.items ).toHaveCount( 1 );
+		await expect( page.locator( '#order_status' ) ).toHaveValue( 'wc-completed' );
+		expect(
+			await page.evaluate( () => ( window as unknown as { e2eMarker?: boolean } ).e2eMarker )
+		).toBe( true );
+	} );
+
 	test( 'the orders list action adds tracking and completes the order', async ( { page } ) => {
 		const orderId = await createOrderViaApi( 'processing' );
 		const trackingNumber = `E2E-${ Date.now() }`;
