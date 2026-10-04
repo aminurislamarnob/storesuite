@@ -518,7 +518,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 							?>
 							<label for="date_created"><?php esc_html_e( 'Customer', 'storesuite' ); ?></label>
 							<select class="wc-customer-search" id="customer_user" name="customer_user" data-placeholder="<?php esc_attr_e( 'Guest', 'storesuite' ); ?>" data-allow_clear="true">
-								<option value="<?php echo $user_id ? esc_attr( $user_id ) : ''; ?>"><?php echo $user_id ? esc_html( htmlspecialchars( wp_kses_post( $user_string ) ) ) : esc_html__( 'Guest', 'storesuite' ); ?></option>
+								<option value="<?php echo $user_id ? esc_attr( $user_id ) : ''; ?>"><?php echo $user_id ? esc_html( htmlspecialchars( wp_kses_post( $user_string ), ENT_QUOTES ) ) : esc_html__( 'Guest', 'storesuite' ); ?></option>
 							</select>
 						</div>
 						<div class="storesuite-form-group">
@@ -540,8 +540,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 							<select class="storesuite-form-control" id="order_status" name="order_status">
 								<?php
 									$statuses = wc_get_order_statuses();
-								foreach ( $statuses as $status => $status_name ) {
-									echo '<option value="' . esc_attr( $status ) . '" ' . selected( $status, 'wc-' . $order->get_status(), false ) . '>' . esc_html( $status_name ) . '</option>';
+								foreach ( $statuses as $status_key => $status_name ) {
+									echo '<option value="' . esc_attr( $status_key ) . '" ' . selected( $status_key, 'wc-' . $order->get_status(), false ) . '>' . esc_html( $status_name ) . '</option>';
 								}
 								?>
 							</select>

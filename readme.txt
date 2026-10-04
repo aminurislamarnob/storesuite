@@ -4,8 +4,8 @@ Donate link: https://www.buymeacoffee.com/aiarnob
 Tags: woocommerce frontend dashboard, woocommerce order management, woocommerce product management, shop manager, woocommerce ai
 Requires at least: 6.9
 Tested up to: 7.1
-Requires PHP: 8.1
-Stable tag: 1.3.1
+Requires PHP: 7.4
+Stable tag: 1.4.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -159,6 +159,12 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 * Add **AI Generate** to the SEO (Yoast) card: a Generate with AI button beside Insert variable on the SEO title, meta description, and social and X titles and descriptions, powered by the same AI provider as the product copy helpers. Suggestions open in the familiar modal with a live length counter, and use the focus keyphrase. A **Yoast SEO** block on the AI settings page holds one on/off switch and the two editable system instructions.
 * Developers: AI text generation is now extensible — register fields with `storesuite_ai_text_fields`, and supply your own generator (or a test double) with `storesuite_ai_text_generator`. The settings endpoint accepts the toggle and instruction keys of registered fields.
 * Developers: new `storesuite_product_form_after_main_cards` action for adding cards to the product form.
+
+= 1.4.0 =
+* Lower the minimum PHP version to **7.4** (previously 8.1), matching the WordPress and WooCommerce floors so StoreSuite can be installed on the same hosts they run on. PHP compatibility is now checked in CI on every change.
+* Fix a fatal error when using **AI product text or image generation** on WordPress 6.9. The WordPress AI Client only ships with WordPress 7.0, so on older versions the AI buttons now return a clear message instead of crashing the request.
+* The plugin name shown in the **Plugins** list now matches the WordPress.org listing.
+* The release package no longer includes development-only files.
 
 = 1.3.1 =
 * Fix the login screen redirecting to My Account before anyone had logged in. The redirect fired while the login **form** was rendering, which broke plain `wp-login.php` and hidden login URLs from plugins such as WPS Hide Login. The form now renders normally; the redirect only runs after a successful login.

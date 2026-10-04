@@ -10,8 +10,14 @@ on:
 name: Tests
 jobs:
     runPHPUnit:
-        name: Run PHPUnit
+        name: Run PHPUnit (PHP ${{ matrix.php }})
         runs-on: ubuntu-latest
+        strategy:
+            fail-fast: false
+            # 7.4 is the declared minimum (readme.txt / storesuite.php); 8.1 is the
+            # version the other workflows run on.
+            matrix:
+                php: ['7.4', '8.1']
         services:
             mysql:
                 image: mysql:8.0
@@ -31,7 +37,7 @@ jobs:
             - name: Setup PHP
               uses: shivammathur/setup-php@v2
               with:
-                  php-version: '8.1'
+                  php-version: ${{ matrix.php }}
                   extensions: mysqli
                   coverage: none
                   tools: composer:v2
@@ -44,8 +50,8 @@ jobs:
               uses: actions/cache@v4
               with:
                   path: ${{ steps.composercache.outputs.dir }}
-                  key: "${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}"
-                  restore-keys: ${{ runner.os }}-composer-
+                  key: "${{ runner.os }}-php${{ matrix.php }}-composer-${{ hashFiles('**/composer.lock') }}"
+                  restore-keys: ${{ runner.os }}-php${{ matrix.php }}-composer-
 
             - name: Install dependencies
               run: composer install --prefer-dist --no-progress

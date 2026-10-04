@@ -116,6 +116,18 @@ class ProductImageAI {
 			__( 'AI image generation is not available. Connect an AI provider that supports images to use this feature.', 'storesuite' )
 		);
 
+		// The core AI Client ships with WordPress 7.0; is_supported() already
+		// covers this, but keep the guard inline so the call below is never
+		// reached on the 6.9 minimum this plugin still supports.
+		if ( ! function_exists( 'wp_ai_client_prompt' ) ) {
+			wp_send_json_error(
+				array(
+					'reason'  => 'unavailable',
+					'message' => __( 'AI image generation requires WordPress 7.0 or newer.', 'storesuite' ),
+				)
+			);
+		}
+
 		$prompt = isset( $_POST['prompt'] ) ? sanitize_textarea_field( wp_unslash( $_POST['prompt'] ) ) : '';
 		if ( '' === $prompt ) {
 			wp_send_json_error( array( 'message' => __( 'Please describe the image you want to generate.', 'storesuite' ) ) );

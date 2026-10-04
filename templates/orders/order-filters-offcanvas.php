@@ -79,7 +79,7 @@ global $wp_locale;
 				}
 				?>
 				<select class="wc-customer-search storesuite-form-control" name="_customer_user" data-placeholder="<?php esc_attr_e( 'Filter by registered customer', 'storesuite' ); ?>" data-allow_clear="true">
-					<option value="<?php echo esc_attr( $user_id ); ?>" selected="selected"><?php echo htmlspecialchars( wp_kses_post( $user_string ) ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Note: use of htmlspecialchars (below) is to prevent XSS when rendered by selectWoo. wooCommerce follow the same security rules. ?></option>
+					<option value="<?php echo esc_attr( $user_id ); ?>" selected="selected"><?php echo htmlspecialchars( wp_kses_post( $user_string ), ENT_QUOTES ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Note: use of htmlspecialchars (below) is to prevent XSS when rendered by selectWoo. wooCommerce follow the same security rules. ?></option>
 				</select>
 			</div>
 
