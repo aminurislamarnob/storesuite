@@ -233,6 +233,16 @@ class AcfChoiceFieldsTest extends StoreSuiteAjaxTestCase {
 		$this->assertMatchesRegularExpression( '/<div class="storesuite-form-group storesuite-form-switch storesuite-acf-switch">\s*<input type="checkbox"[^>]*name="storesuite_acf\[field_ss_choice_switch\]" value="1" >/s', $html );
 		$this->assertStringContainsString( 'Show the limited edition badge', $html );
 		$this->assertStringNotContainsString( 'storesuite-acf-field-unsupported-note', $html );
+
+		// A single control gets <label for>; a group of inputs is named by its label through aria-labelledby.
+		$this->assertStringContainsString( '<label class="storesuite-acf-label" for="storesuite_acf_field_ss_choice_select">', $html );
+		$this->assertStringContainsString( '<label class="storesuite-acf-label" for="storesuite_acf_field_ss_choice_switch">', $html );
+		foreach ( array( 'checkbox' => 'group', 'radio' => 'radiogroup', 'buttons' => 'radiogroup' ) as $name => $role ) {
+			$id = 'storesuite_acf_field_ss_choice_' . $name;
+			$this->assertStringContainsString( '<span class="storesuite-acf-label" id="' . $id . '-label">', $html );
+			$this->assertStringContainsString( 'id="' . $id . '" role="' . $role . '" aria-labelledby="' . $id . '-label"', $html );
+			$this->assertStringNotContainsString( 'for="' . $id . '"', $html, 'No label points at the ' . $name . ' container.' );
+		}
 	}
 
 	public function test_edit_form_reflects_stored_values() {

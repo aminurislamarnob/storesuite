@@ -17,9 +17,12 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // Only a 6-digit hex value can drive the native picker; rgba() values (opacity
-// is unsupported) or 3-digit shorthands are shown in the text box only.
-$hex   = is_scalar( $value ) ? strtolower( trim( (string) $value ) ) : '';
+// is unsupported) or 3-digit shorthands are shown in the text box only. A
+// stored rgba() value also drops the hex pattern: it is kept as-is on save and
+// must not fail the browser's validation, which would block every other edit.
+$hex    = is_scalar( $value ) ? strtolower( trim( (string) $value ) ) : '';
 $swatch = preg_match( '/^#[0-9a-f]{6}$/', $hex ) ? $hex : '';
+$is_hex = '' === $hex || preg_match( '/^#([0-9a-f]{3}|[0-9a-f]{6})$/', $hex );
 ?>
 <div class="storesuite-acf-color">
 	<input
@@ -36,7 +39,7 @@ $swatch = preg_match( '/^#[0-9a-f]{6}$/', $hex ) ? $hex : '';
 		name="<?php echo esc_attr( $input_name ); ?>"
 		value="<?php echo esc_attr( $hex ); ?>"
 		placeholder="#000000"
-		pattern="^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"
+		<?php echo $is_hex ? 'pattern="^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"' : ''; ?>
 		autocomplete="off"
 		spellcheck="false"
 		<?php echo $is_required ? 'required' : ''; ?>

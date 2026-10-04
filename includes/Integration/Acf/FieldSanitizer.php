@@ -245,12 +245,23 @@ class FieldSanitizer {
 	/**
 	 * Sanitise an `email` field value.
 	 *
+	 * An address sanitize_email() cannot repair is rejected (null) rather than
+	 * stored as empty, so ACF's own validator explains why the save failed.
+	 *
 	 * @param mixed $raw Raw posted value.
 	 *
-	 * @return string
+	 * @return string|null
 	 */
-	protected function sanitize_email( $raw ): string {
-		return sanitize_email( $this->to_string( $raw ) );
+	protected function sanitize_email( $raw ) {
+		$value = trim( $this->to_string( $raw ) );
+
+		if ( '' === $value ) {
+			return '';
+		}
+
+		$email = sanitize_email( $value );
+
+		return '' !== $email ? $email : null;
 	}
 
 	/**

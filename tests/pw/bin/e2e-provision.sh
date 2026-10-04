@@ -101,8 +101,9 @@ if ( empty( $existing ) ) {
 echo "Seeded.\n";
 '
 
-# ACF field group covering every supported type, one conditional rule and one
-# unsupported type, plus a media-library image for the image picker. Stored in
+# ACF field group covering every supported type, two conditional rules (equals
+# and pattern) and one unsupported type, plus a media-library image for the
+# image picker. Stored in
 # the database (not a local group) so it survives without a must-use plugin.
 if $WP_CLI plugin is-active advanced-custom-fields 2>/dev/null; then
 	$WP_CLI eval '
@@ -124,6 +125,8 @@ $fields  = [
 	[ "key" => "field_e2e_switch",    "label" => "E2E Switch",    "name" => "e2e_switch",    "type" => "true_false", "message" => "Enable the extra field" ],
 	[ "key" => "field_e2e_dependent", "label" => "E2E Dependent", "name" => "e2e_dependent", "type" => "text",
 		"conditional_logic" => [ [ [ "field" => "field_e2e_switch", "operator" => "==", "value" => "1" ] ] ] ],
+	[ "key" => "field_e2e_pattern",   "label" => "E2E Pattern",   "name" => "e2e_pattern",   "type" => "text",
+		"conditional_logic" => [ [ [ "field" => "field_e2e_text", "operator" => "==pattern", "value" => "^premium" ] ] ] ],
 	[ "key" => "field_e2e_date",      "label" => "E2E Date",      "name" => "e2e_date",      "type" => "date_picker" ],
 	[ "key" => "field_e2e_datetime",  "label" => "E2E Datetime",  "name" => "e2e_datetime",  "type" => "date_time_picker" ],
 	[ "key" => "field_e2e_time",      "label" => "E2E Time",      "name" => "e2e_time",      "type" => "time_picker" ],

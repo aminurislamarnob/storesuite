@@ -273,8 +273,7 @@ class AcfIntegration {
 			$value = $this->sanitizer->sanitize( $field, $raw[ $key ] );
 
 			if ( null === $value ) {
-				// A blank password means "keep the stored value", not a rejection.
-				if ( 'password' !== $field['type'] || '' !== $raw[ $key ] ) {
+				if ( ! $this->keeps_stored_password( $field, $raw[ $key ], absint( $product_id ) ) ) {
 					$this->rejected[ $key ] = $raw[ $key ];
 				}
 				continue;
@@ -284,6 +283,34 @@ class AcfIntegration {
 		}
 
 		return $sanitized;
+	}
+
+	/**
+	 * Whether a blank password submit means "keep the stored secret".
+	 *
+	 * The form never prefills a password, so blank keeps what is there — but
+	 * only when something is there. On the add form, or for a product that
+	 * never had a value, the blank is validated like any other field so a
+	 * required password cannot be skipped.
+	 *
+	 * @param array $field      ACF field array.
+	 * @param mixed $raw        Raw posted value.
+	 * @param int   $product_id Product being edited, 0 when adding.
+	 *
+	 * @return bool
+	 */
+	protected function keeps_stored_password( array $field, $raw, int $product_id ): bool {
+		if ( 'password' !== $field['type'] || '' !== $raw || $product_id <= 0 || empty( $field['name'] ) ) {
+			return false;
+		}
+
+		if ( ! function_exists( 'acf_get_metadata' ) ) {
+			return false;
+		}
+
+		$stored = acf_get_metadata( $product_id, $field['name'] );
+
+		return null !== $stored && '' !== $stored;
 	}
 
 	/**
@@ -322,7 +349,9 @@ class AcfIntegration {
 			acf_validate_value( $value, $field, 'storesuite_acf[' . $key . ']' );
 
 			foreach ( (array) acf_get_validation_errors() as $acf_error ) {
-				$message = isset( $acf_error['message'] ) ? wp_strip_all_tags( (string) $acf_error['message'] ) : '';
+				// Plain text: the dialog escapes for display, so ACF's own
+				// escaping (e.g. the quoted value in its email message) is undone.
+				$message = isset( $acf_error['message'] ) ? wp_specialchars_decode( wp_strip_all_tags( (string) $acf_error['message'] ), ENT_QUOTES ) : '';
 
 				if ( '' === $message ) {
 					continue;

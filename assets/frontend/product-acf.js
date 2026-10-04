@@ -144,8 +144,9 @@
 						? value.indexOf( rule.value ) !== -1
 						: text.indexOf( rule.value ) !== -1;
 				case '==pattern':
+					// ACF matches case-insensitively.
 					try {
-						return new RegExp( rule.value ).test( text );
+						return new RegExp( rule.value, 'i' ).test( text );
 					} catch ( e ) {
 						return false;
 					}

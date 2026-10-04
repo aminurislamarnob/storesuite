@@ -3,7 +3,10 @@
  * StoreSuite product form: base wrapper shared by every ACF field type.
  *
  * Renders the grid column, label (with required marker), the type-specific
- * input template and the field instructions as help text.
+ * input template and the field instructions as help text. The label is a
+ * `<label for>` when the type renders a single control; choice groups, the
+ * image picker and fields without an input get a `<span>` instead, which
+ * their template references through aria-labelledby.
  *
  * @var array                                                 $field        ACF field array.
  * @var string                                                $type         ACF field type.
@@ -44,16 +47,19 @@ if ( null !== $stored_value ) {
 }
 $instructions = ! empty( $field['instructions'] ) ? (string) $field['instructions'] : '';
 $is_required  = ! empty( $field['required'] );
+$label_for    = $renderer->has_labelable_control( $type, $supported ) ? $input_id : '';
+$label_id     = '' === $label_for && ! empty( $field['label'] ) ? $input_id . '-label' : '';
+$label_tag    = '' !== $label_for ? 'label' : 'span';
 ?>
 <div class="<?php echo esc_attr( implode( ' ', $wrapper_classes ) ); ?>"<?php echo '' !== $wrapper_id ? ' id="' . esc_attr( $wrapper_id ) . '"' : ''; ?> data-key="<?php echo esc_attr( $field['key'] ); ?>" data-name="<?php echo esc_attr( isset( $field['name'] ) ? $field['name'] : '' ); ?>" data-type="<?php echo esc_attr( $type ); ?>"<?php echo $data_attrs; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped above. ?>>
 	<div class="storesuite-form-group">
 		<?php if ( ! empty( $field['label'] ) ) : ?>
-			<label for="<?php echo esc_attr( $input_id ); ?>">
+			<<?php echo tag_escape( $label_tag ); ?> class="storesuite-acf-label"<?php echo '' !== $label_for ? ' for="' . esc_attr( $label_for ) . '"' : ' id="' . esc_attr( $label_id ) . '"'; ?>>
 				<?php echo esc_html( $field['label'] ); ?>
 				<?php if ( $is_required && $supported ) : ?>
 					<span class="req">*</span>
 				<?php endif; ?>
-			</label>
+			</<?php echo tag_escape( $label_tag ); ?>>
 		<?php endif; ?>
 		<?php
 		$renderer->render_input(
@@ -64,6 +70,7 @@ $is_required  = ! empty( $field['required'] );
 				'layout'       => $layout,
 				'input_name'   => $input_name,
 				'input_id'     => $input_id,
+				'label_id'     => $label_id,
 				'value'        => $value,
 				'is_required'  => $is_required,
 				'product_id'   => $product_id,

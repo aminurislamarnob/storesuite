@@ -8,8 +8,9 @@ test.use( { storageState: MANAGER_STATE } );
 
 /**
  * The "E2E Custom Fields" group seeded by bin/e2e-provision.sh: every
- * supported type, one conditional rule (E2E Dependent shows when E2E Switch
- * is on) and one unsupported type (relationship).
+ * supported type, two conditional rules (E2E Dependent shows when E2E Switch
+ * is on; E2E Pattern shows when E2E Text matches ^premium) and one
+ * unsupported type (relationship).
  */
 const GROUP = 'group_e2e_acf';
 const IMAGE_TITLE = 'E2E Image';
@@ -41,7 +42,12 @@ test.describe( 'ACF fields on the product form', () => {
 		await expect( acf.field( 'field_e2e_dependent' ) ).toBeHidden();
 		await acf.setSwitch( 'field_e2e_switch', true );
 
+		// Pattern rule: case-insensitive, as in wp-admin.
+		await expect( acf.field( 'field_e2e_pattern' ) ).toBeHidden();
+		await acf.input( 'field_e2e_text' ).fill( 'PREMIUM cotton' );
+		await expect( acf.field( 'field_e2e_pattern' ) ).toBeVisible();
 		await acf.input( 'field_e2e_text' ).fill( 'Cotton' );
+		await expect( acf.field( 'field_e2e_pattern' ) ).toBeHidden();
 		await acf.input( 'field_e2e_textarea' ).fill( 'Line one\nLine two' );
 		await acf.input( 'field_e2e_number' ).fill( '42' );
 		await acf.input( 'field_e2e_range' ).fill( '7' );

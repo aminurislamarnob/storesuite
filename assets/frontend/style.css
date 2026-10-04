@@ -538,7 +538,8 @@ template {
   border-radius: 6px;
   padding: 24px;
 }
-.my-storesuite-container .storesuite-form-group label {
+.my-storesuite-container .storesuite-form-group label,
+.my-storesuite-container .storesuite-form-group .storesuite-acf-label {
   font-size: 14px;
   font-weight: 500;
   display: block;
@@ -2597,7 +2598,8 @@ span.select2-selection__clear {
   position: relative;
 }
 
-.my-storesuite-wrapper .storesuite-form-group label {
+.my-storesuite-wrapper .storesuite-form-group label,
+.my-storesuite-wrapper .storesuite-form-group .storesuite-acf-label {
   display: block;
   margin-bottom: 6px;
   font-weight: 500;
@@ -7350,7 +7352,8 @@ body,
 }
 
 /* Field labels are plain text — recolor them, but keep them background-free. */
-[data-theme="dark"] .my-storesuite-wrapper .storesuite-form-group label {
+[data-theme="dark"] .my-storesuite-wrapper .storesuite-form-group label,
+[data-theme="dark"] .my-storesuite-wrapper .storesuite-form-group .storesuite-acf-label {
   color: var(--storesuite-text-color);
 }
 

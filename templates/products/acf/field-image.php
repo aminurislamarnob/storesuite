@@ -9,6 +9,7 @@
  * @var array  $field       ACF field array.
  * @var string $input_name  Input name attribute.
  * @var string $input_id    Input id attribute.
+ * @var string $label_id    Id of the field label the group is named by, '' when it has none.
  * @var mixed  $value       Stored attachment ID, null when none.
  * @var bool   $is_required Whether the field is required.
  * @var \PluginizeLab\StoreSuite\Integration\Acf\FieldRenderer $renderer Field renderer.
@@ -29,7 +30,7 @@ if ( ! $preview_url ) {
 	$attachment_id = 0;
 }
 ?>
-<div class="storesuite-acf-image" data-storesuite-media-picker data-target="#<?php echo esc_attr( $input_id ); ?>" data-preview-size="<?php echo esc_attr( $preview_size ); ?>" data-mime-types="<?php echo esc_attr( implode( ',', $mime_types ) ); ?>" data-title="<?php echo esc_attr( sprintf( /* translators: %s: field label */ __( 'Select %s', 'storesuite' ), $field['label'] ) ); ?>">
+<div class="storesuite-acf-image" role="group"<?php echo '' !== $label_id ? ' aria-labelledby="' . esc_attr( $label_id ) . '"' : ''; ?> data-storesuite-media-picker data-target="#<?php echo esc_attr( $input_id ); ?>" data-preview-size="<?php echo esc_attr( $preview_size ); ?>" data-mime-types="<?php echo esc_attr( implode( ',', $mime_types ) ); ?>" data-title="<?php echo esc_attr( sprintf( /* translators: %s: field label */ __( 'Select %s', 'storesuite' ), $field['label'] ) ); ?>">
 	<input type="hidden" id="<?php echo esc_attr( $input_id ); ?>" name="<?php echo esc_attr( $input_name ); ?>" value="<?php echo esc_attr( $attachment_id ? $attachment_id : '' ); ?>">
 	<div class="image-drop-container storesuite-media-picker-drop<?php echo $attachment_id ? ' image-drop-bg' : ''; ?>" role="button" tabindex="0">
 		<div class="preview-image storesuite-media-picker-preview">

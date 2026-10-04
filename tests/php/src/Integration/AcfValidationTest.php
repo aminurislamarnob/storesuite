@@ -262,8 +262,12 @@ class AcfValidationTest extends StoreSuiteAjaxTestCase {
 		$this->assertSame( 'Silk', get_post_meta( $product_id, 'ss_val_material', true ) );
 	}
 
-	public function test_blank_password_is_not_validated_as_missing() {
-		$this->require_acf();
+	/**
+	 * Register a group with a single required password.
+	 *
+	 * @return void
+	 */
+	private function register_password_group() {
 		$this->register_acf_field_group(
 			array(
 				'key'      => self::GROUP_KEY,
@@ -280,6 +284,11 @@ class AcfValidationTest extends StoreSuiteAjaxTestCase {
 				'location' => $this->acf_product_location(),
 			)
 		);
+	}
+
+	public function test_blank_password_is_not_validated_as_missing() {
+		$this->require_acf();
+		$this->register_password_group();
 
 		$product_id = self::factory()->product->create()->get_id();
 		update_field( 'field_ss_val_secret', 'keep-me', $product_id );
@@ -288,5 +297,46 @@ class AcfValidationTest extends StoreSuiteAjaxTestCase {
 
 		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
 		$this->assertSame( 'keep-me', get_post_meta( $product_id, 'ss_val_secret', true ) );
+	}
+
+	public function test_required_password_left_blank_on_the_add_form_is_refused() {
+		$this->require_acf();
+		$this->register_password_group();
+
+		// The add form lets the browser enforce it; the edit form cannot, since blank keeps the secret there.
+		$add_html  = $this->render_acf_cards( 0 );
+		$edit_html = $this->render_acf_cards( self::factory()->product->create()->get_id() );
+		$this->assertMatchesRegularExpression( '/<input[^>]*type="password"[^>]*name="storesuite_acf\[field_ss_val_secret\]"[^>]*required/s', $add_html );
+		$this->assertStringNotContainsString( 'Leave blank to keep the current value.', $add_html );
+		$this->assertDoesNotMatchRegularExpression( '/<input[^>]*type="password"[^>]*required/s', $edit_html );
+		$this->assertStringContainsString( 'Leave blank to keep the current value.', $edit_html );
+
+		$response = $this->add_with_acf( array( 'field_ss_val_secret' => '' ) );
+
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( array( 'Portal key value is required' ), $response['data']['errors'] );
+		$this->assertSame( 0, $this->count_products_titled( 'Validated product' ), 'Nothing was created.' );
+
+		$response = $this->add_with_acf( array( 'field_ss_val_secret' => 'first-secret' ) );
+
+		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
+		$this->assertSame( 1, $this->count_products_titled( 'Validated product' ) );
+	}
+
+	public function test_required_password_with_nothing_stored_is_refused_on_edit() {
+		$this->require_acf();
+		$this->register_password_group();
+
+		$product_id = self::factory()->product->create()->get_id();
+
+		$response = $this->edit_with_acf( $product_id, array( 'field_ss_val_secret' => '' ) );
+
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( array( 'Portal key value is required' ), $response['data']['errors'] );
+
+		$response = $this->edit_with_acf( $product_id, array( 'field_ss_val_secret' => 'now-set' ) );
+
+		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
+		$this->assertSame( 'now-set', get_post_meta( $product_id, 'ss_val_secret', true ) );
 	}
 }

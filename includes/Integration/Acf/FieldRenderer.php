@@ -17,6 +17,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 class FieldRenderer {
 
 	/**
+	 * Supported types whose template has no single control carrying the input
+	 * id: several inputs (choice groups) or a hidden input behind a button
+	 * (image). Their label cannot use `for`; the group is named through
+	 * aria-labelledby instead.
+	 *
+	 * @var string[]
+	 */
+	const GROUP_LABEL_TYPES = array( 'checkbox', 'radio', 'button_group', 'image' );
+
+	/**
 	 * Owning integration (field type support lookup).
 	 *
 	 * @var AcfIntegration
@@ -224,6 +234,21 @@ class FieldRenderer {
 	 */
 	public function get_input_id( array $field ): string {
 		return 'storesuite_acf_' . $field['key'];
+	}
+
+	/**
+	 * Whether a field's label can point at a single form control with `for`.
+	 *
+	 * False for the GROUP_LABEL_TYPES, and for layout-only and unsupported
+	 * types, which render no control at all.
+	 *
+	 * @param string $type      ACF field type.
+	 * @param bool   $supported Whether StoreSuite can edit the type.
+	 *
+	 * @return bool
+	 */
+	public function has_labelable_control( string $type, bool $supported ): bool {
+		return $supported && ! in_array( $type, self::GROUP_LABEL_TYPES, true );
 	}
 
 	/**

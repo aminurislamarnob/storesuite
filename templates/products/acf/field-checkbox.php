@@ -5,6 +5,7 @@
  * @var array  $field       ACF field array.
  * @var string $input_name  Input name attribute.
  * @var string $input_id    Input id attribute.
+ * @var string $label_id    Id of the field label the group is named by, '' when it has none.
  * @var mixed  $value       Value to prefill, null when none.
  * @var bool   $is_required Whether the field is required.
  * @var \PluginizeLab\StoreSuite\Integration\Acf\FieldRenderer $renderer Field renderer.
@@ -23,7 +24,7 @@ $index    = 0;
 ?>
 <?php // Sentinel so unchecking every box still submits the key. ?>
 <input type="hidden" name="<?php echo esc_attr( $input_name ); ?>" value="">
-<div class="storesuite-acf-choices storesuite-acf-choices-<?php echo esc_attr( $layout ); ?>" id="<?php echo esc_attr( $input_id ); ?>">
+<div class="storesuite-acf-choices storesuite-acf-choices-<?php echo esc_attr( $layout ); ?>" id="<?php echo esc_attr( $input_id ); ?>" role="group"<?php echo '' !== $label_id ? ' aria-labelledby="' . esc_attr( $label_id ) . '"' : ''; ?>>
 	<?php foreach ( $choices as $choice_value => $choice_label ) : ?>
 		<?php $choice_id = $input_id . '-' . ( $index++ ); ?>
 		<label class="storesuite-acf-choice" for="<?php echo esc_attr( $choice_id ); ?>">

@@ -169,7 +169,8 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 			'range numeric'                           => array( 'range', '25', '25' ),
 			'range rejects text'                      => array( 'range', '25px', null ),
 			'email valid'                             => array( 'email', 'Shop@Example.com', 'Shop@Example.com' ),
-			'email invalid becomes empty'             => array( 'email', 'not an email', '' ),
+			'email blank clears'                      => array( 'email', '', '' ),
+			'email invalid refused'                   => array( 'email', 'not an email', null ),
 			'url valid'                               => array( 'url', ' https://example.com/a?b=1 ', 'https://example.com/a?b=1' ),
 			'url strips javascript'                   => array( 'url', 'javascript:alert(1)', '' ),
 			'password blank keeps existing'           => array( 'password', '', null ),
@@ -222,6 +223,11 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 		$this->assertStringContainsString( '<hr class="storesuite-acf-separator">', $html );
 		$this->assertStringNotContainsString( 'storesuite_acf[field_ss_simple_message]', $html );
 		$this->assertStringNotContainsString( 'storesuite_acf[field_ss_simple_separator]', $html );
+
+		// With no control to point at, the label is a span rather than a dangling `for`.
+		$this->assertStringContainsString( '<span class="storesuite-acf-label" id="storesuite_acf_field_ss_simple_message-label">', $html );
+		$this->assertStringNotContainsString( 'for="storesuite_acf_field_ss_simple_message"', $html );
+		$this->assertStringContainsString( '<label class="storesuite-acf-label" for="storesuite_acf_field_ss_simple_email">', $html );
 
 		// Order is preserved: the message sits between the colour picker and the separator.
 		$color     = strpos( $html, 'field_ss_simple_color' );
@@ -374,16 +380,48 @@ class AcfSimpleFieldsTest extends StoreSuiteAjaxTestCase {
 		$product_id = self::factory()->product->create()->get_id();
 		update_field( 'field_ss_simple_color', '#123456', $product_id );
 
-		$response = $this->edit_with_acf(
-			$product_id,
-			array(
-				'field_ss_simple_color' => 'rgba(1,2,3,0.4)',
-				'field_ss_simple_email' => 'nope',
-			)
-		);
+		$response = $this->edit_with_acf( $product_id, array( 'field_ss_simple_color' => 'rgba(1,2,3,0.4)' ) );
 
 		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
 		$this->assertSame( '#123456', get_post_meta( $product_id, 'ss_simple_color', true ), 'Opacity values are never stored.' );
-		$this->assertSame( '', get_post_meta( $product_id, 'ss_simple_email', true ), 'An invalid email is stored as empty, as sanitize_email() does.' );
+	}
+
+	public function test_invalid_email_is_refused_with_acfs_message() {
+		$this->require_acf();
+		$this->register_simple_group();
+
+		$product_id = self::factory()->product->create()->get_id();
+		update_field( 'field_ss_simple_email', 'orders@example.com', $product_id );
+
+		$response = $this->edit_with_acf( $product_id, array( 'field_ss_simple_email' => 'nope' ) );
+
+		$this->assertFalse( $response['success'] );
+		$this->assertSame( array( "Email field: 'nope' is not a valid email address" ), $response['data']['errors'], 'ACF\'s message, with its HTML escaping undone for the text-only dialog.' );
+		$this->assertSame( 'orders@example.com', get_post_meta( $product_id, 'ss_simple_email', true ), 'The stored address survives a refused save.' );
+
+		$response = $this->edit_with_acf( $product_id, array( 'field_ss_simple_email' => '' ) );
+
+		$this->assertTrue( $response['success'], wp_json_encode( $response ) );
+		$this->assertSame( '', get_post_meta( $product_id, 'ss_simple_email', true ), 'Blank clears the address.' );
+	}
+
+	public function test_stored_opacity_colour_renders_without_the_hex_pattern() {
+		$this->require_acf();
+		$this->register_simple_group();
+
+		// Empty and hex values keep the browser-side hex check.
+		$this->assertMatchesRegularExpression( '/<input[^>]*storesuite-acf-color-text"[^>]*value=""[^>]*pattern="/s', $this->render_acf_cards( 0 ) );
+
+		$product_id = self::factory()->product->create()->get_id();
+		update_field( 'field_ss_simple_color', '#123456', $product_id );
+		$this->assertMatchesRegularExpression( '/<input[^>]*storesuite-acf-color-text"[^>]*value="#123456"[^>]*pattern="/s', $this->render_acf_cards( $product_id ) );
+
+		// A colour saved in wp-admin with opacity is shown as-is and must not
+		// fail the pattern, which would block every other edit on the product.
+		update_field( 'field_ss_simple_color', 'rgba(1,2,3,0.4)', $product_id );
+		$html = $this->render_acf_cards( $product_id );
+
+		$this->assertMatchesRegularExpression( '/<input[^>]*storesuite-acf-color-text"[^>]*value="rgba\(1,2,3,0.4\)"/s', $html );
+		$this->assertDoesNotMatchRegularExpression( '/<input[^>]*storesuite-acf-color-text"[^>]*pattern="/s', $html );
 	}
 }

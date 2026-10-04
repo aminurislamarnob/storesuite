@@ -126,7 +126,9 @@ class AcfImageFieldTest extends StoreSuiteAjaxTestCase {
 		$html = $this->render_acf_cards( $product_id );
 
 		$this->assertSame( 2, substr_count( $html, 'data-storesuite-media-picker' ) );
-		$this->assertMatchesRegularExpression( '/data-target="#storesuite_acf_field_ss_img_front"[^>]*data-preview-size="thumbnail"[^>]*data-mime-types="image\/jpeg,image\/png"/', $html );
+		$this->assertMatchesRegularExpression( '/<div class="storesuite-acf-image" role="group" aria-labelledby="storesuite_acf_field_ss_img_front-label" data-storesuite-media-picker data-target="#storesuite_acf_field_ss_img_front"[^>]*data-preview-size="thumbnail"[^>]*data-mime-types="image\/jpeg,image\/png"/', $html );
+		$this->assertStringContainsString( '<span class="storesuite-acf-label" id="storesuite_acf_field_ss_img_front-label">', $html );
+		$this->assertStringNotContainsString( 'for="storesuite_acf_field_ss_img_front"', $html, 'No label points at the hidden id input.' );
 		$this->assertMatchesRegularExpression( '/data-target="#storesuite_acf_field_ss_img_back"[^>]*data-preview-size="medium"[^>]*data-mime-types=""/', $html );
 
 		// Filled picker: id in the hidden input, thumbnail preview, remove label.
