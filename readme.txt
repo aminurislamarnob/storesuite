@@ -162,6 +162,7 @@ Learn more about how [Appsero collects and uses this data](https://appsero.com/p
 * Developers: new `storesuite_order_list_columns` filter and `storesuite_order_list_column_{$key}` action for adding columns to the orders list.
 * Developers: new `storesuite_product_form_after_others` template action and `storesuite_product_pre_save_validation` filter on the product form.
 * Stopped querying the deprecated `point_of_sale` feature flag on WooCommerce 11.
+* Fix an "unexpected error" when saving a product on older WooCommerce versions (such as 10.4) that have Point of Sale enabled but cannot store a product's POS visibility. The **Available for POS** switch is hidden on those versions.
 
 = 1.4.0 =
 * Lower the minimum PHP version to **7.4** (previously 8.1), matching the WordPress and WooCommerce floors so StoreSuite can be installed on the same hosts they run on. PHP compatibility is now checked in CI on every change.

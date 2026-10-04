@@ -320,9 +320,17 @@ function storesuite_get_navigation_url( $name = '' ) {
  * WooCommerce 11 made the feature always-on and deprecated querying it through
  * FeaturesUtil, so the flag is only read on older versions.
  *
+ * The flag is older than the class that stores a product's POS visibility
+ * (missing on WooCommerce 10.4, for example). Without that class the
+ * "Available for POS" switch cannot be saved, so the feature counts as off.
+ *
  * @return bool
  */
 function storesuite_is_pos_feature_enabled() {
+	if ( ! class_exists( '\Automattic\WooCommerce\Internal\ProductFeed\Integrations\POSCatalog\POSProductVisibilitySync' ) ) {
+		return false;
+	}
+
 	if ( defined( 'WC_VERSION' ) && version_compare( WC_VERSION, '11.0', '>=' ) ) {
 		return true;
 	}
