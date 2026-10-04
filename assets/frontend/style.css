@@ -8334,6 +8334,14 @@ ul.storesuite-notifications-list {
 .storesuite-order-tracking .storesuite-add-tracking svg {
   width: 16px;
   height: 16px;
+  /* The icon token can be themed to white (it also colours sidebar icons), so follow the label. */
+  fill: currentColor;
+}
+.storesuite-tracking-item:last-child {
+  border-bottom: 0;
+}
+.storesuite-tracking-item.storesuite-tracking-empty {
+  padding-bottom: 0;
 }
 
 /* Orders list column: one shipment per line. */
@@ -8349,6 +8357,10 @@ ul.storesuite-notifications-list {
 /* Add-tracking modal. */
 .storesuite-order-tracking-modal form {
   margin: 0;
+}
+/* Keeps the native calendar icon visible on the dark surface. */
+[data-theme="dark"] .storesuite-order-tracking-modal input[type="date"] {
+  color-scheme: dark;
 }
 .storesuite-tracking-mark-as {
   margin: 0;

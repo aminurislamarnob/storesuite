@@ -38,6 +38,7 @@
 
 			this.$form
 				.on( 'submit', this.addTracking.bind( this ) )
+				.on( 'input change', this.clearError.bind( this ) )
 				.on(
 					'change',
 					'input[name="mark_order_as"]',

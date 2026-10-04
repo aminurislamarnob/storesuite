@@ -123,9 +123,13 @@ If your store uses the free **[Advanced Shipment Tracking for WooCommerce](https
 
 ### On an order
 
+![Shipment Tracking card on an order](screenshots/screenshot-52.png)
+
 Open an order and look for the **Shipment Tracking** card in the right-hand column. It lists every shipment on the order with the carrier, the tracking number, the date it shipped and a **Track** link that opens the carrier's tracking page in a new tab.
 
 To record a shipment, click **Add Tracking** and fill in the form:
+
+![Add Tracking form](screenshots/screenshot-53.png)
 
 | Field | What to enter |
 |-------|---------------|
@@ -139,6 +143,8 @@ Click **Add Tracking** to save. The customer receives the shipment email with th
 An order can hold more than one tracking number, so parcels that ship separately can each be recorded. To remove one entered by mistake, click **Delete** under it and confirm.
 
 ### From the orders list
+
+![Tracking column in the orders list](screenshots/screenshot-54.png)
 
 The orders list gains a **Tracking** column showing each order's tracking numbers as links to the carrier. To add tracking without opening the order, open the **⋯** menu at the end of the row and choose **Add Tracking**; the same form appears.
 

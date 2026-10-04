@@ -66,7 +66,8 @@ class ShipmentTrackingIntegration {
 		add_action( 'storesuite_order_list_row_actions', array( $this, 'render_list_row_action' ) );
 		// Priority 8 so the card sits below Documents (5) and above notes / customer history (10).
 		add_action( 'storesuite_after_order_details_action', array( $this, 'render_order_details_card' ), 8 );
-		add_action( 'storesuite_dashboard_wrapper_end', array( $this, 'render_modal' ) );
+		// Inside the page content, where the dashboard's form styles apply; the overlay itself is fixed.
+		add_action( 'storesuite_dashboard_before_main_content', array( $this, 'render_modal' ), 99 );
 
 		add_filter( 'storesuite_get_order_status_class', array( $this, 'add_status_classes' ) );
 
