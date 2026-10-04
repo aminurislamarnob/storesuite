@@ -24,6 +24,17 @@
 					'.storesuite-order-tracking-modal-cancel, .storesuite-order-tracking-modal-close',
 			} );
 
+			// The same date picker as the order form; order.js initialises it where it is loaded.
+			var $date = this.$form.find( '#storesuite-tracking-date' );
+			if ( $.fn.datepicker && ! $date.hasClass( 'hasDatepicker' ) ) {
+				$date.datepicker( {
+					defaultDate: '',
+					dateFormat: 'yy-mm-dd',
+					numberOfMonths: 1,
+					showButtonPanel: true,
+				} );
+			}
+
 			$( document )
 				.on(
 					'click',

@@ -531,7 +531,7 @@ class ShipmentTrackingIntegration {
 		wp_register_script(
 			self::SCRIPT_HANDLE,
 			STORESUITE_PLUGIN_ASSET . '/frontend/order-tracking.js',
-			array( 'jquery', 'storesuite_script', 'storesuite_sweetalert2_script' ),
+			array( 'jquery', 'jquery-ui-datepicker', 'storesuite_script', 'storesuite_sweetalert2_script' ),
 			STORESUITE_PLUGIN_VERSION,
 			true
 		);

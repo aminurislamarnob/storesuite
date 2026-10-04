@@ -68,16 +68,16 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 			<div class="storesuite-form-group storesuite-mb-20">
 				<label for="storesuite-tracking-date"><?php esc_html_e( 'Date shipped', 'storesuite' ); ?></label>
-				<input type="date" class="storesuite-form-control" id="storesuite-tracking-date" name="date_shipped" value="<?php echo esc_attr( $today ); ?>" data-default="<?php echo esc_attr( $today ); ?>" />
+				<input type="text" class="date-picker storesuite-form-control date-input" id="storesuite-tracking-date" name="date_shipped" maxlength="10" autocomplete="off" placeholder="<?php esc_attr_e( 'YYYY-MM-DD', 'storesuite' ); ?>" value="<?php echo esc_attr( $today ); ?>" data-default="<?php echo esc_attr( $today ); ?>" />
 			</div>
 
-			<fieldset class="storesuite-form-group storesuite-tracking-mark-as">
+			<fieldset class="storesuite-tracking-mark-as">
 				<legend><?php esc_html_e( 'Mark order as', 'storesuite' ); ?></legend>
 				<?php foreach ( $mark_as as $value => $option ) : ?>
-					<label class="storesuite-tracking-mark-as-option" for="storesuite-tracking-mark-<?php echo esc_attr( $value ); ?>">
-						<input type="checkbox" id="storesuite-tracking-mark-<?php echo esc_attr( $value ); ?>" name="mark_order_as" value="<?php echo esc_attr( $value ); ?>" <?php checked( $option['checked'] ); ?> data-default="<?php echo $option['checked'] ? '1' : '0'; ?>" />
-						<?php echo esc_html( $option['label'] ); ?>
-					</label>
+					<div class="storesuite-form-group storesuite-form-switch">
+						<input type="checkbox" class="storesuite-form-control" id="storesuite-tracking-mark-<?php echo esc_attr( $value ); ?>" name="mark_order_as" value="<?php echo esc_attr( $value ); ?>" <?php checked( $option['checked'] ); ?> data-default="<?php echo $option['checked'] ? '1' : '0'; ?>" />
+						<label for="storesuite-tracking-mark-<?php echo esc_attr( $value ); ?>"><?php echo esc_html( $option['label'] ); ?></label>
+					</div>
 				<?php endforeach; ?>
 			</fieldset>
 

@@ -8358,9 +8358,9 @@ ul.storesuite-notifications-list {
 .storesuite-order-tracking-modal form {
   margin: 0;
 }
-/* Keeps the native calendar icon visible on the dark surface. */
-[data-theme="dark"] .storesuite-order-tracking-modal input[type="date"] {
-  color-scheme: dark;
+/* A short single-column form, so a narrower dialog than quick edit. */
+.storesuite-order-tracking-modal .storesuite-product-bulk-modal-dialog.storesuite-product-quick-edit-modal-dialog {
+  max-width: 480px;
 }
 .storesuite-tracking-mark-as {
   margin: 0;
@@ -8374,14 +8374,11 @@ ul.storesuite-notifications-list {
   font-size: 14px;
   font-weight: 500;
 }
-.storesuite-tracking-mark-as-option {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-right: 16px;
-  color: var(--storesuite-text-color);
-  font-weight: 400;
-  cursor: pointer;
+.storesuite-tracking-mark-as .storesuite-form-switch {
+  margin-bottom: 0;
+}
+.storesuite-tracking-mark-as .storesuite-form-switch + .storesuite-form-switch {
+  margin-top: 12px;
 }
 .storesuite-order-tracking-error {
   display: block;

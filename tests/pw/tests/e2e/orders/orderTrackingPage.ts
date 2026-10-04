@@ -53,7 +53,11 @@ export class OrderTrackingPage {
 	async fill( trackingNumber: string, carrier: string, markAsShipped: boolean ): Promise< void > {
 		await this.modal.locator( '#storesuite-tracking-number' ).fill( trackingNumber );
 		await this.modal.locator( '#storesuite-tracking-provider' ).selectOption( carrier );
-		await this.modal.locator( '#storesuite-tracking-mark-shipped' ).setChecked( markAsShipped );
+		const markShipped = this.modal.locator( '#storesuite-tracking-mark-shipped' );
+		if ( ( await markShipped.isChecked() ) !== markAsShipped ) {
+			// The visual switch is the label; the checkbox itself is hidden.
+			await this.modal.locator( 'label[for="storesuite-tracking-mark-shipped"]' ).click();
+		}
 	}
 
 	async submit(): Promise< void > {

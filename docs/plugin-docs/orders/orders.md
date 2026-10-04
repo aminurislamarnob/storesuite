@@ -135,8 +135,8 @@ To record a shipment, click **Add Tracking** and fill in the form:
 |-------|---------------|
 | **Tracking number** | The number from your shipping label |
 | **Carrier** | The company delivering the parcel. Only carriers enabled in the plugin's settings are listed |
-| **Date shipped** | Set to today; change it if the parcel left on another day |
-| **Mark order as** | Ticked by default, so saving also moves the order to **Completed**. Untick it to add tracking without changing the status |
+| **Date shipped** | Set to today; click the field to pick another day from the calendar if the parcel left earlier |
+| **Mark order as** | Switched on by default, so saving also moves the order to **Completed** (shown as **Shipped** if your store has renamed that status). Switch it off to add tracking without changing the status |
 
 Click **Add Tracking** to save. The customer receives the shipment email with their tracking details, exactly as if you had added it in the WordPress admin, and a note is added to the order.
 
