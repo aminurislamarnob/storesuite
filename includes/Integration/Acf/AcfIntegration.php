@@ -358,8 +358,7 @@ class AcfIntegration {
 				}
 
 				// ACF's required message already names the field; prefix everything else.
-				/* translators: %s: field label (ACF's own string, reproduced to detect it). */
-				$required_message = sprintf( __( '%s value is required', 'acf' ), $field['label'] ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Must match ACF's string.
+				$required_message = $this->renderer->get_required_message( $field );
 
 				$messages[] = $message === $required_message
 					? $message

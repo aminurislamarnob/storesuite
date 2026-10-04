@@ -32,7 +32,7 @@ if ( $multiple ) :
 		multiple
 		data-placeholder="<?php echo esc_attr( ! empty( $field['placeholder'] ) ? $field['placeholder'] : __( 'Select', 'storesuite' ) ); ?>"
 		data-allow_clear="true"
-		<?php echo $is_required ? 'required' : ''; ?>
+		<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 	>
 		<?php foreach ( $choices as $choice_value => $choice_label ) : ?>
 			<option value="<?php echo esc_attr( $choice_value ); ?>" <?php selected( in_array( $choice_value, $selected, true ) ); ?>><?php echo esc_html( $choice_label ); ?></option>
@@ -45,7 +45,7 @@ else :
 		class="storesuite-form-control"
 		id="<?php echo esc_attr( $input_id ); ?>"
 		name="<?php echo esc_attr( $input_name ); ?>"
-		<?php echo $is_required ? 'required' : ''; ?>
+		<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 	>
 		<?php if ( $allow_null ) : ?>
 			<option value=""><?php echo esc_html( ! empty( $field['placeholder'] ) ? $field['placeholder'] : __( '— Select —', 'storesuite' ) ); ?></option>

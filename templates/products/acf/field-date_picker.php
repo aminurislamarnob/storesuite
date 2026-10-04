@@ -35,5 +35,5 @@ if ( '' === $input_value && ! $is_edit_mode && ! empty( $field['default_to_curre
 	placeholder="YYYY-MM-DD"
 	pattern="\d{4}-\d{2}-\d{2}"
 	autocomplete="off"
-	<?php echo $is_required ? 'required' : ''; ?>
+	<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 >

@@ -18,7 +18,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 }
 
 // The stored secret is never prefilled. On the edit form a blank submit keeps
-// it, so the browser only enforces `required` where there is nothing to keep.
+// it, so the field is only marked required where there is nothing to keep.
 $renderer->open_input_group( $field );
 ?>
 <input
@@ -31,7 +31,7 @@ $renderer->open_input_group( $field );
 	<?php if ( ! empty( $field['placeholder'] ) ) : ?>
 		placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"
 	<?php endif; ?>
-	<?php echo $is_required && ! $is_edit_mode ? 'required' : ''; ?>
+	<?php echo $is_required && ! $is_edit_mode ? 'aria-required="true"' : ''; ?>
 >
 <?php
 $renderer->close_input_group( $field );

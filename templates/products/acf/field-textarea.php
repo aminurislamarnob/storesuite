@@ -30,5 +30,5 @@ $maxlength = ! empty( $field['maxlength'] ) ? absint( $field['maxlength'] ) : 0;
 	<?php if ( $maxlength > 0 ) : ?>
 		maxlength="<?php echo esc_attr( $maxlength ); ?>"
 	<?php endif; ?>
-	<?php echo $is_required ? 'required' : ''; ?>
+	<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 ><?php echo esc_textarea( is_scalar( $value ) ? (string) $value : '' ); ?></textarea>

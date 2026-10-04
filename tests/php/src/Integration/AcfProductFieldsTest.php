@@ -219,7 +219,9 @@ class AcfProductFieldsTest extends StoreSuiteAjaxTestCase {
 		$this->assertStringContainsString( 'name="storesuite_acf[' . self::TEXT_KEY . ']"', $html );
 		$this->assertStringContainsString( 'id="storesuite_acf_' . self::TEXT_KEY . '"', $html );
 		$this->assertStringContainsString( 'placeholder="e.g. Cotton"', $html );
-		$this->assertMatchesRegularExpression( '/<input[^>]*name="storesuite_acf\[' . self::TEXT_KEY . '\]"[^>]*required/s', $html, 'HTML5 required is set.' );
+		$this->assertMatchesRegularExpression( '/<input[^>]*name="storesuite_acf\[' . self::TEXT_KEY . '\]"[^>]*aria-required="true"/s', $html, 'The input is marked required.' );
+		$this->assertDoesNotMatchRegularExpression( '/<input[^>]*name="storesuite_acf\[' . self::TEXT_KEY . '\]"[^>]*\srequired/s', $html, 'The browser does not pre-empt the inline message.' );
+		$this->assertStringContainsString( 'data-required-message="Material value is required"', $html );
 	}
 
 	public function test_wrapper_width_class_and_id_are_mapped() {

@@ -37,7 +37,7 @@ $renderer->open_input_group( $field );
 	<?php if ( ! empty( $field['placeholder'] ) ) : ?>
 		placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"
 	<?php endif; ?>
-	<?php echo $is_required ? 'required' : ''; ?>
+	<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 >
 <?php
 $renderer->close_input_group( $field );

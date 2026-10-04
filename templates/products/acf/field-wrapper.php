@@ -47,6 +47,12 @@ if ( null !== $stored_value ) {
 }
 $instructions = ! empty( $field['instructions'] ) ? (string) $field['instructions'] : '';
 $is_required  = ! empty( $field['required'] );
+
+// Checked on submit by product-acf.js, which shows the message under the
+// field. A blank password on the edit form keeps the stored value.
+if ( $is_required && $supported && ! ( 'password' === $type && $is_edit_mode ) ) {
+	$data_attrs .= ' data-required-message="' . esc_attr( $renderer->get_required_message( $field ) ) . '"';
+}
 $label_for    = $renderer->has_labelable_control( $type, $supported ) ? $input_id : '';
 $label_id     = '' === $label_for && ! empty( $field['label'] ) ? $input_id . '-label' : '';
 $label_tag    = '' !== $label_for ? 'label' : 'span';

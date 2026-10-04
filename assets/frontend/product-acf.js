@@ -21,6 +21,78 @@
 			this.initDatePickers( $groups );
 			this.bindMediaPickers( $groups );
 			this.initConditionalLogic( $groups );
+			this.bindRequiredValidation( $groups );
+		},
+
+		/**
+		 * Required fields, checked when the product form validates its own
+		 * (product.js) and reported the same way: a red border and the message
+		 * under the field. Fields hidden by conditional logic are skipped.
+		 */
+		bindRequiredValidation: function ( $groups ) {
+			var self = this;
+
+			$groups
+				.closest( 'form' )
+				.on(
+					'storesuite_product_form_validate',
+					function ( event, formIsValid ) {
+						var $invalid = $groups
+							.find( '.storesuite-acf-field[data-required-message]' )
+							.not( '.storesuite-acf-hidden' )
+							.filter( function () {
+								var value = self.readFieldValue( $( this ) );
+
+								return self.isEmptyValue(
+									typeof value === 'string' ? value.trim() : value
+								);
+							} );
+
+						if ( ! $invalid.length ) {
+							return;
+						}
+
+						event.preventDefault();
+
+						$invalid.each( function () {
+							self.markFieldAsInvalid( $( this ) );
+						} );
+
+						// The form's own errors sit higher up and win the scroll.
+						if ( formIsValid ) {
+							$invalid[ 0 ].scrollIntoView( {
+								behavior: 'smooth',
+								block: 'center',
+							} );
+						}
+					}
+				);
+
+			// Remove error on field change
+			$groups.on( 'input change', '.storesuite-acf-field', function () {
+				$( this )
+					.find( '.storesuite-field-invalid' )
+					.removeClass( 'storesuite-field-invalid' );
+				$( this ).find( '.storesuite-field-error' ).remove();
+			} );
+		},
+
+		markFieldAsInvalid: function ( $field ) {
+			var $group = $field.children( '.storesuite-form-group' );
+			var $help = $group.children( '.storesuite-form-text' ).first();
+			var $error = $( '<span class="storesuite-field-error"></span>' ).text(
+				$field.data( 'required-message' )
+			);
+
+			$field
+				.find( '.storesuite-form-control' )
+				.addClass( 'storesuite-field-invalid' );
+
+			if ( $help.length ) {
+				$error.insertBefore( $help );
+			} else {
+				$group.append( $error );
+			}
 		},
 
 		/**

@@ -303,12 +303,14 @@ class AcfValidationTest extends StoreSuiteAjaxTestCase {
 		$this->require_acf();
 		$this->register_password_group();
 
-		// The add form lets the browser enforce it; the edit form cannot, since blank keeps the secret there.
+		// The add form checks it before submitting; the edit form cannot, since blank keeps the secret there.
 		$add_html  = $this->render_acf_cards( 0 );
 		$edit_html = $this->render_acf_cards( self::factory()->product->create()->get_id() );
-		$this->assertMatchesRegularExpression( '/<input[^>]*type="password"[^>]*name="storesuite_acf\[field_ss_val_secret\]"[^>]*required/s', $add_html );
+		$this->assertMatchesRegularExpression( '/<input[^>]*type="password"[^>]*name="storesuite_acf\[field_ss_val_secret\]"[^>]*aria-required="true"/s', $add_html );
+		$this->assertStringContainsString( 'data-required-message=', $add_html );
 		$this->assertStringNotContainsString( 'Leave blank to keep the current value.', $add_html );
 		$this->assertDoesNotMatchRegularExpression( '/<input[^>]*type="password"[^>]*required/s', $edit_html );
+		$this->assertStringNotContainsString( 'data-required-message=', $edit_html );
 		$this->assertStringContainsString( 'Leave blank to keep the current value.', $edit_html );
 
 		$response = $this->add_with_acf( array( 'field_ss_val_secret' => '' ) );

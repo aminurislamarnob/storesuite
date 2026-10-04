@@ -26,6 +26,11 @@ export class AcfCardPage {
 		return this.field( key ).locator( `[name="storesuite_acf[${ key }]"]:not([type="hidden"])` );
 	}
 
+	/** The inline validation message under a field. */
+	fieldError( key: string ): Locator {
+		return this.field( key ).locator( '.storesuite-field-error' );
+	}
+
 	choice( key: string, value: string ): Locator {
 		return this.field( key ).locator( `input[value="${ value }"]` );
 	}

@@ -25,5 +25,5 @@ if ( ! defined( 'ABSPATH' ) ) {
 	<?php if ( ! empty( $field['placeholder'] ) ) : ?>
 		placeholder="<?php echo esc_attr( $field['placeholder'] ); ?>"
 	<?php endif; ?>
-	<?php echo $is_required ? 'required' : ''; ?>
+	<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 >

@@ -239,9 +239,19 @@
 					];
 
 					// Validate required fields
-					if (
-						! self.validateRequiredFields( $form, requiredFields )
-					) {
+					var isValid = self.validateRequiredFields(
+						$form,
+						requiredFields
+					);
+
+					// Integrations mark their own invalid fields the same way
+					// and call preventDefault() on the event to stop the save.
+					var validation = $.Event(
+						'storesuite_product_form_validate'
+					);
+					$form.trigger( validation, [ isValid ] );
+
+					if ( ! isValid || validation.isDefaultPrevented() ) {
 						return;
 					}
 

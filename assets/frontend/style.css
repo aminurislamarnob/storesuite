@@ -660,6 +660,11 @@ template {
   box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25);
 }
 
+.my-storesuite-container .storesuite-field-invalid + .select2-container .select2-selection {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.1);
+}
+
 .my-storesuite-container .storesuite-field-error {
   display: block;
   color: #dc3545;

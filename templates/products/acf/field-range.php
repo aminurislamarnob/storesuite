@@ -35,7 +35,7 @@ $renderer->open_input_group( $field );
 		min="<?php echo esc_attr( $min ); ?>"
 		max="<?php echo esc_attr( $max ); ?>"
 		step="<?php echo esc_attr( $step ); ?>"
-		<?php echo $is_required ? 'required' : ''; ?>
+		<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 	>
 	<output class="storesuite-acf-range-output" for="<?php echo esc_attr( $input_id ); ?>"><?php echo esc_html( $value ); ?></output>
 </div>

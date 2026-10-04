@@ -102,7 +102,32 @@ test.describe( 'ACF fields on the product form', () => {
 		await expect( saved.field( 'field_e2e_image' ).locator( '.preview-image img' ) ).toBeVisible();
 	} );
 
-	test( 'a required field violation shows the error dialog and saves nothing', async ( { page } ) => {
+	test( 'an empty required field is flagged under the field and nothing is submitted', async ( { page } ) => {
+		const name = `ACF required ${ Date.now() }`;
+		const productId = await createProductViaApi( name );
+		await page.goto( `${ dashboardPath }/edit-product/${ productId }/` );
+
+		const acf = new AcfCardPage( page, GROUP );
+		await expect( acf.card ).toBeVisible();
+
+		await acf.form.locator( '#product_title' ).fill( `${ name } renamed` );
+		await acf.save();
+
+		// Same style as the form's own required fields: no dialog, no request.
+		await expect( acf.fieldError( 'field_e2e_text' ) ).toHaveText( 'E2E Text value is required' );
+		await expect( acf.input( 'field_e2e_text' ) ).toHaveClass( /storesuite-field-invalid/ );
+		await expect( acf.dialog() ).toHaveCount( 0 );
+
+		// Typing clears the message.
+		await acf.input( 'field_e2e_text' ).fill( 'Cotton' );
+		await expect( acf.fieldError( 'field_e2e_text' ) ).toHaveCount( 0 );
+		await expect( acf.input( 'field_e2e_text' ) ).not.toHaveClass( /storesuite-field-invalid/ );
+
+		await page.reload();
+		await expect( page.locator( '#product_title' ) ).toHaveValue( name );
+	} );
+
+	test( 'a rule only ACF can check shows the error dialog and saves nothing', async ( { page } ) => {
 		const name = `ACF invalid ${ Date.now() }`;
 		const productId = await createProductViaApi( name );
 		await page.goto( `${ dashboardPath }/edit-product/${ productId }/` );
@@ -110,14 +135,13 @@ test.describe( 'ACF fields on the product form', () => {
 		const acf = new AcfCardPage( page, GROUP );
 		await expect( acf.card ).toBeVisible();
 
-		// Bypass the browser's own required check so the server rule is exercised.
+		// Bypass the browser's own range check so the server rule is exercised.
 		await acf.form.evaluate( ( form ) => form.setAttribute( 'novalidate', 'novalidate' ) );
-		await acf.input( 'field_e2e_text' ).fill( '' );
+		await acf.input( 'field_e2e_text' ).fill( 'Cotton' );
 		await acf.input( 'field_e2e_number' ).fill( '500' );
 		await acf.form.locator( '#product_title' ).fill( `${ name } renamed` );
 
 		await acf.save();
-		await expect( acf.dialog() ).toContainText( 'E2E Text value is required' );
 		await expect( acf.dialog() ).toContainText( 'E2E Number' );
 
 		await page.reload();

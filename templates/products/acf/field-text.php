@@ -32,7 +32,7 @@ $renderer->open_input_group( $field );
 	<?php if ( $maxlength > 0 ) : ?>
 		maxlength="<?php echo esc_attr( $maxlength ); ?>"
 	<?php endif; ?>
-	<?php echo $is_required ? 'required' : ''; ?>
+	<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 >
 <?php
 $renderer->close_input_group( $field );

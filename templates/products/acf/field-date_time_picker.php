@@ -32,5 +32,5 @@ if ( '' === $input_value && ! $is_edit_mode && ! empty( $field['default_to_curre
 	id="<?php echo esc_attr( $input_id ); ?>"
 	name="<?php echo esc_attr( $input_name ); ?>"
 	value="<?php echo esc_attr( $input_value ); ?>"
-	<?php echo $is_required ? 'required' : ''; ?>
+	<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 >

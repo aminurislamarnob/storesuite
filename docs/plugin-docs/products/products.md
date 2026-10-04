@@ -145,7 +145,8 @@ A few things work a little differently from wp-admin, on purpose:
 - **Dates and times** are always shown in ISO style (`2026-12-24`, `18:45`) no matter which display format the group uses. A Date Picker opens the same calendar as the sale-price dates.
 - **Password fields** never show the stored value. Leave one blank to keep what's there; type something to replace it. A required password still has to be filled in when there is nothing stored yet, such as when adding a product.
 - **Conditional logic** works as in wp-admin: dependent fields appear and disappear as you change the controlling field, and hidden fields keep their stored values.
-- **Required rules and limits** are checked when you save. If something fails, the error dialog lists each field with ACF's own message and nothing is saved until you fix it.
+- **Required fields** are checked when you save, just like the product title: an empty one gets a red border and a message right under it, and nothing is saved until you fill it in.
+- **Other rules and limits** (a number out of range, an invalid email, …) are checked by ACF on save. If something fails, the error dialog lists each field with ACF's own message and nothing is saved until you fix it.
 - **Settings that are ignored:** the "Stylised UI" and AJAX options on Select, the "Toggle all" checkbox option, the "Other" choice on Radio, the on/off text on True / False, image size and dimension limits, and the group's position and style options.
 
 Not seeing the box at all? An administrator can turn the feature on and off under **StoreSuite → Settings → General**.

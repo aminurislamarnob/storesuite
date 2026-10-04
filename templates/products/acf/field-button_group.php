@@ -23,7 +23,7 @@ $index    = 0;
 ?>
 <?php // Sentinel so "nothing selected" still submits the key (clears when allow_null is on). ?>
 <input type="hidden" name="<?php echo esc_attr( $input_name ); ?>" value="">
-<div class="storesuite-acf-button-group" id="<?php echo esc_attr( $input_id ); ?>" role="radiogroup"<?php echo '' !== $label_id ? ' aria-labelledby="' . esc_attr( $label_id ) . '"' : ''; ?>>
+<div class="storesuite-acf-button-group" id="<?php echo esc_attr( $input_id ); ?>" role="radiogroup"<?php echo $is_required ? ' aria-required="true"' : ''; ?><?php echo '' !== $label_id ? ' aria-labelledby="' . esc_attr( $label_id ) . '"' : ''; ?>>
 	<?php foreach ( $choices as $choice_value => $choice_label ) : ?>
 		<?php $choice_id = $input_id . '-' . ( $index++ ); ?>
 		<input
@@ -33,7 +33,6 @@ $index    = 0;
 			name="<?php echo esc_attr( $input_name ); ?>"
 			value="<?php echo esc_attr( $choice_value ); ?>"
 			<?php checked( in_array( $choice_value, $selected, true ) ); ?>
-			<?php echo $is_required ? 'required' : ''; ?>
 		>
 		<label class="storesuite-acf-button-group-option" for="<?php echo esc_attr( $choice_id ); ?>"><?php echo esc_html( $choice_label ); ?></label>
 	<?php endforeach; ?>

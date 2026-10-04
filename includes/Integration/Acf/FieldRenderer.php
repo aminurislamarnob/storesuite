@@ -226,6 +226,18 @@ class FieldRenderer {
 	}
 
 	/**
+	 * Message shown when a required field is left empty (ACF's own wording).
+	 *
+	 * @param array $field ACF field array.
+	 *
+	 * @return string
+	 */
+	public function get_required_message( array $field ): string {
+		/* translators: %s: field label (ACF's own string). */
+		return sprintf( __( '%s value is required', 'acf' ), isset( $field['label'] ) ? $field['label'] : '' ); // phpcs:ignore WordPress.WP.I18n.TextDomainMismatch -- Must match ACF's string.
+	}
+
+	/**
 	 * ID attribute for a field's input.
 	 *
 	 * @param array $field ACF field array.

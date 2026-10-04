@@ -42,6 +42,6 @@ $is_hex = '' === $hex || preg_match( '/^#([0-9a-f]{3}|[0-9a-f]{6})$/', $hex );
 		<?php echo $is_hex ? 'pattern="^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$"' : ''; ?>
 		autocomplete="off"
 		spellcheck="false"
-		<?php echo $is_required ? 'required' : ''; ?>
+		<?php echo $is_required ? 'aria-required="true"' : ''; ?>
 	>
 </div>
