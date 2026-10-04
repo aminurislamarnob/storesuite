@@ -440,3 +440,37 @@
 		}
 	}
 }
+
+// Touch devices: WooCommerce's report controls render a 13px select (iOS zooms
+// the page on focus under 16px) and 36px-tall buttons. Mouse-driven desktops
+// never match this query.
+@media ( pointer: coarse ) {
+	.storesuite-analytics-layout {
+		// !important: WordPress components set these through runtime
+		// (emotion) styles that outrank any stylesheet selector.
+		.components-select-control__input {
+			font-size: 16px !important;
+			min-height: 44px !important;
+		}
+
+		.woocommerce-select-control__control-input {
+			font-size: 16px !important;
+		}
+
+		.woocommerce-chart__type-button,
+		.woocommerce-legend__item > button,
+		.woocommerce-table__download-button,
+		.woocommerce-ellipsis-menu__toggle,
+		.woocommerce-table .components-button,
+		.woocommerce-pagination .components-button {
+			min-width: 44px;
+			min-height: 44px;
+		}
+
+		// Settings report "Save" button and the table page-picker field.
+		.components-button.is-primary,
+		.woocommerce-pagination__page-picker-input {
+			min-height: 44px;
+		}
+	}
+}

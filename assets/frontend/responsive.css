@@ -16,6 +16,80 @@
 	gap: 10px;
 }
 
+/* Everything below desktop: phones, tablets and 1180px landscape tablets.
+   Ends under 1200px so desktop layouts (>= 1280px) are never reached. */
+@media ( max-width: 1199.98px ) {
+
+	/* selectWoo's body-level dropdown wrapper inherits width: 100% and, offset
+	   by its left position, pushed the page wider than the viewport. */
+	body.storesuite-main-dashboard > .select2-container--open {
+		width: auto !important;
+	}
+
+	/* Off-canvas filters: follow the visible viewport under browser chrome */
+	.storesuite-filter-offcanvas {
+		height: 100dvh;
+	}
+
+	.storesuite-filter-offcanvas-body {
+		padding-block-end: calc( 20px + env( safe-area-inset-bottom, 0px ) );
+	}
+
+	.storesuite-product-bulk-modal-dialog {
+		max-height: min( 90dvh, 900px );
+	}
+
+	/* Product form sidebar: the Virtual / Downloadable switches overlapped */
+	#storesuite-add-product > .row > .col-md-4 .row.show_if_simple {
+		--bs-gutter-y: 12px;
+	}
+
+	#storesuite-add-product > .row > .col-md-4 .row.show_if_simple > .col-md-6 {
+		flex: 0 0 100%;
+		width: 100%;
+		max-width: 100%;
+	}
+
+	/* Sale price label row: keep the "Schedule" link inside the card */
+	#storesuite-add-product .storesuite-form-group > .row > .col-md-8 {
+		flex: 1 1 0;
+		width: auto;
+		min-width: 0;
+	}
+
+	#storesuite-add-product .storesuite-form-group > .row > .col-md-4.text-right {
+		flex: 0 0 auto;
+		width: auto;
+		white-space: nowrap;
+	}
+
+	/* Primary / secondary form buttons sat flush against each other */
+	.storesuite-button-group {
+		gap: 8px;
+	}
+
+	/* Order form: date + time and coupon rows wrap instead of leaving the card */
+	.storesuite-dashboard-order-details .date-time-group,
+	.storesuite-dashboard-order-details .coupon-group {
+		flex-wrap: wrap;
+	}
+
+	.storesuite-dashboard-order-details .coupon-group .storesuite-form-control {
+		min-width: 120px;
+	}
+
+	/* Date on its own row so the time fields wrap as one group */
+	.storesuite-dashboard-order-details .col-md-4 .date-input {
+		flex: 1 1 100%;
+	}
+
+	/* Order items: scroll inside the card, never the page */
+	#woocommerce-order-items {
+		overflow-x: auto;
+		-webkit-overflow-scrolling: touch;
+	}
+}
+
 @media ( max-width: 767px ) {
 	/* Off-canvas sidebar */
 	.my-storesuite-container .my-storesuite-sidebar {
@@ -26,6 +100,9 @@
 		box-shadow: 0 12px 40px -8px rgba( 15, 23, 42, 0.35 );
 		transition: transform 0.28s ease;
 		z-index: 1000;
+
+		/* Keep the last menu items clear of the home indicator */
+		padding-block-end: calc( 10px + env( safe-area-inset-bottom, 0px ) );
 	}
 
 	.my-storesuite-container.storesuite-sidebar-mobile-open .my-storesuite-sidebar {
@@ -442,6 +519,10 @@
 	.my-storesuite-container .storesuite-permalink-prefix {
 		width: 100%;
 		border-right: 0;
+
+		/* A long site URL was clipped on 320px screens */
+		white-space: normal;
+		overflow-wrap: anywhere;
 	}
 
 	/* Order items (view + edit): scroll horizontally instead of squishing */
@@ -610,6 +691,16 @@
 		justify-content: center;
 		text-align: center;
 	}
+
+	/* Long names, SKUs and emails wrap inside their card row */
+	.storesuite-list-table tr.storesuite-list-row td {
+		min-width: 0;
+		overflow-wrap: anywhere;
+	}
+
+	.storesuite-list-table tr.storesuite-list-row td[data-title]::before {
+		overflow-wrap: normal;
+	}
 }
 
 @media ( max-width: 575px ) {
@@ -756,6 +847,37 @@
 	.storesuite-dashboard-order-details .storesuite-table.order-items {
 		min-width: 480px;
 	}
+
+	/* Orders title row: Add Order + Filter need a gap, as on phones */
+	.storesuite-orders-title-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+
+	/* "Add" + "Product" label parts ran together inside the flex button */
+	.storesuite-toolbar-actions .my-storesuite-button .storesuite-add-product-text {
+		margin-inline-start: 0.3em;
+	}
+
+	/* Account: one-row nav so it does not eat a short landscape screen */
+	.storesuite-account-nav-list {
+		flex-direction: row;
+		flex-wrap: wrap;
+	}
+}
+
+/* Small tablets and landscape phones (768-991px, below Bootstrap's lg tier):
+   the 8/4 product form squeezed the sidebar card to ~200px. Stack it under the
+   main column, as the order form already does. */
+@media ( min-width: 768px ) and ( max-width: 991.98px ) {
+
+	#storesuite-add-product > .row > .col-md-8,
+	#storesuite-add-product > .row > .col-md-4 {
+		flex: 0 0 100%;
+		width: 100%;
+		max-width: 100%;
+	}
 }
 
 /* Landscape phones (wide angle): reclaim the short viewport height */
@@ -770,6 +892,202 @@
 
 	.storesuite-product-bulk-modal-dialog {
 		max-height: calc( 100vh - 1rem );
+		max-height: calc( 100dvh - 1rem );
+	}
+}
+
+/* Short landscape screens (phones on their side, 320-500px tall): dialogs must
+   fit the height, scroll inside themselves and keep their buttons reachable. */
+@media ( max-width: 1024px ) and ( orientation: landscape ) and ( max-height: 500px ) {
+
+	.storesuite-product-bulk-modal-header,
+	.storesuite-product-bulk-modal-footer {
+		padding-block: 0.5rem;
+	}
+
+	/* Keep Cancel / Update side by side so the form body keeps its height */
+	.storesuite-product-bulk-modal-footer {
+		flex-direction: row;
+		flex-wrap: nowrap;
+		align-items: center;
+	}
+
+	.storesuite-product-bulk-modal-footer .my-storesuite-button {
+		flex: 1 1 0;
+		width: auto;
+	}
+
+	.storesuite-filter-offcanvas-header {
+		padding-block: 10px;
+	}
+
+	/* Export modal: the progress bar sat below the fold of the scrolling form
+	   body, so a running export showed no feedback. Pin it to the bottom. */
+	.storesuite-product-bulk-edit-scroll .storesuite-export-progress {
+		position: sticky;
+		bottom: 0;
+	}
+
+	.swal2-container {
+		padding: 8px;
+	}
+
+	.swal2-popup {
+		max-height: calc( 100dvh - 16px );
+		padding: 16px;
+		overflow-y: auto;
+	}
+
+	.swal2-icon {
+		margin: 0 auto 8px;
+		font-size: 9px;
+	}
+
+	.swal2-actions {
+		margin-block-start: 12px;
+	}
+}
+
+/* Touch devices of any width (phones, tablets, incl. 1366px landscape tablets).
+   Mouse-driven desktops never match, so the desktop design is untouched. */
+@media ( pointer: coarse ) {
+
+	/* iOS zooms the page when a focused field is under 16px */
+	.storesuite-main-dashboard .my-storesuite-container input:not( [type] ),
+	.storesuite-main-dashboard .my-storesuite-container input[type="text"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="number"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="email"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="password"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="search"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="tel"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="url"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="date"],
+	.storesuite-main-dashboard .my-storesuite-container input[type="time"],
+	.storesuite-main-dashboard .my-storesuite-container select,
+	.storesuite-main-dashboard .my-storesuite-container textarea,
+	.storesuite-main-dashboard .my-storesuite-container #order-search-filter,
+	.storesuite-main-dashboard .select2-container .select2-search__field,
+	.storesuite-main-dashboard .select2-container .select2-selection--multiple .select2-search--inline .select2-search__field,
+	#storesuite-product-attributes .select2-container .select2-selection--multiple .select2-search--inline:not( .storesuite-attribute-col-name * ) .select2-search__field,
+	.storesuite-main-dashboard .swal2-input,
+	.storesuite-main-dashboard .swal2-select,
+	.storesuite-main-dashboard .swal2-textarea {
+		font-size: 16px;
+	}
+
+	/* 44px minimum tap targets */
+	.my-storesuite-container .my-storesuite-button,
+	.storesuite-main-dashboard .swal2-styled,
+	.storesuite-dashboard-order-details .apply-btn,
+	.storesuite-dashboard-order-details .add-note-btn,
+	.storesuite-dashboard-order-details .create-order-btn,
+	.my-storesuite-container button.button.refund-items,
+	.my-storesuite-container .refund-actions button.button,
+	.storesuite-import-mapping button[data-map-filter],
+	.storesuite-account-nav-link,
+	.storesuite-seo-tab {
+		min-height: 44px;
+	}
+
+	/* Header "Visit Home" keeps its own size (icon-only circle on small phones) */
+	.my-storesuite-container .storesuite-header-right > a.my-storesuite-button {
+		min-height: 0;
+	}
+
+	.my-storesuite-container select.storesuite-form-control,
+	.my-storesuite-container input.storesuite-form-control:not( [type="checkbox"] ):not( [type="radio"] ),
+	.my-storesuite-container .storesuite-table-search-input input {
+		min-height: 44px;
+	}
+
+	.storesuite-table-header-part .storesuite-export-toggle,
+	.storesuite-table-header-part .storesuite-filter-toggle,
+	.storesuite-table-header-part .storesuite-search-toggle,
+	.storesuite-orders-title-actions .storesuite-filter-toggle {
+		min-width: 45px;
+	}
+
+	.storesuite-pagination li a,
+	.storesuite-pagination li .current {
+		min-width: 44px;
+		height: 44px;
+	}
+
+	.storesuite-dropdown-menu .dropdown-link {
+		padding-block: 14px;
+	}
+
+	/* Checkbox column: 44px wide so the checkbox pad stays inside its own cell */
+	.storesuite-list-table th.check-column,
+	.storesuite-list-table td.check-column {
+		padding-inline: 14px;
+	}
+
+	.storesuite-list-table th.check-column {
+		height: 44px;
+	}
+
+	/* Row "more" trigger: 44px box, icon stays the same size */
+	.storesuite-list-table .storesuite-dropdown-icon,
+	.my-storesuite-tbl .storesuite-dropdown-icon {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 44px;
+		min-height: 44px;
+	}
+
+	/* The taller trigger would sit on top of its own floating menu */
+	.my-storesuite-tbl .storesuite-dropdown .storesuite-dropdown-menu {
+		top: 100%;
+	}
+
+	table.my-storesuite-tbl tbody tr:nth-last-child( -n + 2 ) .storesuite-dropdown .storesuite-dropdown-menu {
+		top: auto;
+		bottom: 100%;
+	}
+
+	/* Small icon controls keep their size; an invisible pad extends the
+	   hit area to 44px. */
+	.storesuite-sidebar-trigger,
+	.storesuite-header-icon-link,
+	.storesuite-theme-toggle,
+	.storesuite-header-dropdown > .storesuite-dropdown-icon,
+	.storesuite-header-right > a.my-storesuite-button,
+	.storesuite-filter-close,
+	.my-storesuite-container .storesuite-ai-generate,
+	.my-storesuite-container .storesuite-ai-image-generate,
+	.storesuite-seo-mode-switch,
+	button.edit-storesuite-order-address {
+		position: relative;
+	}
+
+	.storesuite-sidebar-trigger::after,
+	.storesuite-header-icon-link::after,
+	.storesuite-theme-toggle::after,
+	.storesuite-header-dropdown > .storesuite-dropdown-icon::after,
+	.storesuite-header-right > a.my-storesuite-button::after,
+	.storesuite-filter-close::after,
+	.my-storesuite-container .storesuite-ai-generate::after,
+	.my-storesuite-container .storesuite-ai-image-generate::after,
+	.storesuite-seo-mode-switch::after,
+	button.edit-storesuite-order-address::after,
+	.storesuite-account-avatar-upload::after,
+	.my-storesuite-checkbox::after {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		width: max( 100%, 44px );
+		height: max( 100%, 44px );
+		transform: translate( -50%, -50% );
+	}
+
+	/* Switch rows: the label is the control. Give it a 44px tall hit area
+	   without moving the layout. */
+	.storesuite-form-group.storesuite-form-switch label {
+		padding-block: 12px;
+		margin-block: -12px;
 	}
 }
 
