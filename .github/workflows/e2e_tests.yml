@@ -29,9 +29,12 @@ jobs:
                     - lane: latest
                       wp: latest
                       wc: latest-stable
+                    # The plugin's declared minimums ("Requires at least" /
+                    # "WC requires at least" in storesuite.php); WordPress
+                    # refuses to activate it on anything older.
                     - lane: pinned
-                      wp: '6.8'
-                      wc: '10.1.2'
+                      wp: '6.9'
+                      wc: '10.4.3'
         env:
             WP_DIR: /tmp/wp-e2e
             BASE_URL: http://127.0.0.1:9999
