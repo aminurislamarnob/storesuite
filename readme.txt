@@ -17,7 +17,7 @@ StoreSuite is a free frontend shop manager for WooCommerce that puts complete st
 
 ✨ **[All Features](https://storesuite.dev/features/)** | 📖 **[Documentation](https://storesuite.dev/docs/)** | 🆘 **[Support](https://wordpress.org/support/plugin/storesuite/#new-post)**
 
-https://www.youtube.com/watch?v=HXfJfzyU9W8
+https://www.youtube.com/watch?v=ufrHz6hzY50
 
 = 💎 Premium-grade features, completely free =
 
