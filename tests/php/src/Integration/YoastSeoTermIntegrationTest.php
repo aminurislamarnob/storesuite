@@ -1485,7 +1485,7 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 	 * @return void
 	 */
 	public function test_term_ai_modals_render_only_with_ai_on_term_form_pages() {
-		$integration = $this->make_integration( true, array( '__is_term_form_page' => true ) );
+		$integration = $this->make_integration( true, array( '__form_taxonomy' => 'product_cat' ) );
 
 		ob_start();
 		$integration->render_ai_modals();
@@ -1531,7 +1531,7 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 			}
 		}
 
-		$integration = $this->make_integration( true, array( '__is_term_form_page' => true ) );
+		$integration = $this->make_integration( true, array( '__form_taxonomy' => 'product_cat' ) );
 		$integration->enqueue_ai_assets();
 		$this->assertFalse( wp_script_is( 'storesuite_product_ai_script', 'enqueued' ), 'No AI, no script.' );
 

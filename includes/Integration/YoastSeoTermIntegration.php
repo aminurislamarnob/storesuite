@@ -950,7 +950,7 @@ class YoastSeoTermIntegration {
 	 * @return void
 	 */
 	public function enqueue_ai_assets() {
-		if ( ! $this->is_term_form_page() || ! ProductAI::is_text_supported() ) {
+		if ( '' === $this->get_form_taxonomy() || ! ProductAI::is_text_supported() ) {
 			return;
 		}
 
@@ -983,7 +983,7 @@ class YoastSeoTermIntegration {
 	 * @return void
 	 */
 	public function render_ai_modals() {
-		if ( ! $this->is_term_form_page() || ! ProductAI::is_text_supported() ) {
+		if ( '' === $this->get_form_taxonomy() || ! ProductAI::is_text_supported() ) {
 			return;
 		}
 
