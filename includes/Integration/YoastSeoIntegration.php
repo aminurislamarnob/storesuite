@@ -793,7 +793,22 @@ class YoastSeoIntegration {
 			$lines[] = 'Product details: ' . $details;
 		}
 
-		$lines[] = 'Language: ' . $this->get_site_language_name();
+		return array_merge( $lines, self::get_ai_platform_lines( $spec, $this->get_site_language_name() ) );
+	}
+
+	/**
+	 * The language, platform and length prompt lines shared by every SEO field.
+	 *
+	 * Also used by the term SEO integration, whose specs have the same shape.
+	 *
+	 * @param array  $spec     Field spec: kind, platform and length.
+	 * @param string $language Site language as an English name.
+	 * @return string[]
+	 */
+	public static function get_ai_platform_lines( array $spec, string $language ): array {
+		$lines = array();
+
+		$lines[] = 'Language: ' . $language;
 
 		$platforms = array(
 			'google' => 'Google search result',
@@ -817,6 +832,15 @@ class YoastSeoIntegration {
 	 * @return string
 	 */
 	protected function get_site_language_name(): string {
+		return self::site_language_name();
+	}
+
+	/**
+	 * The site language as an English name, for any integration building prompts.
+	 *
+	 * @return string
+	 */
+	public static function site_language_name(): string {
 		$locale = get_locale();
 
 		require_once ABSPATH . 'wp-admin/includes/translation-install.php';
