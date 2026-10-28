@@ -72,6 +72,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<label for="<?php echo esc_attr( $field_prefix . 'title' ); ?>"><?php esc_html_e( 'SEO title', 'storesuite' ); ?></label>
 				<span class="storesuite-seo-field-actions">
 					<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+					<?php do_action( 'storesuite_product_form_field_label', 'yoast_term_title' ); ?>
 				</span>
 			</div>
 			<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'title' ); ?>" name="<?php echo esc_attr( $field_prefix . 'title' ); ?>" value="<?php echo esc_attr( $seo_values['title'] ?? '' ); ?>" placeholder="<?php echo esc_attr( $title_template ); ?>" autocomplete="off">
@@ -83,6 +84,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 				<label for="<?php echo esc_attr( $field_prefix . 'metadesc' ); ?>"><?php esc_html_e( 'Meta description', 'storesuite' ); ?></label>
 				<span class="storesuite-seo-field-actions">
 					<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+					<?php do_action( 'storesuite_product_form_field_label', 'yoast_term_metadesc' ); ?>
 				</span>
 			</div>
 			<textarea class="storesuite-form-control" id="<?php echo esc_attr( $field_prefix . 'metadesc' ); ?>" name="<?php echo esc_attr( $field_prefix . 'metadesc' ); ?>" rows="3" placeholder="<?php echo esc_attr( $desc_template ); ?>"><?php echo esc_textarea( $seo_values['metadesc'] ?? '' ); ?></textarea>
@@ -137,6 +139,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 									<label for="<?php echo esc_attr( $storesuite_seo_title_field ); ?>"><?php echo esc_html( $storesuite_seo_is_x ? __( 'X title', 'storesuite' ) : __( 'Social title', 'storesuite' ) ); ?></label>
 									<span class="storesuite-seo-field-actions">
 										<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+										<?php do_action( 'storesuite_product_form_field_label', 'yoast_term_' . $storesuite_seo_network . '-title' ); ?>
 									</span>
 								</div>
 								<input type="text" class="storesuite-form-control" id="<?php echo esc_attr( $storesuite_seo_title_field ); ?>" name="<?php echo esc_attr( $storesuite_seo_title_field ); ?>" value="<?php echo esc_attr( $seo_values[ $storesuite_seo_network . '-title' ] ?? '' ); ?>" autocomplete="off">
@@ -146,6 +149,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 									<label for="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>"><?php echo esc_html( $storesuite_seo_is_x ? __( 'X description', 'storesuite' ) : __( 'Social description', 'storesuite' ) ); ?></label>
 									<span class="storesuite-seo-field-actions">
 										<button type="button" class="my-storesuite-button storesuite-seo-insert-variable" aria-haspopup="listbox" aria-expanded="false"><?php esc_html_e( 'Insert variable', 'storesuite' ); ?></button>
+										<?php do_action( 'storesuite_product_form_field_label', 'yoast_term_' . $storesuite_seo_network . '-description' ); ?>
 									</span>
 								</div>
 								<textarea class="storesuite-form-control" id="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>" name="<?php echo esc_attr( $storesuite_seo_desc_field ); ?>" rows="3"><?php echo esc_textarea( $seo_values[ $storesuite_seo_network . '-description' ] ?? '' ); ?></textarea>

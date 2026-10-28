@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
+use PluginizeLab\StoreSuite\Product\ProductAI;
 use WP_Term;
 
 /**
@@ -49,6 +50,7 @@ class YoastSeoTermIntegration {
 		add_action( 'edit_term', array( $this, 'save' ), 10, 3 );
 		// Priority 20: after Assets has enqueued the dashboard scripts.
 		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_assets' ), 20 );
+		$this->register_ai_hooks();
 	}
 
 	/**
@@ -751,6 +753,242 @@ class YoastSeoTermIntegration {
 		if ( $this->get_social_networks() ) {
 			wp_enqueue_media();
 		}
+	}
+
+	/* ----------------------------------------------------------------------
+	 * AI Generate for the term SEO fields
+	 * -------------------------------------------------------------------- */
+
+	/**
+	 * Hook the AI field registry, script and modals.
+	 *
+	 * The Generate buttons themselves are rendered by ProductAI on the card's
+	 * field-label slots, and the product AJAX endpoint serves the fields.
+	 *
+	 * @return void
+	 */
+	protected function register_ai_hooks(): void {
+		add_filter( 'storesuite_ai_text_fields', array( $this, 'register_ai_fields' ) );
+		// Priority 30: after the card's own assets and Assets' registrations.
+		add_action( 'wp_enqueue_scripts', array( $this, 'enqueue_ai_assets' ), 30 );
+		add_action( 'storesuite_dashboard_wrapper_end', array( $this, 'render_ai_modals' ) );
+	}
+
+	/**
+	 * The six SEO fields AI can generate: key => [ kind, platform, meta, length ].
+	 *
+	 * Mirrors the product card's set; social fields only for enabled networks.
+	 *
+	 * @return array<string, array{kind: string, platform: string, meta: string, length: int}>
+	 */
+	protected function get_ai_field_specs(): array {
+		$specs = array(
+			'yoast_term_title'    => array(
+				'kind'     => 'title',
+				'platform' => 'google',
+				'meta'     => 'title',
+				'length'   => 60,
+			),
+			'yoast_term_metadesc' => array(
+				'kind'     => 'description',
+				'platform' => 'google',
+				'meta'     => 'metadesc',
+				'length'   => 156,
+			),
+		);
+
+		$platforms = array(
+			'opengraph' => 'social',
+			'twitter'   => 'x',
+		);
+
+		foreach ( array_keys( $this->get_social_networks() ) as $network ) {
+			$specs[ 'yoast_term_' . $network . '-title' ]       = array(
+				'kind'     => 'title',
+				'platform' => $platforms[ $network ],
+				'meta'     => $network . '-title',
+				'length'   => 70,
+			);
+			$specs[ 'yoast_term_' . $network . '-description' ] = array(
+				'kind'     => 'description',
+				'platform' => $platforms[ $network ],
+				'meta'     => $network . '-description',
+				'length'   => 200,
+			);
+		}
+
+		return $specs;
+	}
+
+	/**
+	 * Register the term SEO fields with the AI field registry.
+	 *
+	 * They share the product Yoast fields' settings keys and group, so admins
+	 * configure Yoast AI once.
+	 *
+	 * @param array $fields Registered AI text fields.
+	 * @return array
+	 */
+	public function register_ai_fields( $fields ) {
+		$instructions = YoastSeoIntegration::default_ai_instructions();
+		$labels       = array(
+			'yoast_term_title'                 => __( 'SEO title suggestion', 'storesuite' ),
+			'yoast_term_metadesc'              => __( 'Meta description suggestion', 'storesuite' ),
+			'yoast_term_opengraph-title'       => __( 'Social title suggestion', 'storesuite' ),
+			'yoast_term_opengraph-description' => __( 'Social description suggestion', 'storesuite' ),
+			'yoast_term_twitter-title'         => __( 'X title suggestion', 'storesuite' ),
+			'yoast_term_twitter-description'   => __( 'X description suggestion', 'storesuite' ),
+		);
+
+		foreach ( $this->get_ai_field_specs() as $key => $spec ) {
+			$is_title = 'title' === $spec['kind'];
+
+			$fields[ $key ] = array(
+				'label'               => $labels[ $key ],
+				'group'               => 'yoast_seo',
+				'instruction_label'   => $is_title
+					? __( 'SEO title system instruction', 'storesuite' )
+					: __( 'SEO description system instruction', 'storesuite' ),
+				'output'              => $is_title ? 'text' : 'textarea',
+				'instruction'         => $instructions[ $spec['kind'] ],
+				'instruction_setting' => $is_title ? YoastSeoIntegration::AI_TITLE_INSTRUCTION_SETTING : YoastSeoIntegration::AI_DESCRIPTION_INSTRUCTION_SETTING,
+				'enabled_setting'     => YoastSeoIntegration::AI_ENABLED_SETTING,
+				'intro'               => $is_title
+					? 'Write a title for the archive page of an online store.'
+					: 'Write a description for the archive page of an online store.',
+				// A term form has no product title; the term name and description arrive as raw request context.
+				'needs_context'       => false,
+				'target'              => '#' . self::FIELD_PREFIX . $spec['meta'],
+				'rows'                => $is_title ? 2 : 4,
+				'length'              => $spec['length'],
+				'prompt_lines'        => function ( array $context, array $request ) use ( $spec ) {
+					return $this->get_ai_prompt_lines( $spec, $request );
+				},
+			);
+		}
+
+		return $fields;
+	}
+
+	/**
+	 * The posted fields naming a term and its description, per taxonomy.
+	 *
+	 * @return array<string, array{type: string, label: string, name: string, description: string}>
+	 */
+	protected function get_ai_request_fields(): array {
+		return array(
+			'product_cat'   => array(
+				'type'        => 'category',
+				'label'       => 'Category',
+				'name'        => 'product_category_name',
+				'description' => 'product_category_description',
+			),
+			'product_brand' => array(
+				'type'        => 'brand',
+				'label'       => 'Brand',
+				'name'        => 'product_brand_name',
+				'description' => 'product_brand_description',
+			),
+			'product_tag'   => array(
+				'type'        => 'tag',
+				'label'       => 'Tag',
+				'name'        => 'name',
+				'description' => 'description',
+			),
+		);
+	}
+
+	/**
+	 * Prompt lines for a term SEO field: keyphrase, archive type, term name and details, then platform and length.
+	 *
+	 * @param array $spec    Field spec from get_ai_field_specs().
+	 * @param array $request Raw request data (the form's fields flagged `data-ai-context`).
+	 * @return string[]
+	 */
+	protected function get_ai_prompt_lines( array $spec, array $request ): array {
+		$lines = array();
+
+		// phpcs:disable WordPress.Security.NonceVerification.Missing -- Verified by ProductAI::handle_generate() before this runs.
+		$keyphrase = isset( $request[ self::FIELD_PREFIX . 'focuskw' ] ) ? sanitize_text_field( wp_unslash( $request[ self::FIELD_PREFIX . 'focuskw' ] ) ) : '';
+		if ( '' !== $keyphrase ) {
+			$lines[] = 'Focus keyphrase: ' . $keyphrase;
+		}
+
+		foreach ( $this->get_ai_request_fields() as $fields ) {
+			if ( ! isset( $request[ $fields['name'] ] ) ) {
+				continue;
+			}
+
+			$lines[] = 'Page type: a product ' . $fields['type'] . ' archive';
+
+			$name = sanitize_text_field( wp_unslash( $request[ $fields['name'] ] ) );
+			if ( '' !== $name ) {
+				$lines[] = $fields['label'] . ' name: ' . $name;
+			}
+
+			// The description is context only, so markup is never sent.
+			$details = isset( $request[ $fields['description'] ] ) ? trim( wp_strip_all_tags( wp_unslash( $request[ $fields['description'] ] ), true ) ) : '';
+			if ( '' !== $details ) {
+				if ( mb_strlen( $details ) > YoastSeoIntegration::AI_DESCRIPTION_CONTEXT_LENGTH ) {
+					$details = rtrim( mb_substr( $details, 0, YoastSeoIntegration::AI_DESCRIPTION_CONTEXT_LENGTH ) ) . '…';
+				}
+				$lines[] = 'Page details: ' . $details;
+			}
+			break;
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		return array_merge( $lines, YoastSeoIntegration::get_ai_platform_lines( $spec, YoastSeoIntegration::site_language_name() ) );
+	}
+
+	/**
+	 * Enqueue the product AI script on the term form pages, with its config.
+	 *
+	 * The script reads the localized StoreSuite_Product global, which only the
+	 * product pages localize otherwise. Image AI has no place on term forms.
+	 *
+	 * @return void
+	 */
+	public function enqueue_ai_assets() {
+		if ( ! $this->is_term_form_page() || ! ProductAI::is_text_supported() ) {
+			return;
+		}
+
+		$config                     = ProductAI::get_script_config();
+		$config['image']['enabled'] = false;
+
+		wp_enqueue_script( 'storesuite_product_ai_script' );
+		wp_localize_script(
+			'storesuite_product_script',
+			'StoreSuite_Product',
+			array(
+				'ajax_url' => admin_url( 'admin-ajax.php' ),
+				'i18n'     => array(
+					'success_title'    => __( 'Success!', 'storesuite' ),
+					'error_title'      => __( 'Error!', 'storesuite' ),
+					'ok_button'        => __( 'OK', 'storesuite' ),
+					'unexpected_error' => __( 'An unexpected error occurred. Please try again.', 'storesuite' ),
+				),
+				'ai'       => $config,
+			)
+		);
+	}
+
+	/**
+	 * Render the AI suggestion modals (and their icon sprite) on the term form pages.
+	 *
+	 * Hooked on `storesuite_dashboard_wrapper_end`; only outputs when text
+	 * generation is available.
+	 *
+	 * @return void
+	 */
+	public function render_ai_modals() {
+		if ( ! $this->is_term_form_page() || ! ProductAI::is_text_supported() ) {
+			return;
+		}
+
+		storesuite_get_template_part( 'products/product-icons' );
+		storesuite_get_template_part( 'products/ai-text-modals' );
 	}
 
 	/**

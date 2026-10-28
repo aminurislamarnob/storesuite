@@ -1543,12 +1543,14 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		add_filter( 'storesuite_ai_text_generator', $filter );
 		ProductAI::reset_ai_support_cache();
 
-		$this->make_integration()->enqueue_ai_assets();
-		$this->assertFalse( wp_script_is( 'storesuite_product_ai_script', 'enqueued' ), 'Not a term form page.' );
-
 		$integration->enqueue_ai_assets();
 		$enqueued = wp_script_is( 'storesuite_product_ai_script', 'enqueued' );
 		$data     = (string) wp_scripts()->get_data( 'storesuite_product_script', 'data' );
+		wp_dequeue_script( 'storesuite_product_ai_script' );
+
+		// The fake Yoast options are shared by the anonymous class: build the off-page double last.
+		$this->make_integration()->enqueue_ai_assets();
+		$off_page = wp_script_is( 'storesuite_product_ai_script', 'enqueued' );
 
 		remove_filter( 'storesuite_ai_text_generator', $filter );
 		ProductAI::reset_ai_support_cache();
@@ -1559,6 +1561,7 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		}
 
 		$this->assertTrue( $enqueued );
+		$this->assertFalse( $off_page, 'Not a term form page.' );
 		$this->assertStringContainsString( 'StoreSuite_Product', $data );
 		$this->assertStringContainsString( 'yoast_term_title', $data );
 		$this->assertStringContainsString( 'storesuite_generate_product_field', $data );

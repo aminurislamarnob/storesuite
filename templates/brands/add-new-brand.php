@@ -25,7 +25,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 						<form id="storesuite-add-brand">
 						<div class="storesuite-form-group">
 							<label for="product_brand_name"><?php esc_html_e( 'Brand Name', 'storesuite' ); ?> <span class="req"><?php esc_html_e( '*', 'storesuite' ); ?></span></label>
-							<input type="text" class="storesuite-form-control" id="product_brand_name" name="product_brand_name" placeholder="<?php echo esc_attr__( 'Product brand name', 'storesuite' ); ?>">
+							<input type="text" class="storesuite-form-control" id="product_brand_name" name="product_brand_name" data-ai-context placeholder="<?php echo esc_attr__( 'Product brand name', 'storesuite' ); ?>">
 						</div>
 						<div class="storesuite-form-group">
 							<label for="product_brand_slug"><?php esc_html_e( 'Slug', 'storesuite' ); ?></label>
@@ -57,7 +57,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							</div>
 						<div class="storesuite-form-group">
 							<label for="product_brand_description"><?php esc_html_e( 'Brand Description', 'storesuite' ); ?></label>
-							<textarea class="storesuite-form-control" id="product_brand_description" name="product_brand_description" placeholder="<?php echo esc_attr__( 'Product brand description', 'storesuite' ); ?>" rows="3"></textarea>
+							<textarea class="storesuite-form-control" id="product_brand_description" name="product_brand_description" data-ai-context placeholder="<?php echo esc_attr__( 'Product brand description', 'storesuite' ); ?>" rows="3"></textarea>
 						</div>
 						<div class="storesuite-form-group">
 							<label for="product_brand_thumbnail_id"><?php esc_html_e( 'Brand Image', 'storesuite' ); ?></label>

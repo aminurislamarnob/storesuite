@@ -37,7 +37,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 						<form id="storesuite-edit-tag">
 							<div class="storesuite-form-group">
 								<label for="name"><?php esc_html_e( 'Tag Name', 'storesuite' ); ?> <span class="req"><?php esc_html_e( '*', 'storesuite' ); ?></span></label>
-								<input type="text" class="storesuite-form-control" id="name" name="name" placeholder="<?php echo esc_attr__( 'Product tag name', 'storesuite' ); ?>" value="<?php echo esc_attr( $product_tag->name ); ?>">
+								<input type="text" class="storesuite-form-control" id="name" name="name" data-ai-context placeholder="<?php echo esc_attr__( 'Product tag name', 'storesuite' ); ?>" value="<?php echo esc_attr( $product_tag->name ); ?>">
 							</div>
 							<div class="storesuite-form-group">
 								<label for="slug"><?php esc_html_e( 'Slug', 'storesuite' ); ?></label>
@@ -46,7 +46,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 							</div>
 							<div class="storesuite-form-group">
 								<label for="description"><?php esc_html_e( 'Tag Description', 'storesuite' ); ?></label>
-								<textarea class="storesuite-form-control" id="description" name="description" placeholder="<?php echo esc_attr__( 'Product tag description', 'storesuite' ); ?>" rows="3"><?php echo esc_textarea( $product_tag->description ); ?></textarea>
+								<textarea class="storesuite-form-control" id="description" name="description" data-ai-context placeholder="<?php echo esc_attr__( 'Product tag description', 'storesuite' ); ?>" rows="3"><?php echo esc_textarea( $product_tag->description ); ?></textarea>
 							</div>
 							<?php
 							/**
