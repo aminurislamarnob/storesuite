@@ -607,13 +607,23 @@ class YoastSeoIntegration {
 		}
 
 		// Like the core assets: file mtime under SCRIPT_DEBUG so edits show up without a version bump.
+		$debug   = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+		$engine  = STORESUITE_DIR . '/assets/frontend/seo-preview.js';
 		$script  = STORESUITE_DIR . '/assets/frontend/product-seo.js';
-		$version = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG && file_exists( $script ) ? (string) filemtime( $script ) : STORESUITE_PLUGIN_VERSION;
+		$version = $debug && file_exists( $script ) ? (string) filemtime( $script ) : STORESUITE_PLUGIN_VERSION;
 
+		// The shared snippet-preview engine the product adapter builds on.
+		wp_enqueue_script(
+			'storesuite_seo_preview_script',
+			STORESUITE_PLUGIN_ASSET . '/frontend/seo-preview.js',
+			array( 'jquery' ),
+			$debug && file_exists( $engine ) ? (string) filemtime( $engine ) : STORESUITE_PLUGIN_VERSION,
+			true
+		);
 		wp_enqueue_script(
 			'storesuite_product_seo_script',
 			STORESUITE_PLUGIN_ASSET . '/frontend/product-seo.js',
-			array( 'jquery', 'storesuite_product_script' ),
+			array( 'jquery', 'storesuite_product_script', 'storesuite_seo_preview_script' ),
 			$version,
 			true
 		);

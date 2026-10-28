@@ -459,6 +459,21 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 	}
 
 	/**
+	 * The product adapter needs the shared engine loaded before it.
+	 *
+	 * @return void
+	 */
+	public function test_product_adapter_loads_after_shared_preview_engine() {
+		$this->make_integration( true, array( '__is_product_form_page' => true ) )->enqueue_assets();
+
+		$this->assertTrue( wp_script_is( 'storesuite_seo_preview_script', 'enqueued' ) );
+		$this->assertContains( 'storesuite_seo_preview_script', wp_scripts()->registered['storesuite_product_seo_script']->deps );
+
+		wp_dequeue_script( 'storesuite_product_seo_script' );
+		wp_dequeue_script( 'storesuite_seo_preview_script' );
+	}
+
+	/**
 	 * Post every advanced field with valid values.
 	 *
 	 * @return void
