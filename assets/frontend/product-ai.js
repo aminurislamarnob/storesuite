@@ -192,8 +192,12 @@
 		// Most fields need a title or keywords to work from; the server decides
 		// which (a field's `needs_context`), so only the title is exempt here.
 		hasContext( fieldName ) {
-			// Generating the title itself never needs prior context.
-			if ( fieldName === 'title' ) {
+			// Generating the title itself never needs prior context, nor does
+			// any field whose registry definition says so (e.g. term SEO).
+			if (
+				fieldName === 'title' ||
+				this.fieldDefinition( fieldName ).needs_context === false
+			) {
 				return true;
 			}
 

@@ -709,50 +709,7 @@ class Assets {
 					'success_title'         => __( 'Product updated', 'storesuite' ),
 					'loading_text'          => __( 'Loading…', 'storesuite' ),
 				),
-				'ai'                         => array(
-					'enabled'       => \PluginizeLab\StoreSuite\Product\ProductAI::is_text_supported(),
-					'nonce'         => wp_create_nonce( '_storesuite_ai_' ),
-					'action'        => 'storesuite_generate_product_field',
-					'bundle_action' => 'storesuite_generate_product_bundle',
-					'image'         => array(
-						'enabled'         => \PluginizeLab\StoreSuite\Product\ProductImageAI::is_supported(),
-						'generate_action' => 'storesuite_generate_product_image',
-						'insert_action'   => 'storesuite_insert_product_image',
-						'prompt_required' => __( 'Please describe the image you want to generate.', 'storesuite' ),
-						'inserting'       => __( 'Inserting…', 'storesuite' ),
-					),
-					// Every generatable field: label, insert target, textarea rows, target length.
-					'fields'        => array_map(
-						static function ( $definition ) {
-							return array(
-								'label'  => $definition['label'],
-								'target' => $definition['target'],
-								'rows'   => isset( $definition['rows'] ) ? (int) $definition['rows'] : 3,
-								'length' => isset( $definition['length'] ) ? (int) $definition['length'] : 0,
-							);
-						},
-						\PluginizeLab\StoreSuite\Product\ProductAI::get_fields()
-					),
-					'i18n'          => array(
-						'generate'        => __( 'Generate with AI', 'storesuite' ),
-						'generating'      => __( 'Generating…', 'storesuite' ),
-						'error_title'     => __( 'AI generation failed', 'storesuite' ),
-						'no_context'      => __( 'Add a product title or a few keywords first.', 'storesuite' ),
-						'unavailable'     => __( 'AI generation is not available. Connect an AI provider to use this feature.', 'storesuite' ),
-						'insert'          => __( 'Insert', 'storesuite' ),
-						'regenerate'      => __( 'Regenerate', 'storesuite' ),
-						'regenerating'    => __( 'Regenerating…', 'storesuite' ),
-						'subtitle'        => __( 'Review, edit and insert the suggestion or regenerate a new one.', 'storesuite' ),
-						'prompt_required' => __( 'Please enter a few keywords first.', 'storesuite' ),
-						'hint_required'   => __( 'Please describe your product first.', 'storesuite' ),
-						'insert_all'      => __( 'Insert all', 'storesuite' ),
-						'modal_titles'    => array(
-							'title'             => __( 'Title suggestion', 'storesuite' ),
-							'description'       => __( 'Description suggestion', 'storesuite' ),
-							'short_description' => __( 'Short description suggestion', 'storesuite' ),
-						),
-					),
-				),
+				'ai'                         => \PluginizeLab\StoreSuite\Product\ProductAI::get_script_config(),
 			);
 
 			wp_localize_script(

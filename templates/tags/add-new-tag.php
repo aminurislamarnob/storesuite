@@ -25,7 +25,7 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 						<form id="storesuite-add-tag">
 						<div class="storesuite-form-group">
 							<label for="name"><?php esc_html_e( 'Tag Name', 'storesuite' ); ?> <span class="req"><?php esc_html_e( '*', 'storesuite' ); ?></span></label>
-							<input type="text" class="storesuite-form-control" id="name" name="name" placeholder="<?php echo esc_attr__( 'Product tag name', 'storesuite' ); ?>">
+							<input type="text" class="storesuite-form-control" id="name" name="name" data-ai-context placeholder="<?php echo esc_attr__( 'Product tag name', 'storesuite' ); ?>">
 						</div>
 						<div class="storesuite-form-group">
 							<label for="slug"><?php esc_html_e( 'Slug', 'storesuite' ); ?></label>
@@ -34,8 +34,17 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 						</div>
 						<div class="storesuite-form-group">
 							<label for="description"><?php esc_html_e( 'Tag Description', 'storesuite' ); ?></label>
-							<textarea class="storesuite-form-control" id="description" name="description" placeholder="<?php echo esc_attr__( 'Product tag description', 'storesuite' ); ?>" rows="3"></textarea>
+							<textarea class="storesuite-form-control" id="description" name="description" data-ai-context placeholder="<?php echo esc_attr__( 'Product tag description', 'storesuite' ); ?>" rows="3"></textarea>
 						</div>
+							<?php
+							/**
+							 * Fires inside a term form, right before the submission group.
+							 *
+							 * @param string        $taxonomy Taxonomy of the form's term.
+							 * @param \WP_Term|null $term     The term being edited, or null on add forms.
+							 */
+							do_action( 'storesuite_term_form_after_fields', 'product_tag', null );
+							?>
 							<div class="storesuite-form-submission-group">
 								<?php wp_nonce_field( '_storesuite_add_product_tag_', 'storesuite_add_product_tag_nonce' ); ?>
 								<input type="hidden" name="action" value="storesuite_add_product_tag">

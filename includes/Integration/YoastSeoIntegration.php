@@ -607,13 +607,23 @@ class YoastSeoIntegration {
 		}
 
 		// Like the core assets: file mtime under SCRIPT_DEBUG so edits show up without a version bump.
+		$debug   = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+		$engine  = STORESUITE_DIR . '/assets/frontend/seo-preview.js';
 		$script  = STORESUITE_DIR . '/assets/frontend/product-seo.js';
-		$version = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG && file_exists( $script ) ? (string) filemtime( $script ) : STORESUITE_PLUGIN_VERSION;
+		$version = $debug && file_exists( $script ) ? (string) filemtime( $script ) : STORESUITE_PLUGIN_VERSION;
 
+		// The shared snippet-preview engine the product adapter builds on.
+		wp_enqueue_script(
+			'storesuite_seo_preview_script',
+			STORESUITE_PLUGIN_ASSET . '/frontend/seo-preview.js',
+			array( 'jquery' ),
+			$debug && file_exists( $engine ) ? (string) filemtime( $engine ) : STORESUITE_PLUGIN_VERSION,
+			true
+		);
 		wp_enqueue_script(
 			'storesuite_product_seo_script',
 			STORESUITE_PLUGIN_ASSET . '/frontend/product-seo.js',
-			array( 'jquery', 'storesuite_product_script' ),
+			array( 'jquery', 'storesuite_product_script', 'storesuite_seo_preview_script' ),
 			$version,
 			true
 		);
@@ -783,7 +793,22 @@ class YoastSeoIntegration {
 			$lines[] = 'Product details: ' . $details;
 		}
 
-		$lines[] = 'Language: ' . $this->get_site_language_name();
+		return array_merge( $lines, self::get_ai_platform_lines( $spec, $this->get_site_language_name() ) );
+	}
+
+	/**
+	 * The language, platform and length prompt lines shared by every SEO field.
+	 *
+	 * Also used by the term SEO integration, whose specs have the same shape.
+	 *
+	 * @param array  $spec     Field spec: kind, platform and length.
+	 * @param string $language Site language as an English name.
+	 * @return string[]
+	 */
+	public static function get_ai_platform_lines( array $spec, string $language ): array {
+		$lines = array();
+
+		$lines[] = 'Language: ' . $language;
 
 		$platforms = array(
 			'google' => 'Google search result',
@@ -807,6 +832,15 @@ class YoastSeoIntegration {
 	 * @return string
 	 */
 	protected function get_site_language_name(): string {
+		return self::site_language_name();
+	}
+
+	/**
+	 * The site language as an English name, for any integration building prompts.
+	 *
+	 * @return string
+	 */
+	public static function site_language_name(): string {
 		$locale = get_locale();
 
 		require_once ABSPATH . 'wp-admin/includes/translation-install.php';
