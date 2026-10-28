@@ -7,7 +7,9 @@
 
 namespace PluginizeLab\StoreSuite\Test\Integration;
 
+use PluginizeLab\StoreSuite\Integration\YoastSeoIntegration;
 use PluginizeLab\StoreSuite\Integration\YoastSeoTermIntegration;
+use PluginizeLab\StoreSuite\Product\ProductAI;
 use PluginizeLab\StoreSuite\Test\StoreSuiteTestCase;
 
 /**
@@ -1195,5 +1197,389 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 			YoastSeoTermIntegration::class,
 			\pluginizelab_storesuite()->storesuite_yoast_seo_term_integration
 		);
+	}
+
+	/* ----------------------------------------------------------------------
+	 * AI Generate for the term SEO fields
+	 * -------------------------------------------------------------------- */
+
+	/**
+	 * Register the fake generator and build the prompt for one term SEO field.
+	 *
+	 * The term fields carry their context in the raw request (any form field
+	 * marked `data-ai-context`), never in the product form context.
+	 *
+	 * @param string $field   AI field key.
+	 * @param array  $request Raw request fields.
+	 *
+	 * @return array{0: string, 1: string} Prompt and system instruction the generator received.
+	 */
+	private function generate_term_seo_field( string $field, array $request ): array {
+		$captured = array();
+		$callable = function ( $prompt, $instruction ) use ( &$captured ) {
+			$captured = array( $prompt, $instruction );
+			return 'Generated';
+		};
+		$filter   = function () use ( $callable ) {
+			return $callable;
+		};
+		add_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$fields = ProductAI::get_fields();
+		$this->assertArrayHasKey( $field, $fields, "AI field $field is registered." );
+
+		$ai = new ProductAI();
+		// Drive the prompt through the same code path the AJAX handler uses.
+		$method = new \ReflectionMethod( $ai, 'generate_one' );
+		$method->setAccessible( true );
+		$context = array(
+			'title'             => '',
+			'short_description' => '',
+			'description'       => '',
+			'categories'        => array(),
+			'previous'          => '',
+		);
+		$method->invoke( $ai, $field, $context, $request );
+
+		remove_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		return $captured;
+	}
+
+	/**
+	 * With Yoast active the six term SEO fields are registered; inactive, none are.
+	 *
+	 * @return void
+	 */
+	public function test_term_seo_ai_fields_follow_yoast_activation() {
+		$this->make_integration();
+		$keys = array_keys( ProductAI::get_fields() );
+		foreach ( array( 'yoast_term_title', 'yoast_term_metadesc', 'yoast_term_opengraph-title', 'yoast_term_opengraph-description', 'yoast_term_twitter-title', 'yoast_term_twitter-description' ) as $key ) {
+			$this->assertContains( $key, $keys );
+		}
+
+		$fields = ProductAI::get_fields();
+		$this->assertSame( '#storesuite_yoast_term_title', $fields['yoast_term_title']['target'] );
+		$this->assertSame( '#storesuite_yoast_term_twitter-description', $fields['yoast_term_twitter-description']['target'] );
+		$this->assertSame( 60, $fields['yoast_term_title']['length'] );
+		$this->assertSame( 156, $fields['yoast_term_metadesc']['length'] );
+		$this->assertSame( 70, $fields['yoast_term_opengraph-title']['length'] );
+		$this->assertSame( 200, $fields['yoast_term_opengraph-description']['length'] );
+		$this->assertSame( 'yoast_seo', $fields['yoast_term_title']['group'] );
+		$this->assertFalse( $fields['yoast_term_title']['needs_context'], 'Term fields never demand a product title from the shared AJAX handler.' );
+
+		remove_all_filters( 'storesuite_ai_text_fields' );
+		$this->make_integration( false );
+		$this->assertNotContains( 'yoast_term_title', array_keys( ProductAI::get_fields() ) );
+	}
+
+	/**
+	 * Social term fields are registered only for networks Yoast has enabled.
+	 *
+	 * @return void
+	 */
+	public function test_term_social_ai_fields_follow_yoast_feature_toggles() {
+		$this->make_integration( true, array( 'twitter' => false ) );
+		$keys = array_keys( ProductAI::get_fields() );
+
+		$this->assertContains( 'yoast_term_opengraph-title', $keys );
+		$this->assertNotContains( 'yoast_term_twitter-title', $keys );
+	}
+
+	/**
+	 * The term fields point at the product Yoast group's settings keys, so
+	 * admins configure Yoast AI once and the settings page shows one block.
+	 *
+	 * @return void
+	 */
+	public function test_term_seo_ai_fields_share_the_product_yoast_settings_keys() {
+		$this->make_integration();
+		$fields = ProductAI::get_fields();
+
+		$this->assertSame( 'storesuite_ai_field_yoast_seo', $fields['yoast_term_title']['enabled_setting'] );
+		$this->assertSame( 'storesuite_ai_field_yoast_seo', $fields['yoast_term_twitter-description']['enabled_setting'] );
+		$this->assertSame( 'storesuite_ai_instruction_yoast_title', $fields['yoast_term_title']['instruction_setting'] );
+		$this->assertSame( 'storesuite_ai_instruction_yoast_description', $fields['yoast_term_metadesc']['instruction_setting'] );
+		$this->assertSame( 'storesuite_ai_instruction_yoast_description', $fields['yoast_term_opengraph-description']['instruction_setting'], 'All descriptions share one instruction.' );
+		$this->assertSame( 'text', $fields['yoast_term_title']['output'] );
+		$this->assertSame( 'textarea', $fields['yoast_term_metadesc']['output'] );
+
+		// With the product Yoast fields registered alongside, the settings page
+		// still shows a single Yoast SEO block: one toggle, two instructions.
+		new class() extends YoastSeoIntegration {
+			protected function is_yoast_active(): bool {
+				return true;
+			}
+
+			protected function get_yoast_option( string $key, $fallback = null ) {
+				$options = array(
+					'opengraph' => true,
+					'twitter'   => true,
+				);
+				return $options[ $key ] ?? $fallback;
+			}
+		};
+
+		$yoast_groups = array_values(
+			array_filter(
+				ProductAI::get_settings_groups(),
+				static function ( $group ) {
+					return 'yoast_seo' === $group['key'];
+				}
+			)
+		);
+
+		$this->assertCount( 1, $yoast_groups, 'Product and term fields share one settings group.' );
+		$this->assertSame( 'storesuite_ai_field_yoast_seo', $yoast_groups[0]['enabled_setting'] );
+		$this->assertSame(
+			array( 'storesuite_ai_instruction_yoast_title', 'storesuite_ai_instruction_yoast_description' ),
+			array_column( $yoast_groups[0]['instructions'], 'setting' )
+		);
+	}
+
+	/**
+	 * The term SEO title prompt targets Google with the keyphrase, the archive
+	 * wording and the term name, never the product wording.
+	 *
+	 * @return void
+	 */
+	public function test_term_seo_title_prompt() {
+		$this->make_integration();
+		list( $prompt, $instruction ) = $this->generate_term_seo_field(
+			'yoast_term_title',
+			array(
+				'product_category_name'          => 'Coffee Mugs',
+				'product_category_description'   => 'Hand-made ceramic mugs.',
+				'storesuite_yoast_term_focuskw'  => 'ceramic <b>mugs</b>',
+			)
+		);
+
+		$this->assertStringContainsString( 'archive page of an online store', $prompt );
+		$this->assertStringContainsString( 'Page type: a product category archive', $prompt );
+		$this->assertStringContainsString( 'Category name: Coffee Mugs', $prompt );
+		$this->assertStringContainsString( 'Page details: Hand-made ceramic mugs.', $prompt );
+		$this->assertStringContainsString( 'Focus keyphrase: ceramic mugs', $prompt );
+		$this->assertStringContainsString( 'Language: English', $prompt );
+		$this->assertStringContainsString( 'Platform: Google search result', $prompt );
+		$this->assertStringContainsString( 'at most 60 characters', $prompt );
+		$this->assertStringNotContainsString( 'product title', $prompt );
+		$this->assertStringNotContainsString( '%%', $prompt, 'The prompt never teaches the model Yoast variables.' );
+		$this->assertStringContainsString( 'SEO copywriter', $instruction );
+	}
+
+	/**
+	 * Tag and brand forms get their own taxonomy wording from their posted
+	 * context fields.
+	 *
+	 * @return void
+	 */
+	public function test_term_prompt_wording_follows_the_posted_taxonomy() {
+		$this->make_integration();
+
+		list( $tag ) = $this->generate_term_seo_field(
+			'yoast_term_title',
+			array(
+				'name'        => 'Vintage',
+				'description' => 'Old things.',
+			)
+		);
+		$this->assertStringContainsString( 'Page type: a product tag archive', $tag );
+		$this->assertStringContainsString( 'Tag name: Vintage', $tag );
+
+		list( $brand ) = $this->generate_term_seo_field(
+			'yoast_term_title',
+			array(
+				'product_brand_name'        => 'Acme',
+				'product_brand_description' => 'Everything Acme.',
+			)
+		);
+		$this->assertStringContainsString( 'Page type: a product brand archive', $brand );
+		$this->assertStringContainsString( 'Brand name: Acme', $brand );
+	}
+
+	/**
+	 * Without a keyphrase the keyphrase line is omitted, not left blank.
+	 *
+	 * @return void
+	 */
+	public function test_term_prompt_omits_empty_keyphrase() {
+		$this->make_integration();
+		list( $prompt ) = $this->generate_term_seo_field( 'yoast_term_title', array( 'product_category_name' => 'Mugs' ) );
+
+		$this->assertStringNotContainsString( 'Focus keyphrase', $prompt );
+	}
+
+	/**
+	 * Meta descriptions get the 120–156 target and a huge term description cut down.
+	 *
+	 * @return void
+	 */
+	public function test_term_meta_description_prompt() {
+		$this->make_integration();
+		$long           = str_repeat( 'word ', 800 ); // ~4,000 characters.
+		list( $prompt ) = $this->generate_term_seo_field(
+			'yoast_term_metadesc',
+			array(
+				'product_category_name'        => 'Mugs',
+				'product_category_description' => $long,
+			)
+		);
+
+		$this->assertStringContainsString( 'between 120 and 156 characters', $prompt );
+		$this->assertStringContainsString( 'Platform: Google search result', $prompt );
+		$this->assertMatchesRegularExpression( '/Page details: (word ){1,401}/', $prompt );
+		$this->assertLessThan( 2600, strlen( $prompt ), 'A huge description is cut to about 2,000 characters.' );
+	}
+
+	/**
+	 * Social and X term fields carry their platform lines and lengths.
+	 *
+	 * @return void
+	 */
+	public function test_term_social_prompts_carry_platform_and_length() {
+		$this->make_integration();
+
+		list( $og ) = $this->generate_term_seo_field( 'yoast_term_opengraph-title', array( 'product_category_name' => 'Mugs' ) );
+		$this->assertStringContainsString( 'Platform: social media share', $og );
+		$this->assertStringContainsString( 'at most 70 characters', $og );
+
+		list( $x ) = $this->generate_term_seo_field( 'yoast_term_twitter-description', array( 'product_category_name' => 'Mugs' ) );
+		$this->assertStringContainsString( 'Platform: X (Twitter) post', $x );
+		$this->assertStringContainsString( 'at most 200 characters', $x );
+	}
+
+	/**
+	 * The card renders Generate buttons only when text AI is available.
+	 *
+	 * @return void
+	 */
+	public function test_term_card_renders_generate_buttons_only_with_ai() {
+		$without = $this->render_card( $this->make_integration() );
+		$this->assertStringNotContainsString( 'storesuite-ai-generate', $without );
+
+		$filter = function () {
+			return function () {
+				return 'x';
+			};
+		};
+		add_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$with = $this->render_card( $this->make_integration() );
+
+		remove_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$this->assertSame( 6, substr_count( $with, 'class="storesuite-ai-generate' ) );
+		$this->assertStringContainsString( 'data-field="yoast_term_title" data-target="#storesuite_yoast_term_title"', $with );
+		$this->assertStringContainsString( 'data-field="yoast_term_metadesc" data-target="#storesuite_yoast_term_metadesc"', $with );
+		$this->assertStringContainsString( 'data-field="yoast_term_twitter-description" data-target="#storesuite_yoast_term_twitter-description"', $with );
+	}
+
+	/**
+	 * The AI modals (and their icon sprite) render on term form pages only
+	 * when text AI is available.
+	 *
+	 * @return void
+	 */
+	public function test_term_ai_modals_render_only_with_ai_on_term_form_pages() {
+		$integration = $this->make_integration( true, array( '__is_term_form_page' => true ) );
+
+		ob_start();
+		$integration->render_ai_modals();
+		$this->assertSame( '', ob_get_clean(), 'No modals without AI.' );
+
+		$filter = function () {
+			return function () {
+				return 'x';
+			};
+		};
+		add_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		ob_start();
+		$integration->render_ai_modals();
+		$on_form_page = ob_get_clean();
+
+		ob_start();
+		$this->make_integration()->render_ai_modals();
+		$elsewhere = ob_get_clean();
+
+		remove_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$this->assertStringContainsString( 'id="storesuite-ai-modal"', $on_form_page );
+		$this->assertStringContainsString( 'storesuite-icon-ai-magic', $on_form_page, 'The AI icon sprite ships with the modals.' );
+		$this->assertSame( '', $elsewhere, 'No modals off the term form pages.' );
+	}
+
+	/**
+	 * Term form pages enqueue the product AI script and localize the registry
+	 * (including the term fields, which never need a product title) for it.
+	 * Other pages and AI-less sites get nothing.
+	 *
+	 * @return void
+	 */
+	public function test_term_form_pages_enqueue_the_ai_script_with_the_term_fields() {
+		$registered = array();
+		foreach ( array( 'storesuite_product_script', 'storesuite_product_ai_script' ) as $handle ) {
+			if ( ! wp_script_is( $handle, 'registered' ) ) {
+				wp_register_script( $handle, false, array(), STORESUITE_PLUGIN_VERSION, true );
+				$registered[] = $handle;
+			}
+		}
+
+		$integration = $this->make_integration( true, array( '__is_term_form_page' => true ) );
+		$integration->enqueue_ai_assets();
+		$this->assertFalse( wp_script_is( 'storesuite_product_ai_script', 'enqueued' ), 'No AI, no script.' );
+
+		$filter = function () {
+			return function () {
+				return 'x';
+			};
+		};
+		add_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+
+		$this->make_integration()->enqueue_ai_assets();
+		$this->assertFalse( wp_script_is( 'storesuite_product_ai_script', 'enqueued' ), 'Not a term form page.' );
+
+		$integration->enqueue_ai_assets();
+		$enqueued = wp_script_is( 'storesuite_product_ai_script', 'enqueued' );
+		$data     = (string) wp_scripts()->get_data( 'storesuite_product_script', 'data' );
+
+		remove_filter( 'storesuite_ai_text_generator', $filter );
+		ProductAI::reset_ai_support_cache();
+		wp_dequeue_script( 'storesuite_product_ai_script' );
+		wp_dequeue_script( 'storesuite_product_script' );
+		foreach ( $registered as $handle ) {
+			wp_deregister_script( $handle );
+		}
+
+		$this->assertTrue( $enqueued );
+		$this->assertStringContainsString( 'StoreSuite_Product', $data );
+		$this->assertStringContainsString( 'yoast_term_title', $data );
+		$this->assertStringContainsString( 'storesuite_generate_product_field', $data );
+		$this->assertStringContainsString( 'ajax_url', $data );
+	}
+
+	/**
+	 * Active Yoast wires the AI field registration, asset and modal hooks;
+	 * inactive Yoast wires none.
+	 *
+	 * @return void
+	 */
+	public function test_registers_ai_hooks_only_when_yoast_is_active() {
+		$integration = $this->make_integration();
+		$this->assertNotFalse( has_filter( 'storesuite_ai_text_fields', array( $integration, 'register_ai_fields' ) ) );
+		$this->assertNotFalse( has_action( 'wp_enqueue_scripts', array( $integration, 'enqueue_ai_assets' ) ) );
+		$this->assertNotFalse( has_action( 'storesuite_dashboard_wrapper_end', array( $integration, 'render_ai_modals' ) ) );
+
+		$inactive = $this->make_integration( false );
+		$this->assertFalse( has_filter( 'storesuite_ai_text_fields', array( $inactive, 'register_ai_fields' ) ) );
+		$this->assertFalse( has_action( 'wp_enqueue_scripts', array( $inactive, 'enqueue_ai_assets' ) ) );
+		$this->assertFalse( has_action( 'storesuite_dashboard_wrapper_end', array( $inactive, 'render_ai_modals' ) ) );
 	}
 }
