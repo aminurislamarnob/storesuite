@@ -140,6 +140,16 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 			}
 
 			/**
+			 * Whitelist extra taxonomies so gates below the whitelist (like
+			 * the taxonomy's `public` flag) can be exercised in isolation.
+			 *
+			 * @return string[]
+			 */
+			protected function get_supported_taxonomies(): array {
+				return array_merge( parent::get_supported_taxonomies(), self::$options['__extra_taxonomies'] ?? array() );
+			}
+
+			/**
 			 * Report the faked Yoast advanced-metadata capability.
 			 *
 			 * @return bool
@@ -264,6 +274,60 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 	}
 
 	/**
+	 * A real term create and update — core `created_term` / `edit_term`
+	 * firing from `wp_insert_term()` / `wp_update_term()` — without the card
+	 * marker writes nothing: the registered hooks themselves are guarded, not
+	 * just a direct `save()` call.
+	 *
+	 * @return void
+	 */
+	public function test_plain_term_saves_through_core_hooks_write_nothing() {
+		$integration = $this->make_integration();
+
+		$_POST = array(
+			'tag-name'                    => 'Plain',
+			'storesuite_yoast_term_title' => 'Sneaky',
+		);
+
+		$created = wp_insert_term( 'Plain core save', 'product_cat' );
+		$this->assertIsArray( $created );
+		wp_update_term( $created['term_id'], 'product_cat', array( 'description' => 'Still plain' ) );
+
+		$this->assertSame( array(), $integration->written );
+	}
+
+	/**
+	 * With the marker posted, every supported taxonomy persists on both core
+	 * paths: `created_term` from `wp_insert_term()` and `edit_term` from
+	 * `wp_update_term()`.
+	 *
+	 * @return void
+	 */
+	public function test_core_term_hooks_persist_for_all_supported_taxonomies() {
+		$integration = $this->make_integration();
+
+		foreach ( array( 'product_cat', 'product_tag', 'product_brand' ) as $taxonomy ) {
+			$this->post_form( array( 'storesuite_yoast_term_title' => 'Created in ' . $taxonomy ) );
+			$created = wp_insert_term( 'Hooked ' . $taxonomy, $taxonomy );
+			$this->assertIsArray( $created, $taxonomy );
+
+			$write = end( $integration->written );
+			$this->assertSame( $created['term_id'], $write['term_id'], $taxonomy );
+			$this->assertSame( $taxonomy, $write['taxonomy'] );
+			$this->assertSame( 'Created in ' . $taxonomy, $write['values']['wpseo_title'] );
+
+			$this->post_form( array( 'storesuite_yoast_term_title' => 'Updated in ' . $taxonomy ) );
+			wp_update_term( $created['term_id'], $taxonomy, array( 'description' => 'Edited' ) );
+
+			$write = end( $integration->written );
+			$this->assertSame( $created['term_id'], $write['term_id'], $taxonomy );
+			$this->assertSame( 'Updated in ' . $taxonomy, $write['values']['wpseo_title'] );
+		}
+
+		$this->assertCount( 6, $integration->written, 'Exactly one write per created_term and edit_term firing.' );
+	}
+
+	/**
 	 * Taxonomies outside the product_cat/product_tag/product_brand whitelist
 	 * are never written, marker or not.
 	 *
@@ -292,6 +356,37 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		$integration->save( $this->category_id, 0, 'product_cat' );
 
 		$this->assertSame( array(), $integration->written );
+	}
+
+	/**
+	 * A non-public taxonomy is blocked even when whitelisted and not hidden by
+	 * Yoast's metabox toggle: Yoast only manages public archives, so the card
+	 * does not render and nothing saves.
+	 *
+	 * @return void
+	 */
+	public function test_non_public_taxonomy_blocks_render_and_save() {
+		register_taxonomy( 'storesuite_hidden_tax', 'product', array( 'public' => false ) );
+
+		$integration = $this->make_integration(
+			true,
+			array(
+				'__extra_taxonomies' => array( 'storesuite_hidden_tax' ),
+				'display-metabox-tax-storesuite_hidden_tax' => true,
+			)
+		);
+
+		$term_id = self::factory()->term->create( array( 'taxonomy' => 'storesuite_hidden_tax' ) );
+		$this->post_form( array( 'storesuite_yoast_term_title' => 'Hidden archive' ) );
+		$integration->save( $term_id, 0, 'storesuite_hidden_tax' );
+
+		$this->assertSame( array(), $integration->written );
+
+		ob_start();
+		$integration->render_card( 'storesuite_hidden_tax', get_term( $term_id, 'storesuite_hidden_tax' ) );
+		$this->assertSame( '', ob_get_clean() );
+
+		unregister_taxonomy( 'storesuite_hidden_tax' );
 	}
 
 	/**
@@ -454,6 +549,62 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 	}
 
 	/**
+	 * Each way of being allowed also renders the Advanced tab and its fields —
+	 * the same access paths gate render and save alike.
+	 *
+	 * @dataProvider provide_advanced_access
+	 *
+	 * @param array $options    Faked Yoast options / capability.
+	 * @param bool  $use_filter Whether to grant access through the StoreSuite filter.
+	 *
+	 * @return void
+	 */
+	public function test_advanced_tab_renders_for_each_access_path( array $options, bool $use_filter ) {
+		if ( $use_filter ) {
+			add_filter( 'storesuite_yoast_term_can_edit_advanced', '__return_true' );
+		}
+
+		$html = $this->render_card( $this->make_integration( true, $options ) );
+
+		remove_filter( 'storesuite_yoast_term_can_edit_advanced', '__return_true' );
+
+		$this->assertStringContainsString( 'data-seo-tab="advanced"', $html );
+		$this->assertStringContainsString( 'name="storesuite_yoast_term_noindex"', $html );
+		$this->assertStringContainsString( 'name="storesuite_yoast_term_canonical"', $html );
+	}
+
+	/**
+	 * When a user without advanced access saves, the term's stored advanced
+	 * values ride along unchanged — neither wiped by Yoast's
+	 * rebuild-from-defaults `set_values()` nor replaced by posted ones.
+	 *
+	 * @return void
+	 */
+	public function test_non_advanced_save_preserves_stored_advanced_values() {
+		$integration = $this->make_integration();
+		$integration->stored[ 'product_cat:' . $this->category_id ] = array(
+			'wpseo_noindex'   => 'noindex',
+			'wpseo_canonical' => 'https://example.org/keep/',
+			'wpseo_bctitle'   => 'Keep crumb',
+		);
+
+		$this->post_form(
+			array(
+				'storesuite_yoast_term_title'     => 'Fresh title',
+				'storesuite_yoast_term_noindex'   => 'index',
+				'storesuite_yoast_term_canonical' => 'https://attacker.example/',
+			)
+		);
+		$integration->save( $this->category_id, 0, 'product_cat' );
+
+		$values = $this->last_written( $integration );
+		$this->assertSame( 'noindex', $values['wpseo_noindex'] );
+		$this->assertSame( 'https://example.org/keep/', $values['wpseo_canonical'] );
+		$this->assertSame( 'Keep crumb', $values['wpseo_bctitle'] );
+		$this->assertSame( 'Fresh title', $values['wpseo_title'] );
+	}
+
+	/**
 	 * The filter can also take access away from a user Yoast would allow.
 	 *
 	 * @return void
@@ -483,6 +634,46 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		$this->post_form( array( 'storesuite_yoast_term_noindex' => 'default' ) );
 		$integration->save( $this->category_id, 0, 'product_cat' );
 		$this->assertSame( 'default', $this->last_written( $integration )['wpseo_noindex'], 'The default is sent as-is: Yoast strips defaults itself.' );
+	}
+
+	/**
+	 * `index` is a valid enum value, and an invalid value with nothing stored
+	 * writes no noindex key at all — missing means "default" to Yoast, so an
+	 * invalid submission can never flip a term's robots setting.
+	 *
+	 * @return void
+	 */
+	public function test_noindex_accepts_index_and_drops_invalid_without_stored_value() {
+		$integration = $this->make_integration( true, array( '__has_advanced_capability' => true ) );
+
+		$this->post_form( array( 'storesuite_yoast_term_noindex' => 'index' ) );
+		$integration->save( $this->category_id, 0, 'product_cat' );
+		$this->assertSame( 'index', $this->last_written( $integration )['wpseo_noindex'] );
+
+		$this->post_form( array( 'storesuite_yoast_term_noindex' => 'nofollow' ) );
+		$integration->save( $this->category_id, 0, 'product_cat' );
+		$this->assertArrayNotHasKey( 'wpseo_noindex', $this->last_written( $integration ), 'Terms have no nofollow; the invalid value is dropped, not coerced.' );
+	}
+
+	/**
+	 * The canonical URL is cleaned server-side: trimmed, kept verbatim for
+	 * http(s), and emptied for any other scheme so a script or FTP URL can
+	 * never become the canonical.
+	 *
+	 * @return void
+	 */
+	public function test_canonical_url_is_cleaned_to_http_schemes() {
+		$integration = $this->make_integration( true, array( '__has_advanced_capability' => true ) );
+
+		$this->post_form( array( 'storesuite_yoast_term_canonical' => '  https://example.org/c/?a=1&b=2  ' ) );
+		$integration->save( $this->category_id, 0, 'product_cat' );
+		$this->assertSame( 'https://example.org/c/?a=1&b=2', $this->last_written( $integration )['wpseo_canonical'] );
+
+		foreach ( array( 'javascript:alert(1)', 'ftp://example.org/file' ) as $bad_url ) {
+			$this->post_form( array( 'storesuite_yoast_term_canonical' => $bad_url ) );
+			$integration->save( $this->category_id, 0, 'product_cat' );
+			$this->assertSame( '', $this->last_written( $integration )['wpseo_canonical'], $bad_url );
+		}
 	}
 
 	/**
@@ -543,6 +734,33 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		$this->assertArrayNotHasKey( 'wpseo_opengraph-title', $values );
 		$this->assertSame( 'X title', $values['wpseo_twitter-title'] );
 		$this->assertSame( 'On X', $values['wpseo_twitter-description'] );
+	}
+
+	/**
+	 * The twitter toggle gates its fields symmetrically — including the image
+	 * pair, which is never written while the network is off.
+	 *
+	 * @return void
+	 */
+	public function test_twitter_fields_and_image_ignored_when_twitter_is_off() {
+		$image_id = $this->make_attachment( 'image/jpeg', '2026/10/x-share.jpg' );
+
+		$this->post_form(
+			array(
+				'storesuite_yoast_term_opengraph-title'    => 'Facebook title',
+				'storesuite_yoast_term_twitter-title'      => 'X title',
+				'storesuite_yoast_term_twitter-image-id'   => (string) $image_id,
+			)
+		);
+
+		$integration = $this->make_integration( true, array( 'twitter' => false ) );
+		$integration->save( $this->category_id, 0, 'product_cat' );
+
+		$values = $this->last_written( $integration );
+		$this->assertSame( 'Facebook title', $values['wpseo_opengraph-title'] );
+		$this->assertArrayNotHasKey( 'wpseo_twitter-title', $values );
+		$this->assertArrayNotHasKey( 'wpseo_twitter-image-id', $values );
+		$this->assertArrayNotHasKey( 'wpseo_twitter-image', $values );
 	}
 
 	/**
@@ -662,6 +880,26 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		$this->assertStringContainsString( 'name="storesuite_yoast_term_seo"', $html );
 		$this->assertStringContainsString( 'name="storesuite_yoast_term_focuskw"', $html );
 		$this->assertStringContainsString( 'name="storesuite_yoast_term_title"', $html );
+	}
+
+	/**
+	 * The add form starts empty: no stored values can leak into a new term's
+	 * fields, even when other terms of the taxonomy have values.
+	 *
+	 * @return void
+	 */
+	public function test_add_form_renders_empty_values() {
+		$integration = $this->make_integration( true, array( '__has_advanced_capability' => true ) );
+		$integration->stored[ 'product_cat:' . $this->category_id ] = array(
+			'wpseo_title' => 'Another term title',
+		);
+
+		$html = $this->render_card( $integration, false );
+
+		$this->assertStringContainsString( 'name="storesuite_yoast_term_title" value=""', $html );
+		$this->assertStringContainsString( 'name="storesuite_yoast_term_canonical" value=""', $html );
+		$this->assertStringNotContainsString( 'Another term title', $html );
+		$this->assertMatchesRegularExpression( '/<option value="default"\s+selected/', $html, 'noindex starts on the site default.' );
 	}
 
 	/**
