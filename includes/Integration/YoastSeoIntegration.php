@@ -139,6 +139,15 @@ class YoastSeoIntegration {
 	}
 
 	/**
+	 * ID of the product being edited, 0 on the add form.
+	 *
+	 * @return int
+	 */
+	protected function get_editing_product_id(): int {
+		return absint( get_query_var( 'edit-product' ) );
+	}
+
+	/**
 	 * Whether the current user holds Yoast's capability for advanced metadata.
 	 *
 	 * @return bool
@@ -482,6 +491,65 @@ class YoastSeoIntegration {
 	}
 
 	/**
+	 * Preview values for the term variables, resolved from the same taxonomies
+	 * Yoast's frontend reads.
+	 *
+	 * Yoast's `%%category%%`, `%%primary_category%%` and `%%tag%%` read the
+	 * blog taxonomies (`category`, `post_tag`) — not the product's own
+	 * categories and tags — so on most products they render as nothing. The
+	 * preview must not pretend otherwise, and since the product form never
+	 * edits those taxonomies the values cannot change while it is open, so
+	 * they are resolved here once.
+	 *
+	 * @param int $post_id Product ID, 0 on the add form.
+	 *
+	 * @return array<string, string>
+	 */
+	protected function get_term_replacements( int $post_id ): array {
+		return array(
+			'category'         => $post_id ? $this->get_term_names( $post_id, 'category' ) : '',
+			'primary_category' => $post_id ? $this->get_primary_category_name( $post_id ) : '',
+			'tag'              => $post_id ? $this->get_term_names( $post_id, 'post_tag' ) : '',
+		);
+	}
+
+	/**
+	 * Comma-separated names of a post's terms, as Yoast renders list variables.
+	 *
+	 * @param int    $post_id  Product ID.
+	 * @param string $taxonomy Taxonomy name.
+	 *
+	 * @return string
+	 */
+	private function get_term_names( int $post_id, string $taxonomy ): string {
+		$terms = get_the_terms( $post_id, $taxonomy );
+
+		if ( ! is_array( $terms ) ) {
+			return '';
+		}
+
+		return implode( ', ', wp_list_pluck( $terms, 'name' ) );
+	}
+
+	/**
+	 * Like Yoast's `%%primary_category%%`: the name of the primary `category`
+	 * term, empty when none is set.
+	 *
+	 * @param int $post_id Product ID.
+	 *
+	 * @return string
+	 */
+	protected function get_primary_category_name( int $post_id ): string {
+		if ( ! class_exists( 'WPSEO_Primary_Term' ) ) {
+			return '';
+		}
+
+		$term = get_term( ( new \WPSEO_Primary_Term( 'category', $post_id ) )->get_primary_term() );
+
+		return $term instanceof \WP_Term ? $term->name : '';
+	}
+
+	/**
 	 * Data localized for the snippet preview script.
 	 *
 	 * @return array
@@ -493,6 +561,8 @@ class YoastSeoIntegration {
 		return array(
 			'titleTemplate' => (string) $this->get_yoast_option( 'title-product', '%%title%% %%page%% %%sep%% %%sitename%%' ),
 			'descTemplate'  => (string) $this->get_yoast_option( 'metadesc-product', '' ),
+			// Yoast's page-title width assessment: 400-600px renders green.
+			'titleMinWidth' => 400,
 			'titleMaxWidth' => 600,
 			'descMinLength' => 120,
 			'descMaxLength' => 156,
@@ -500,17 +570,20 @@ class YoastSeoIntegration {
 			'siteIcon'      => $site_icon ? $site_icon : '',
 			'variables'     => $this->get_variables(),
 			// Values the form cannot supply; the script resolves the rest from the live fields.
-			'replacements'  => array(
-				'sep'          => $this->get_title_separator(),
-				'sitename'     => wp_strip_all_tags( get_bloginfo( 'name' ), true ),
-				'sitedesc'     => wp_strip_all_tags( get_bloginfo( 'description' ), true ),
-				'pt_single'    => $post_type ? $post_type->labels->singular_name : '',
-				'pt_plural'    => $post_type ? $post_type->labels->name : '',
-				'currentdate'  => date_i18n( get_option( 'date_format' ) ),
-				'currentday'   => date_i18n( 'j' ),
-				'currentmonth' => date_i18n( 'F' ),
-				'currentyear'  => date_i18n( 'Y' ),
-				'page'         => '',
+			'replacements'  => array_merge(
+				array(
+					'sep'          => $this->get_title_separator(),
+					'sitename'     => wp_strip_all_tags( get_bloginfo( 'name' ), true ),
+					'sitedesc'     => wp_strip_all_tags( get_bloginfo( 'description' ), true ),
+					'pt_single'    => $post_type ? $post_type->labels->singular_name : '',
+					'pt_plural'    => $post_type ? $post_type->labels->name : '',
+					'currentdate'  => date_i18n( get_option( 'date_format' ) ),
+					'currentday'   => date_i18n( 'j' ),
+					'currentmonth' => date_i18n( 'F' ),
+					'currentyear'  => date_i18n( 'Y' ),
+					'page'         => '',
+				),
+				$this->get_term_replacements( $this->get_editing_product_id() )
 			),
 			'i18n'          => array(
 				'noMatches'        => __( 'No matching variables', 'storesuite' ),

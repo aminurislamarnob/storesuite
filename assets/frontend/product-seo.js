@@ -5,7 +5,7 @@
  *   - "Insert variable": a suggestion menu for Yoast snippet variables, opened
  *     from the button or by typing % in the SEO title / meta description.
  *   - Google preview: a live mobile/desktop search snippet built from the SEO
- *     fields and the product's title, permalink, descriptions and terms.
+ *     fields and the product's title, permalink and descriptions.
  *   - Progress bars using Yoast's limits (title width in px, description length).
  *   - Social tab image pickers. Only the attachment ID is submitted; the server
  *     looks the URL up itself.
@@ -171,15 +171,6 @@
 			return this.stripTags( html );
 		},
 
-		getSelectedLabels( selector ) {
-			return $( selector )
-				.find( 'option:selected' )
-				.map( function () {
-					return $( this ).text().trim();
-				} )
-				.get();
-		},
-
 		slugify( text ) {
 			return text
 				.toLowerCase()
@@ -193,7 +184,6 @@
 			const shortDesc = this.stripTags(
 				$( '#product_short_description' ).val() || ''
 			);
-			const categories = this.getSelectedLabels( '#product_category' );
 			let excerpt = shortDesc || this.getDescriptionText();
 
 			if ( excerpt.length > this.config.descMaxLength ) {
@@ -202,13 +192,13 @@
 					.replace( /\s+\S*$/, '' );
 			}
 
+			// category/primary_category/tag come resolved from the server:
+			// Yoast reads them from the blog taxonomies, which the product's
+			// own category and tag fields never touch.
 			return $.extend( {}, this.config.replacements, {
 				title,
 				excerpt,
 				excerpt_only: shortDesc,
-				category: categories.join( ', ' ),
-				primary_category: categories[ 0 ] || '',
-				tag: this.getSelectedLabels( '#product_tags' ).join( ', ' ),
 				focuskw: ( this.$keyphrase.val() || '' ).trim(),
 				id: $( 'input[name="product_id"]' ).val() || '',
 			} );
@@ -276,7 +266,6 @@
 				'input change',
 				render
 			);
-			$( '#product_category, #product_tags' ).on( 'change', render );
 
 			// The description editor initialises after this script runs.
 			$( window ).on( 'load', function () {
@@ -345,12 +334,16 @@
 		 * Bold the focus keyphrase words in the description, as Google does
 		 * for the searcher's query.
 		 *
+		 * Matches on the raw text and escapes each piece, so a keyphrase can
+		 * never match inside an HTML entity. Word boundaries are checked by
+		 * hand: a lookbehind regex would throw on Safari before 16.4, and this
+		 * file ships untranspiled.
+		 *
 		 * @param {string} text      Plain-text description.
 		 * @param {string} keyphrase Focus keyphrase.
 		 * @return {string} Escaped HTML with the keyphrase words wrapped in <strong>.
 		 */
 		highlightKeyphrase( text, keyphrase ) {
-			const self = this;
 			const words = keyphrase
 				.split( /\s+/ )
 				.filter( function ( word ) {
@@ -364,22 +357,32 @@
 				return this.escapeHtml( text );
 			}
 
-			// Split on the raw text and escape each piece, so a keyphrase can
-			// never match inside an HTML entity.
-			const pattern = new RegExp(
-				'(?<![\\p{L}\\p{N}])(' +
-					words.join( '|' ) +
-					')(?![\\p{L}\\p{N}])',
-				'giu'
-			);
+			const pattern = new RegExp( words.join( '|' ), 'giu' );
+			const wordChar = /[\p{L}\p{N}]/u;
+			let html = '';
+			let last = 0;
+			let match;
 
-			return text
-				.split( pattern )
-				.map( function ( piece, index ) {
-					const html = self.escapeHtml( piece );
-					return index % 2 ? '<strong>' + html + '</strong>' : html;
-				} )
-				.join( '' );
+			while ( ( match = pattern.exec( text ) ) !== null ) {
+				const start = match.index;
+				const end = start + match[ 0 ].length;
+				const before = start > 0 ? text[ start - 1 ] : '';
+				const after = end < text.length ? text[ end ] : '';
+
+				// Only whole words: skip a match glued to letters or digits.
+				if ( wordChar.test( before ) || wordChar.test( after ) ) {
+					continue;
+				}
+
+				html +=
+					this.escapeHtml( text.substring( last, start ) ) +
+					'<strong>' +
+					this.escapeHtml( match[ 0 ] ) +
+					'</strong>';
+				last = end;
+			}
+
+			return html + this.escapeHtml( text.substring( last ) );
 		},
 
 		setProgress( field, value, max, state ) {
@@ -417,13 +420,18 @@
 
 			// Progress bars score what will be output, not the Google fallback below.
 			const titleWidth = this.measureTitleWidth( title );
+			let titleState = 'good';
+			if ( ! titleWidth || titleWidth > config.titleMaxWidth ) {
+				titleState = 'bad';
+			} else if ( titleWidth < config.titleMinWidth ) {
+				// Yoast scores a short title orange, but allows it on cornerstone content.
+				titleState = isCornerstone ? 'good' : 'ok';
+			}
 			this.setProgress(
 				'title',
 				titleWidth,
 				config.titleMaxWidth,
-				titleWidth > 0 && titleWidth <= config.titleMaxWidth
-					? 'good'
-					: 'bad'
+				titleState
 			);
 
 			let descState = 'good';

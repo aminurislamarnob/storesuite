@@ -142,6 +142,17 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 			protected function get_title_separator(): string {
 				return '|';
 			}
+
+			/**
+			 * Return the faked edited product, falling back to the query var.
+			 *
+			 * @return int
+			 */
+			protected function get_editing_product_id(): int {
+				return isset( self::$options['__editing_product_id'] )
+					? (int) self::$options['__editing_product_id']
+					: parent::get_editing_product_id();
+			}
 		};
 	}
 
@@ -359,8 +370,64 @@ class YoastSeoIntegrationTest extends StoreSuiteTestCase {
 		$this->assertSame( 'Buy %%title%% today', $data['descTemplate'] );
 		$this->assertSame( '|', $data['replacements']['sep'] );
 		$this->assertSame( 'Widget Shop', $data['replacements']['sitename'] );
+		$this->assertSame( 400, $data['titleMinWidth'] );
 		$this->assertSame( 600, $data['titleMaxWidth'] );
 		$this->assertSame( 156, $data['descMaxLength'] );
+	}
+
+	/**
+	 * The term variables preview what Yoast outputs: the blog taxonomies.
+	 *
+	 * Yoast's %%category%%, %%primary_category%% and %%tag%% read the
+	 * `category` and `post_tag` taxonomies, so a product's own categories
+	 * and tags must never leak into the preview.
+	 *
+	 * @return void
+	 */
+	public function test_preview_term_variables_ignore_the_product_taxonomies() {
+		wp_set_object_terms( $this->product_id, array( 'Hoodies' ), 'product_cat' );
+		wp_set_object_terms( $this->product_id, array( 'warm' ), 'product_tag' );
+
+		$data = $this->make_integration( true, array( '__editing_product_id' => $this->product_id ) )->get_script_data();
+
+		$this->assertSame( '', $data['replacements']['category'] );
+		$this->assertSame( '', $data['replacements']['primary_category'] );
+		$this->assertSame( '', $data['replacements']['tag'] );
+	}
+
+	/**
+	 * A product that does carry blog terms previews them, like Yoast would.
+	 *
+	 * @return void
+	 */
+	public function test_preview_term_variables_resolve_the_blog_taxonomies() {
+		register_taxonomy_for_object_type( 'category', 'product' );
+		register_taxonomy_for_object_type( 'post_tag', 'product' );
+		wp_set_object_terms( $this->product_id, array( 'News' ), 'category' );
+		wp_set_object_terms( $this->product_id, array( 'sale' ), 'post_tag' );
+
+		$data = $this->make_integration( true, array( '__editing_product_id' => $this->product_id ) )->get_script_data();
+
+		unregister_taxonomy_for_object_type( 'category', 'product' );
+		unregister_taxonomy_for_object_type( 'post_tag', 'product' );
+
+		$this->assertSame( 'News', $data['replacements']['category'] );
+		$this->assertSame( 'sale', $data['replacements']['tag'] );
+		// No primary term is set, so like Yoast the variable resolves to nothing.
+		$this->assertSame( '', $data['replacements']['primary_category'] );
+	}
+
+	/**
+	 * The add form resolves the term variables to nothing.
+	 *
+	 * @return void
+	 */
+	public function test_preview_term_variables_empty_on_add_form() {
+		$data = $this->make_integration()->get_script_data();
+
+		$this->assertSame( '', $data['replacements']['category'] );
+		$this->assertSame( '', $data['replacements']['primary_category'] );
+		$this->assertSame( '', $data['replacements']['tag'] );
 	}
 
 	/**

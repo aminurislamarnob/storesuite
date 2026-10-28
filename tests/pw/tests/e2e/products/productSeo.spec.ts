@@ -200,9 +200,10 @@ test.describe( 'product SEO (Yoast) AI Generate as a shop manager', () => {
 		await modal.locator( '.storesuite-ai-insert' ).click();
 		await expect( modal ).toBeHidden();
 		await expect( page.locator( '#storesuite_yoast_title' ) ).toHaveValue( 'E2E generated title #2' );
-		// The Google preview and length bar follow the inserted title.
+		// The Google preview and length bar follow the inserted title. The short
+		// title scores orange: like Yoast, green needs a 400-600px render width.
 		await expect( card( page ).locator( '.storesuite-seo-snippet-title' ) ).toHaveText( 'E2E generated title #2' );
-		await expect( card( page ).locator( '[data-seo-field="title"] .storesuite-seo-progress' ) ).toHaveAttribute( 'data-state', 'good' );
+		await expect( card( page ).locator( '[data-seo-field="title"] .storesuite-seo-progress' ) ).toHaveAttribute( 'data-state', 'ok' );
 	} );
 
 	test( 'insert a generated social description', async ( { page } ) => {
