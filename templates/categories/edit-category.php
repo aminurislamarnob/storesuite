@@ -112,6 +112,15 @@ do_action( 'storesuite_dashboard_wrapper_start' );
 									</div>
 								</div>
 							</div>
+							<?php
+							/**
+							 * Fires inside a term form, right before the submission group.
+							 *
+							 * @param string        $taxonomy Taxonomy of the form's term.
+							 * @param \WP_Term|null $term     The term being edited, or null on add forms.
+							 */
+							do_action( 'storesuite_term_form_after_fields', 'product_cat', $category );
+							?>
 							<div class="storesuite-form-submission-group">
 								<?php wp_nonce_field( '_storesuite_edit_product_category_', 'storesuite_edit_product_category_nonce' ); ?>
 								<input type="hidden" name="action" value="storesuite_edit_product_category">

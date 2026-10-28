@@ -101,6 +101,13 @@ class TagController {
 			wp_send_json_error( array( 'error' => $new_category->get_error_message() ) );
 		}
 
+		/**
+		 * Fires after a product tag is created from the dashboard.
+		 *
+		 * @param array $new_category The wp_insert_term() result (term_id, term_taxonomy_id).
+		 */
+		do_action( 'storesuite_product_tag_created', $new_category );
+
 		wp_send_json_success( array( 'message' => __( 'Tag successfully created', 'storesuite' ) ) );
 	}
 
@@ -167,6 +174,13 @@ class TagController {
 			wp_send_json_error( array( 'error' => $updated_tag->get_error_message() ) );
 		}
 
+		/**
+		 * Fires after a product tag is updated from the dashboard.
+		 *
+		 * @param array $updated_tag The wp_update_term() result (term_id, term_taxonomy_id).
+		 */
+		do_action( 'storesuite_product_tag_updated', $updated_tag );
+
 		wp_send_json_success( array( 'message' => __( 'Tag successfully updated', 'storesuite' ) ) );
 	}
 
@@ -198,6 +212,13 @@ class TagController {
 		} elseif ( $result === false ) {
 			wp_send_json_error( array( 'error' => __( 'Failed to delete tag', 'storesuite' ) ) );
 		}
+
+		/**
+		 * Fires after a product tag is deleted from the dashboard.
+		 *
+		 * @param int $tag_id The deleted term ID.
+		 */
+		do_action( 'storesuite_product_tag_deleted', $tag_id );
 
 		wp_send_json_success( array( 'message' => __( 'Tag successfully deleted', 'storesuite' ) ) );
 	}
