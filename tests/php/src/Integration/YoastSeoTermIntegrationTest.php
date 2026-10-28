@@ -44,6 +44,9 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 	public function tear_down() {
 		$_POST = array();
 
+		// Enqueue assertions need a fresh queue; core keeps it in a global between tests.
+		$GLOBALS['wp_scripts'] = null;
+
 		parent::tear_down();
 	}
 
@@ -159,12 +162,13 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 			}
 
 			/**
-			 * Report the faked page context.
+			 * Report the faked page context: the taxonomy of the term form
+			 * being viewed, '' anywhere else.
 			 *
-			 * @return bool
+			 * @return string
 			 */
-			protected function is_term_form_page(): bool {
-				return ! empty( self::$options['__is_term_form_page'] );
+			protected function get_form_taxonomy(): string {
+				return (string) ( self::$options['__form_taxonomy'] ?? '' );
 			}
 
 			/**
@@ -1006,6 +1010,179 @@ class YoastSeoTermIntegrationTest extends StoreSuiteTestCase {
 		$tag_variables = array_column( $integration->get_script_data( 'product_tag' )['variables'], 'name' );
 		$this->assertContains( 'term_title', $tag_variables );
 		$this->assertNotContains( 'term_hierarchy', $tag_variables, 'Flat taxonomies have no hierarchy.' );
+	}
+
+	/**
+	 * The preview script knows which form fields feed it, per taxonomy: the
+	 * category and brand forms use prefixed ids, the tag form bare ones.
+	 *
+	 * @return void
+	 */
+	public function test_script_data_exposes_form_selectors_per_taxonomy() {
+		$integration = $this->make_integration();
+
+		$this->assertSame(
+			array(
+				'name'        => '#product_category_name',
+				'slug'        => '#product_category_slug',
+				'description' => '#product_category_description',
+			),
+			$integration->get_script_data( 'product_cat' )['fields']
+		);
+		$this->assertSame(
+			array(
+				'name'        => '#name',
+				'slug'        => '#slug',
+				'description' => '#description',
+			),
+			$integration->get_script_data( 'product_tag' )['fields']
+		);
+		$this->assertSame(
+			array(
+				'name'        => '#product_brand_name',
+				'slug'        => '#product_brand_slug',
+				'description' => '#product_brand_description',
+			),
+			$integration->get_script_data( 'product_brand' )['fields']
+		);
+	}
+
+	/**
+	 * Each taxonomy gets its Yoast description alias — `category_description`
+	 * for hierarchical taxonomies, `tag_description` for tags — both as the
+	 * live-resolved alias and in the Insert-variable menu.
+	 *
+	 * @return void
+	 */
+	public function test_script_data_description_alias_follows_taxonomy() {
+		$integration = $this->make_integration();
+
+		$category_data = $integration->get_script_data( 'product_cat' );
+		$this->assertSame( 'category_description', $category_data['descriptionAlias'] );
+		$this->assertTrue( $category_data['hierarchical'] );
+		$this->assertSame( 'product_cat', $category_data['taxonomy'] );
+		$category_variables = array_column( $category_data['variables'], 'name' );
+		$this->assertContains( 'category_description', $category_variables );
+		$this->assertNotContains( 'tag_description', $category_variables );
+
+		$tag_data = $integration->get_script_data( 'product_tag' );
+		$this->assertSame( 'tag_description', $tag_data['descriptionAlias'] );
+		$this->assertFalse( $tag_data['hierarchical'] );
+		$tag_variables = array_column( $tag_data['variables'], 'name' );
+		$this->assertContains( 'tag_description', $tag_variables );
+		$this->assertNotContains( 'category_description', $tag_variables );
+	}
+
+	/**
+	 * `%%term_hierarchy%%` is the term's ancestors joined by the separator;
+	 * the script appends the live name itself, so the data carries only the
+	 * ancestor path — empty on the add form and for top-level terms.
+	 *
+	 * @return void
+	 */
+	public function test_script_data_resolves_hierarchy_base_from_ancestors() {
+		$integration = $this->make_integration();
+
+		$grandparent = self::factory()->term->create(
+			array(
+				'taxonomy' => 'product_cat',
+				'name'     => 'Clothing',
+			)
+		);
+		$parent      = self::factory()->term->create(
+			array(
+				'taxonomy' => 'product_cat',
+				'name'     => 'Shirts',
+				'parent'   => $grandparent,
+			)
+		);
+		$child       = self::factory()->term->create(
+			array(
+				'taxonomy' => 'product_cat',
+				'name'     => 'Polos',
+				'parent'   => $parent,
+			)
+		);
+
+		$data = $integration->get_script_data( 'product_cat', get_term( $child, 'product_cat' ) );
+		$this->assertSame( 'Clothing | Shirts', $data['hierarchyBase'] );
+
+		$top = $integration->get_script_data( 'product_cat', get_term( $grandparent, 'product_cat' ) );
+		$this->assertSame( '', $top['hierarchyBase'] );
+
+		$add_form = $integration->get_script_data( 'product_cat' );
+		$this->assertSame( '', $add_form['hierarchyBase'] );
+	}
+
+	/**
+	 * The preview URL base is the term archive path the slug is appended to.
+	 *
+	 * @return void
+	 */
+	public function test_script_data_exposes_the_term_archive_url_base() {
+		$data = $this->make_integration()->get_script_data( 'product_cat' );
+
+		$this->assertStringEndsWith( '/', $data['urlBase'] );
+		$this->assertStringContainsString( 'product', $data['urlBase'] );
+		$this->assertStringNotContainsString( '?', $data['urlBase'] );
+	}
+
+	/**
+	 * The shared engine and the term adapter only load on the six term form
+	 * endpoints, and the adapter receives the StoreSuite_TermSeo data.
+	 *
+	 * @return void
+	 */
+	public function test_term_scripts_enqueued_only_on_term_form_pages() {
+		$this->make_integration()->enqueue_assets();
+		$this->assertFalse( wp_script_is( 'storesuite_seo_preview_script', 'enqueued' ) );
+		$this->assertFalse( wp_script_is( 'storesuite_term_seo_script', 'enqueued' ) );
+
+		$this->make_integration( true, array( '__form_taxonomy' => 'product_cat' ) )->enqueue_assets();
+		$this->assertTrue( wp_script_is( 'storesuite_seo_preview_script', 'enqueued' ) );
+		$this->assertTrue( wp_script_is( 'storesuite_term_seo_script', 'enqueued' ) );
+
+		$localized = wp_scripts()->get_data( 'storesuite_term_seo_script', 'data' );
+		$this->assertStringContainsString( 'StoreSuite_TermSeo', $localized );
+		$this->assertStringContainsString( '"taxonomy":"product_cat"', $localized );
+	}
+
+	/**
+	 * A taxonomy Yoast hides SEO settings for gets no scripts either.
+	 *
+	 * @return void
+	 */
+	public function test_enqueue_respects_the_taxonomy_gate() {
+		$this->make_integration(
+			true,
+			array(
+				'__form_taxonomy'                 => 'product_cat',
+				'display-metabox-tax-product_cat' => false,
+			)
+		)->enqueue_assets();
+
+		$this->assertFalse( wp_script_is( 'storesuite_term_seo_script', 'enqueued' ) );
+	}
+
+	/**
+	 * The social image pickers need wp.media, which the tag pages do not load
+	 * on their own; it comes along exactly when a social network is enabled.
+	 *
+	 * @return void
+	 */
+	public function test_enqueue_media_follows_the_social_toggles() {
+		$this->make_integration(
+			true,
+			array(
+				'__form_taxonomy' => 'product_tag',
+				'opengraph'       => false,
+				'twitter'         => false,
+			)
+		)->enqueue_assets();
+		$this->assertFalse( wp_script_is( 'media-editor', 'enqueued' ) );
+
+		$this->make_integration( true, array( '__form_taxonomy' => 'product_tag' ) )->enqueue_assets();
+		$this->assertTrue( wp_script_is( 'media-editor', 'enqueued' ) );
 	}
 
 	/**

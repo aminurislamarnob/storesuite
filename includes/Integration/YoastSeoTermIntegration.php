@@ -498,11 +498,13 @@ class YoastSeoTermIntegration {
 	 * Only variables the preview can resolve from the term form are listed;
 	 * any other Yoast variable can still be typed by hand.
 	 *
-	 * @param bool $hierarchical Whether the taxonomy is hierarchical.
+	 * @param bool   $hierarchical      Whether the taxonomy is hierarchical.
+	 * @param string $description_alias Yoast's description alias for the taxonomy,
+	 *                                  `category_description` or `tag_description`.
 	 *
 	 * @return array<int, array{name: string, label: string, recommended: bool}>
 	 */
-	protected function get_variables( bool $hierarchical ): array {
+	protected function get_variables( bool $hierarchical, string $description_alias = '' ): array {
 		$recommended = array(
 			'sitename'   => __( 'Site title', 'storesuite' ),
 			'term_title' => __( 'Term title', 'storesuite' ),
@@ -517,6 +519,19 @@ class YoastSeoTermIntegration {
 			'currentmonth'     => __( 'Current month', 'storesuite' ),
 			'currentyear'      => __( 'Current year', 'storesuite' ),
 		);
+
+		// Yoast's taxonomy-flavoured alias: both resolve to the term description.
+		if ( 'category_description' === $description_alias ) {
+			$others = array_merge(
+				array( 'category_description' => __( 'Category description', 'storesuite' ) ),
+				$others
+			);
+		} elseif ( 'tag_description' === $description_alias ) {
+			$others = array_merge(
+				array( 'tag_description' => __( 'Tag description', 'storesuite' ) ),
+				$others
+			);
+		}
 
 		if ( $hierarchical ) {
 			$others = array_merge(
@@ -549,28 +564,41 @@ class YoastSeoTermIntegration {
 	/**
 	 * Data localized for the term snippet preview script.
 	 *
-	 * @param string $taxonomy Taxonomy of the form's term.
+	 * @param string       $taxonomy Taxonomy of the form's term.
+	 * @param WP_Term|null $term     Term being edited, null on the add form.
 	 *
 	 * @return array
 	 */
-	public function get_script_data( string $taxonomy ): array {
+	public function get_script_data( string $taxonomy, ?WP_Term $term = null ): array {
 		$taxonomy_object = get_taxonomy( $taxonomy );
+		$hierarchical    = $taxonomy_object && ! empty( $taxonomy_object->hierarchical );
+		$alias           = $hierarchical ? 'category_description' : 'tag_description';
 		$site_icon       = get_site_icon_url( 32 );
 
 		return array(
-			'titleTemplate' => (string) $this->get_yoast_option( 'title-tax-' . $taxonomy, '%%term_title%% %%page%% %%sep%% %%sitename%%' ),
-			'descTemplate'  => (string) $this->get_yoast_option( 'metadesc-tax-' . $taxonomy, '' ),
+			'taxonomy'         => $taxonomy,
+			'hierarchical'     => $hierarchical,
+			// The live form fields the preview reads, per taxonomy.
+			'fields'           => $this->get_form_field_selectors( $taxonomy ),
+			// The term archive path the live slug is appended to.
+			'urlBase'          => $this->get_preview_url_base( $taxonomy, $term ),
+			// Yoast's taxonomy-flavoured alias of %%term_description%%.
+			'descriptionAlias' => $alias,
+			// %%term_hierarchy%% ancestors; the script appends the live name.
+			'hierarchyBase'    => $this->get_hierarchy_base( $taxonomy, $term ),
+			'titleTemplate'    => (string) $this->get_yoast_option( 'title-tax-' . $taxonomy, '%%term_title%% Archives %%page%% %%sep%% %%sitename%%' ),
+			'descTemplate'     => (string) $this->get_yoast_option( 'metadesc-tax-' . $taxonomy, '' ),
 			// Yoast's page-title width assessment: 400-600px renders green.
-			'titleMinWidth' => 400,
-			'titleMaxWidth' => 600,
-			'descMinLength' => 120,
-			'descMaxLength' => 156,
-			'homeUrl'       => home_url( '/' ),
-			'siteIcon'      => $site_icon ? $site_icon : '',
-			'variables'     => $this->get_variables( $taxonomy_object && ! empty( $taxonomy_object->hierarchical ) ),
-			// Values the form cannot supply; the script resolves term_title and
-			// term_description from the live name and description fields.
-			'replacements'  => array(
+			'titleMinWidth'    => 400,
+			'titleMaxWidth'    => 600,
+			'descMinLength'    => 120,
+			'descMaxLength'    => 156,
+			'homeUrl'          => home_url( '/' ),
+			'siteIcon'         => $site_icon ? $site_icon : '',
+			'variables'        => $this->get_variables( $hierarchical, $alias ),
+			// Values the form cannot supply; the script resolves term_title,
+			// term_description and the alias from the live name and description fields.
+			'replacements'     => array(
 				'sep'          => $this->get_title_separator(),
 				'sitename'     => wp_strip_all_tags( get_bloginfo( 'name' ), true ),
 				'sitedesc'     => wp_strip_all_tags( get_bloginfo( 'description' ), true ),
@@ -580,7 +608,7 @@ class YoastSeoTermIntegration {
 				'currentyear'  => date_i18n( 'Y' ),
 				'page'         => '',
 			),
-			'i18n'          => array(
+			'i18n'             => array(
 				'noMatches'        => __( 'No matching variables', 'storesuite' ),
 				'titleFallback'    => __( 'Please provide an SEO title by editing the snippet below.', 'storesuite' ),
 				'descFallback'     => __( 'Please provide a meta description by editing the snippet below. If you don’t, Google will try to find a relevant part of this page to show in the search results.', 'storesuite' ),
@@ -592,35 +620,186 @@ class YoastSeoTermIntegration {
 	}
 
 	/**
-	 * Load the term SEO assets on the term add/edit forms only.
+	 * CSS selectors of the form fields that drive the live preview. The
+	 * category and brand templates prefix their ids; the tag templates do not.
 	 *
-	 * The snippet-preview script itself lands with the shared preview engine;
-	 * until then there is nothing to enqueue.
+	 * @param string $taxonomy Taxonomy of the form's term.
+	 *
+	 * @return array{name: string, slug: string, description: string}|array
+	 */
+	protected function get_form_field_selectors( string $taxonomy ): array {
+		switch ( $taxonomy ) {
+			case 'product_cat':
+				return array(
+					'name'        => '#product_category_name',
+					'slug'        => '#product_category_slug',
+					'description' => '#product_category_description',
+				);
+			case 'product_tag':
+				return array(
+					'name'        => '#name',
+					'slug'        => '#slug',
+					'description' => '#description',
+				);
+			case 'product_brand':
+				return array(
+					'name'        => '#product_brand_name',
+					'slug'        => '#product_brand_slug',
+					'description' => '#product_brand_description',
+				);
+		}
+
+		return array();
+	}
+
+	/**
+	 * The term archive path shown in the Google preview, without the term's
+	 * own slug — the script appends the live slug field itself.
+	 *
+	 * @param string       $taxonomy Taxonomy of the form's term.
+	 * @param WP_Term|null $term     Term being edited, null on the add form.
+	 *
+	 * @return string
+	 */
+	protected function get_preview_url_base( string $taxonomy, ?WP_Term $term ): string {
+		if ( $term ) {
+			$link = get_term_link( $term, $taxonomy );
+
+			// With plain permalinks the link is a query URL; fall back below.
+			if ( ! is_wp_error( $link ) && false === strpos( $link, '?' ) ) {
+				return preg_replace( '#[^/]+/$#', '', trailingslashit( $link ) );
+			}
+		}
+
+		$taxonomy_object = get_taxonomy( $taxonomy );
+		$rewrite         = $taxonomy_object && is_array( $taxonomy_object->rewrite ) && ! empty( $taxonomy_object->rewrite['slug'] )
+			? $taxonomy_object->rewrite['slug']
+			: $taxonomy;
+
+		return home_url( user_trailingslashit( trailingslashit( ltrim( $rewrite, '/' ) ) ) );
+	}
+
+	/**
+	 * `%%term_hierarchy%%` without its last segment: the term's ancestor
+	 * names, root first, joined by Yoast's separator. The preview script
+	 * appends the live name itself, so a rename shows up as typed.
+	 *
+	 * @param string       $taxonomy Taxonomy of the form's term.
+	 * @param WP_Term|null $term     Term being edited, null on the add form.
+	 *
+	 * @return string Empty for flat taxonomies, top-level terms and the add form.
+	 */
+	protected function get_hierarchy_base( string $taxonomy, ?WP_Term $term ): string {
+		if ( ! $term || ! is_taxonomy_hierarchical( $taxonomy ) ) {
+			return '';
+		}
+
+		$names = array();
+
+		// Closest parent first; the hierarchy reads root first.
+		foreach ( get_ancestors( $term->term_id, $taxonomy, 'taxonomy' ) as $ancestor_id ) {
+			$ancestor = get_term( $ancestor_id, $taxonomy );
+
+			if ( $ancestor instanceof WP_Term ) {
+				array_unshift( $names, $ancestor->name );
+			}
+		}
+
+		return implode( ' ' . $this->get_title_separator() . ' ', $names );
+	}
+
+	/**
+	 * Load the shared snippet-preview engine and the term adapter on the term
+	 * add/edit forms only, mirroring the card's own taxonomy gates.
 	 *
 	 * @return void
 	 */
 	public function enqueue_assets() {
-		if ( ! $this->is_term_form_page() ) {
+		$taxonomy = $this->get_form_taxonomy();
+
+		if ( ! $taxonomy || ! $this->is_supported_taxonomy( $taxonomy ) ) {
 			return;
+		}
+
+		// Like the core assets: file mtime under SCRIPT_DEBUG so edits show up without a version bump.
+		$debug = defined( 'SCRIPT_DEBUG' ) && SCRIPT_DEBUG;
+
+		$engine  = STORESUITE_DIR . '/assets/frontend/seo-preview.js';
+		$adapter = STORESUITE_DIR . '/assets/frontend/term-seo.js';
+
+		wp_enqueue_script(
+			'storesuite_seo_preview_script',
+			STORESUITE_PLUGIN_ASSET . '/frontend/seo-preview.js',
+			array( 'jquery' ),
+			$debug && file_exists( $engine ) ? (string) filemtime( $engine ) : STORESUITE_PLUGIN_VERSION,
+			true
+		);
+		wp_enqueue_script(
+			'storesuite_term_seo_script',
+			STORESUITE_PLUGIN_ASSET . '/frontend/term-seo.js',
+			array( 'jquery', 'storesuite_seo_preview_script' ),
+			$debug && file_exists( $adapter ) ? (string) filemtime( $adapter ) : STORESUITE_PLUGIN_VERSION,
+			true
+		);
+		wp_localize_script(
+			'storesuite_term_seo_script',
+			'StoreSuite_TermSeo',
+			$this->get_script_data( $taxonomy, $this->get_editing_term( $taxonomy ) )
+		);
+
+		// The tag pages do not load wp.media on their own; the social image pickers need it.
+		if ( $this->get_social_networks() ) {
+			wp_enqueue_media();
 		}
 	}
 
 	/**
-	 * Whether the current request is a dashboard term add/edit form.
+	 * The taxonomy of the dashboard term add/edit form being viewed, or ''
+	 * anywhere else.
 	 *
-	 * @return bool
+	 * @return string
 	 */
-	protected function is_term_form_page(): bool {
+	protected function get_form_taxonomy(): string {
 		if ( ! storesuite_is_dashboard_page() ) {
-			return false;
+			return '';
 		}
 
-		foreach ( array( 'add-new-category', 'edit-category', 'add-new-tag', 'edit-tag', 'add-new-brand', 'edit-brand' ) as $endpoint ) {
+		$endpoints = array(
+			'add-new-category' => 'product_cat',
+			'edit-category'    => 'product_cat',
+			'add-new-tag'      => 'product_tag',
+			'edit-tag'         => 'product_tag',
+			'add-new-brand'    => 'product_brand',
+			'edit-brand'       => 'product_brand',
+		);
+
+		foreach ( $endpoints as $endpoint => $taxonomy ) {
 			if ( storesuite_is_endpoint_url( $endpoint ) ) {
-				return true;
+				return $taxonomy;
 			}
 		}
 
-		return false;
+		return '';
+	}
+
+	/**
+	 * The term the current edit form is for, null on the add forms.
+	 *
+	 * @param string $taxonomy Taxonomy of the form's term.
+	 *
+	 * @return WP_Term|null
+	 */
+	protected function get_editing_term( string $taxonomy ): ?WP_Term {
+		foreach ( array( 'edit-category', 'edit-tag', 'edit-brand' ) as $endpoint ) {
+			$term_id = absint( get_query_var( $endpoint ) );
+
+			if ( $term_id ) {
+				$term = get_term( $term_id, $taxonomy );
+
+				return $term instanceof WP_Term ? $term : null;
+			}
+		}
+
+		return null;
 	}
 }
